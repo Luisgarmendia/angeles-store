@@ -12,9 +12,10 @@ import { useCart } from "./store-provider"
 
 interface ProductCardProps {
   product: Product
+  index?: number
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { add } = useCart()
   const [added, setAdded] = useState(false)
   const detailHref = `/producto/${product.id}`
@@ -22,6 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const hasVariants = product.variants.length > 0
   const discount = discountPercent(product)
   const previousPrice = compareAtPrice(product)
+  const animationDelay = Math.min(index, 8) * 45
 
   useEffect(() => {
     if (!added) return
@@ -36,7 +38,10 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <article className="group flex flex-col transition-transform duration-300 hover:-translate-y-1">
+    <article
+      className="group flex animate-fade-up flex-col transition-transform duration-300 hover:-translate-y-1"
+      style={{ animationDelay: `${animationDelay}ms` }}
+    >
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-sand">
         <ProductImage
           src={product.imagen}

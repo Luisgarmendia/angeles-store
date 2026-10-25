@@ -22,7 +22,7 @@ export function Hero({ hero }: HeroProps) {
   return (
     <section className="relative overflow-hidden">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:items-center md:py-24">
-        <div>
+        <div className="animate-fade-up">
           {hero.tagline && (
             <p className="text-xs uppercase tracking-[0.32em] text-rose-dark">{hero.tagline}</p>
           )}
@@ -69,13 +69,13 @@ export function Hero({ hero }: HeroProps) {
           )}
         </div>
 
-        <div className="relative">
+        <div className="relative animate-fade-in" style={{ animationDelay: "150ms" }}>
           <div className="absolute -inset-6 rounded-full bg-rose/15 blur-3xl" aria-hidden="true" />
           <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-xl shadow-ink/10">
             <ProductImage
               src={hero.image}
               alt={hero.imageAlt || hero.tagline || "Portada de la tienda"}
-              className="h-full w-full object-cover"
+              className="h-full w-full animate-hero-zoom object-cover"
             />
           </div>
         </div>

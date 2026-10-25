@@ -41,7 +41,7 @@ export function CartDrawer({
     <div className="fixed inset-0 z-50 flex justify-end">
       <button
         type="button"
-        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+        className="absolute inset-0 animate-fade-in bg-ink/40 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Cerrar carrito"
       />
@@ -49,7 +49,7 @@ export function CartDrawer({
       <aside
         ref={dialogRef}
         tabIndex={-1}
-        className="relative flex h-full w-full max-w-md flex-col bg-cream shadow-2xl"
+        className="relative flex h-full w-full max-w-md animate-drawer-in flex-col bg-cream shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-label="Carrito de compras"

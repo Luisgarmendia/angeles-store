@@ -64,7 +64,7 @@ export function Catalog({ products }: { products: Product[] }) {
   return (
     <section id="catalogo" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
       <div className="flex flex-col gap-5 border-t border-ink/10 pt-10">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-2 animate-fade-up sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Cremas y camisas</p>
             <h2 className="font-display text-4xl text-ink">La colección</h2>
@@ -75,7 +75,7 @@ export function Catalog({ products }: { products: Product[] }) {
           </p>
         </div>
 
-        <div className="relative">
+        <div className="relative animate-fade-up" style={{ animationDelay: "60ms" }}>
           <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
             type="search"
@@ -87,13 +87,18 @@ export function Catalog({ products }: { products: Product[] }) {
           />
         </div>
 
-        <CategoryFilter
-          categories={categories}
-          active={filters.category}
-          onChange={(category) => updateFilter("category", category)}
-        />
+        <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <CategoryFilter
+            categories={categories}
+            active={filters.category}
+            onChange={(category) => updateFilter("category", category)}
+          />
+        </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 animate-fade-up"
+          style={{ animationDelay: "140ms" }}
+        >
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -248,7 +253,7 @@ export function Catalog({ products }: { products: Product[] }) {
         )}
 
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink/15 px-6 py-16 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink/15 px-6 py-16 text-center animate-fade-up">
             <SearchIcon className="h-8 w-8 text-rose" />
             <p className="font-display text-2xl text-ink">No encontramos nada así</p>
             <p className="max-w-sm text-sm leading-relaxed text-muted">
@@ -265,8 +270,8 @@ export function Catalog({ products }: { products: Product[] }) {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {filtered.map((product, index) => (
+              <ProductCard key={product.id} product={product} index={index} />
             ))}
           </div>
         )}
