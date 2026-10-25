@@ -2,7 +2,7 @@
 
 Objective: after a customer confirms an order, show a confirmation modal with the order summary, a QR to a private receipt page, and copy/open/print actions. The receipt page uses the order UUID as an unguessable link, is `noindex`, and can be printed or saved as PDF.
 
-Branch: `feat/catalog-experience` (continues PR #2)
+Branch: `feat/catalog-experience` (continues PR #3)
 Delivery strategy: `single-pr`
 Test runner: `vitest` (`cd web && npm test`)
 
@@ -12,6 +12,7 @@ Test runner: `vitest` (`cd web && npm test`)
 - **S2 — Private receipt page.** `/pedido/[id]` renders the order receipt from the order UUID. It shows the store name, order number, date, status, payment status, customer, items, total, and shipping note. It is `noindex`, not in the sitemap, and has a "Guardar / imprimir" action that opens the browser print dialog (save as PDF or print).
 - **S3 — Data flow.** `createOrderInDb` and `createOrderAction` return the order `id`; the store shell keeps the created order in local state for the modal. The public receipt uses the existing `getOrder` query and does not expose admin actions.
 - **S4 — Quality.** Tests, typecheck, build, and smoke of the receipt page pass. The QR dependency is declared in `package.json` and the lockfile.
+- **S5 — Admin receipt QR.** The admin order detail shows the receipt QR and a link to open the private receipt, so the order and its customer receipt stay related.
 
 ## Tasks
 
@@ -21,6 +22,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | T2 | S2 | inline | done | private receipt page + print button + print CSS |
 | T3 | S1 | inline | done | confirmation modal + QR + copy/open actions |
 | T4 | S4 | inline | done | tests, typecheck, build, receipt smoke |
+| T5 | S5 | inline | done | admin order detail QR + open receipt link |
 
 - **T1 — Data flow.** Add `id` to `CreatedOrder` and `CreateOrderResult`; return it from the insert; update the action test mock and assertion.
 - **T2 — Receipt page.** Add `/pedido/[id]`, `PrintButton`, and print-only CSS. Use `getOrder`/`getStoreSettings`, `formatPrice`, `orderStatusLabel`, `paymentStatusLabel`, `paymentLabel`. Add `dynamic = "force-dynamic"` and noindex metadata.
@@ -39,3 +41,6 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L8 (user, verbatim):** "ok pero ya no habre wahtsapp automatico eso siempre porque el pedido lo hace desde ahi"
 - **L9 (implementation):** Restored the pre-opened blank tab and the navigation to the WhatsApp URL after the order is stored. The confirmation modal with the QR/receipt stays in the store tab, and its "Abrir WhatsApp" button remains as a fallback if the popup was blocked or closed.
 - **L10 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. The popup flow is client-side and has no browser test; it is verified by code review and build.
+- **L11 (user, verbatim):** "sabes flato poner en pedidos el QR para que tengamos relacinado eso"
+- **L12 (implementation):** Added `OrderReceiptQr` (client SVG QR) to the admin order detail. The card shows the QR for `${SITE_URL}/pedido/${order.id}`, an explanation, and an "Abrir comprobante" link. The QR is rendered server-side as SVG.
+- **L13 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. Authenticated smoke on order #2: the detail contains "Comprobante del cliente", the `/pedido/<uuid>` URL, 3 SVGs including the QR, and the "Abrir comprobante" link.
