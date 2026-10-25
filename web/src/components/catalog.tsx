@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { SearchIcon, XIcon } from "./Icons"
+import { ChevronDownIcon, FilterIcon, SearchIcon } from "./Icons"
 import { CategoryFilter } from "./CategoryFilter"
 import { ProductCard } from "./ProductCard"
 import { Select } from "./Select"
@@ -22,6 +22,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
 
 export function Catalog({ products }: { products: Product[] }) {
   const [filters, setFilters] = useState<CatalogFilterInput>(DEFAULT_CATALOG_FILTERS)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const categories = useMemo(
     () => ["Todos", ...Array.from(new Set(products.map((product) => product.categoria)))],
@@ -39,6 +40,11 @@ export function Catalog({ products }: { products: Product[] }) {
     filters.minPrice !== "" ||
     filters.maxPrice !== "" ||
     filters.sort !== "destacados"
+
+  const hiddenFilterCount =
+    (filters.minPrice !== "" ? 1 : 0) +
+    (filters.maxPrice !== "" ? 1 : 0) +
+    (filters.sort !== "destacados" ? 1 : 0)
 
   function updateFilter<K extends keyof CatalogFilterInput>(
     key: K,
@@ -83,77 +89,125 @@ export function Catalog({ products }: { products: Product[] }) {
           onChange={(category) => updateFilter("category", category)}
         />
 
-        <div className="flex flex-col gap-4 border-t border-ink/10 pt-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted">
-                Precio mín.
-              </span>
-              <input
-                type="number"
-                min={0}
-                step="any"
-                inputMode="decimal"
-                value={filters.minPrice}
-                onChange={(event) => updateFilter("minPrice", event.target.value)}
-                placeholder="0"
-                className="w-24 rounded-full border border-ink/15 bg-white/60 px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-rose focus:ring-2 focus:ring-rose/20"
-                aria-label="Precio mínimo"
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-expanded={filtersOpen}
+              aria-controls="catalog-filters"
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.14em] transition-colors ${
+                filtersOpen || hiddenFilterCount > 0
+                  ? "border-ink bg-ink text-cream"
+                  : "border-ink/15 text-muted hover:border-ink/40 hover:text-ink"
+              }`}
+            >
+              <FilterIcon className="h-3.5 w-3.5" />
+              Filtros
+              {hiddenFilterCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-cream px-1 text-[10px] font-medium text-ink">
+                  {hiddenFilterCount}
+                </span>
+              )}
+              <ChevronDownIcon
+                className={`h-3.5 w-3.5 transition-transform ${
+                  filtersOpen ? "rotate-180" : ""
+                }`}
               />
-            </label>
+            </button>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted">
-                Precio máx.
-              </span>
-              <input
-                type="number"
-                min={0}
-                step="any"
-                inputMode="decimal"
-                value={filters.maxPrice}
-                onChange={(event) => updateFilter("maxPrice", event.target.value)}
-                placeholder="Sin límite"
-                className="w-32 rounded-full border border-ink/15 bg-white/60 px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-rose focus:ring-2 focus:ring-rose/20"
-                aria-label="Precio máximo"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted">
-                Ordenar por
-              </span>
-              <Select
-                variant="pill"
-                value={filters.sort}
-                onChange={(event) => updateFilter("sort", event.target.value as CatalogSort)}
-                aria-label="Ordenar productos"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 sm:justify-end">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted">
-              {filtered.length} {filtered.length === 1 ? "producto" : "productos"}
-            </p>
-            {hasActiveFilters && (
+            {hasActiveFilters && !filtersOpen && (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 px-3 py-1.5 text-xs text-muted transition-colors hover:border-ink hover:text-ink"
+                className="text-xs text-muted transition-colors hover:text-ink"
               >
-                <XIcon className="h-3 w-3" />
                 Limpiar
               </button>
             )}
           </div>
+
+          <p className="text-xs uppercase tracking-[0.18em] text-muted">
+            {filtered.length} {filtered.length === 1 ? "producto" : "productos"}
+          </p>
         </div>
+
+        {filtersOpen && (
+          <div
+            id="catalog-filters"
+            className="rounded-2xl border border-ink/10 bg-white/60 p-4"
+          >
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                  Precio mín.
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  inputMode="decimal"
+                  value={filters.minPrice}
+                  onChange={(event) => updateFilter("minPrice", event.target.value)}
+                  placeholder="0"
+                  className="w-full rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-rose focus:ring-2 focus:ring-rose/20"
+                  aria-label="Precio mínimo"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                  Precio máx.
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  inputMode="decimal"
+                  value={filters.maxPrice}
+                  onChange={(event) => updateFilter("maxPrice", event.target.value)}
+                  placeholder="Sin límite"
+                  className="w-full rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-rose focus:ring-2 focus:ring-rose/20"
+                  aria-label="Precio máximo"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                  Ordenar por
+                </span>
+                <Select
+                  value={filters.sort}
+                  onChange={(event) => updateFilter("sort", event.target.value as CatalogSort)}
+                  aria-label="Ordenar productos"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-ink/10 pt-3">
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs text-muted transition-colors hover:text-ink"
+              >
+                Limpiar filtros
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="rounded-full bg-ink px-5 py-2 text-xs font-medium text-cream transition-colors hover:bg-wine"
+              >
+                Listo
+              </button>
+            </div>
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink/15 px-6 py-16 text-center">
