@@ -1,6 +1,6 @@
-# Amapola — women's fashion store with WhatsApp checkout
+# Angeles Store's — creams, shirts and women's fashion with WhatsApp checkout
 
-Objective: Zero-backend React SPA for a women's fashion and accessories store, based on `prd_tienda_online_frontend_whatsapp.md`, with catalog, cart, WhatsApp order handoff, and a local admin panel.
+Objective: Zero-backend React SPA for a women's store focused on creams and shirts, with a general women's catalog, product detail pages with recommendations, cart, WhatsApp order handoff, and a local admin panel.
 
 Branch: `main` (new repository)
 Delivery strategy: `single-pr` (greenfield, no PR slicing needed)
@@ -20,6 +20,9 @@ Test runner: `vitest`
 - **S10 — Friendly tone.** Store copy uses neutral Honduran tuteo (never voseo), warm microcopy, a trust strip, actionable empty states, and clear success feedback.
 - **S11 — Admin practicality.** Tabs for products and settings, catalog search and category filter, actionable stats (including products without a photo), side-drawer editor with category chips and image preview, delete confirmation, and feedback visible inside the panel.
 - **S12 — Emoji rendering.** WhatsApp uses a small, consistent emoji set with clean spacing; the document declares `es-HN` and the UI declares an explicit color-emoji font fallback.
+- **S13 — Brand and catalog focus.** The store is named exactly `Angeles Store's` and sells mostly creams and shirts plus general women's products. Brand strings live in `src/config.ts`; the seed catalog is 18 products across Cremas, Camisas, Vestidos, Pantalones, Calzado, Bolsos, and Accesorios.
+- **S14 — Product detail.** Every product opens a hash-addressable detail section at `#producto/{id}` with image, name, category, price, description, quantity selector, add-to-cart, and a back link to the catalog. Below the detail, up to 4 recommended products appear, same category first, never the product being viewed.
+- **S15 — Catalog migration.** `DATA_VERSION` 3 replaces the legacy `p1`–`p12` seed, preserves products created by the owner, and prunes cart lines whose product no longer exists.
 
 ## Tasks
 
@@ -37,6 +40,9 @@ Test runner: `vitest`
 | T10 | S10 | inline | done | `1ad4064` · Honduran tuteo across storefront |
 | T11 | S6, S11 | inline | done | `46ca84c` · tabs, search, drawer, confirm |
 | T12 | S10, S11 | inline | done | `1ad4064`, `46ca84c` · toast, summary, feedback |
+| T13 | S13 | inline | done | `2ce85cd` · 18 products, 18/18 images 200 |
+| T14 | S14 | inline | done | `b3a3e13` · hash route, detail, recommendations, quantity |
+| T15 | S13, S15 | inline | done | `321e5aa` · migration v3, 36 tests |
 
 - **T1 — Scaffold.** Initialize git, Vite + React + TypeScript + Tailwind, base config files.
 - **T2 — Domain data.** Central brand/config module, types, and a women's fashion seed catalog.
@@ -50,6 +56,9 @@ Test runner: `vitest`
 - **T10 — Rewrite copy.** Move storefront and checkout copy from voseo to neutral Honduran tuteo, warm empty states, trust strip, announcement bar.
 - **T11 — Redesign admin.** Tabs, stats, search/filter, side-drawer editor, category chips, delete confirmation, phone validation, feedback inside the panel.
 - **T12 — Friendlier flow.** Add-to-cart toast with "Ver carrito" action, product button feedback, order summary in checkout, Escape/scroll-lock behavior.
+- **T13 — Rebrand and recatalog.** Rename the store to Angeles Store's, rebuild the seed catalog around creams and shirts, and resize the brand on header, footer, hero, and document metadata.
+- **T14 — Detail and recommendations.** Hash-addressable product detail with quantity selector, add-to-cart, back navigation, and same-category-first recommendations below.
+- **T15 — Catalog migration.** Bump the stored data version, drop the legacy seed, keep owner-created products, and prune stale cart lines.
 
 ## Log
 
@@ -63,3 +72,8 @@ Test runner: `vitest`
 - **L8 (decision):** The admin panel was rebuilt around daily use: tabs, search/filter, stats, side-drawer editor, delete confirmation, and feedback rendered in both store and admin views.
 - **L9 (decision):** `localStorage` data version 2 migrates browsers that ran the previous catalog: refreshes seed products, preserves products created by the owner, and replaces the old Argentine placeholder phone without overwriting a real configured number.
 - **L10 (verification):** `npm test` → 5 files, 24 tests passing. `npm run build` → TypeScript + Vite build green. All Vite modules return HTTP 200. WhatsApp message verified with correct emoji codepoints and `L 2,580` total.
+- **L11 (user, verbatim):** "se va a llmar Angeles Store's y la venta es mas que todo cremas y camisas y de todo para mujer, y a demas quiero que tenga una seccion para ver el detalle de los productos, y que abajo salgan productos recomendados,"
+- **L12 (decision):** Brand is exactly `Angeles Store's` (apostrophe, no accent) and stays centralized in `src/config.ts`. The seed catalog is 18 products: 6 Cremas (`c1`–`c6`), 5 Camisas (`s1`–`s5`), 2 Vestidos (`v1`, `v2`), 2 Pantalones (`pa1`, `pa2`), 1 Calzado (`z1`), 1 Bolsos (`b1`), 1 Accesorios (`a1`).
+- **L13 (decision):** Detail pages are hash-addressable at `#producto/{id}` so browser back works and a product can be linked directly. Recommendations put the same category first, exclude the viewed product, and cap at 4. `addToCart` accepts an optional quantity for the detail selector.
+- **L14 (decision):** `DATA_VERSION` 3 treats `p1`–`p12` as replaced seed, preserves owner-created products, and prunes cart lines for products that no longer exist.
+- **L15 (verification):** `npm test` → 7 files, 36 tests passing. `npm run build` → green. All 18 catalog images return HTTP 200 and every new Vite module returns 200. Work units were committed on `main` because the repository has no remote and its history lives there.
