@@ -23,6 +23,9 @@ const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
 
 type LoadStatus = "idle" | "filtering" | "loadingMore"
 
+/** Auto-load at most this many pages; after that the user asks for more. */
+const AUTO_PAGE_LIMIT = 8
+
 interface CatalogProps {
   initialPage: CatalogPage
   categories: CategoryCount[]
@@ -37,8 +40,11 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
   const [hasMore, setHasMore] = useState(initialPage.nextCursor !== null)
   const [status, setStatus] = useState<LoadStatus>("idle")
   const [error, setError] = useState<string | null>(null)
+  const [autoPages, setAutoPages] = useState(0)
+  const [footerVisible, setFooterVisible] = useState(false)
 
   const requestRef = useRef(0)
+  const loadingRef = useRef(false)
   const filtersKey = JSON.stringify(filters)
   const lastFiltersKeyRef = useRef(JSON.stringify(DEFAULT_CATALOG_FILTERS))
   const sentinelRef = useRef<HTMLDivElement | null>(null)
@@ -64,6 +70,7 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
         if (mode === "replace") {
           setItems(page.products)
           setTotal(page.total)
+          setAutoPages(0)
         } else {
           setItems((current) => {
             const seen = new Set(current.map((product) => product.id))
@@ -97,25 +104,47 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
     return () => window.clearTimeout(timer)
   }, [filters, filtersKey, fetchPage])
 
-  const loadMore = useCallback(() => {
-    if (status !== "idle" || !hasMore || !cursor) return
-    void fetchPage(filters, cursor, "append")
-  }, [status, hasMore, cursor, filters, fetchPage])
+  const loadMore = useCallback(
+    (auto = false) => {
+      if (loadingRef.current || status !== "idle" || !hasMore || !cursor) return
+      if (auto && (footerVisible || autoPages >= AUTO_PAGE_LIMIT)) return
+
+      loadingRef.current = true
+      if (auto) setAutoPages((current) => current + 1)
+
+      void fetchPage(filters, cursor, "append").finally(() => {
+        loadingRef.current = false
+      })
+    },
+    [status, hasMore, cursor, filters, fetchPage, footerVisible, autoPages],
+  )
 
   useEffect(() => {
     const node = sentinelRef.current
-    if (!node || !hasMore) return
+    if (!node || !hasMore || footerVisible || autoPages >= AUTO_PAGE_LIMIT) return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) loadMore()
+        if (entries.some((entry) => entry.isIntersecting)) loadMore(true)
       },
       { rootMargin: "600px 0px" },
     )
 
     observer.observe(node)
     return () => observer.disconnect()
-  }, [hasMore, loadMore])
+  }, [hasMore, footerVisible, autoPages, loadMore])
+
+  useEffect(() => {
+    const footer = document.getElementById("contacto")
+    if (!footer) return
+
+    const observer = new IntersectionObserver(
+      (entries) => setFooterVisible(entries.some((entry) => entry.isIntersecting)),
+    )
+
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [])
 
   const hasActiveFilters =
     filters.search !== "" ||
@@ -393,7 +422,7 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
             <div className="mt-8 flex justify-center">
               <button
                 type="button"
-                onClick={loadMore}
+                onClick={() => loadMore(false)}
                 disabled={status === "loadingMore"}
                 className="rounded-full border border-ink px-6 py-2.5 text-sm transition-colors hover:bg-ink hover:text-cream disabled:cursor-wait disabled:opacity-60"
               >
