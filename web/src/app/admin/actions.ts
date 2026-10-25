@@ -9,8 +9,8 @@ import { orderItems, orders, productVariants, products, settings } from "@/db/sc
 import { destroySession, requireAdmin } from "@/lib/auth"
 import { PAYMENT_OPTIONS, isPaymentMethod } from "@/lib/payments"
 import { normalizeHonduranPhone } from "@/lib/phone"
-import { isOrderStatus } from "@/lib/orders"
-import type { OrderStatus, StoreSettings } from "@/lib/types"
+import { isOrderStatus, isPaymentStatus } from "@/lib/orders"
+import type { OrderPaymentStatus, OrderStatus, StoreSettings } from "@/lib/types"
 
 export interface FormState {
   error?: string
@@ -422,6 +422,28 @@ export async function updateOrderStatusAction(formData: FormData): Promise<void>
       .where(eq(orders.id, id))
   })
 
+  revalidatePath("/admin/pedidos")
+  redirect(`/admin/pedidos/${id}`)
+}
+
+export async function updatePaymentStatusAction(formData: FormData): Promise<void> {
+  await requireAdmin()
+
+  const id = text(formData, "id")
+  const paymentStatusValue = text(formData, "paymentStatus")
+
+  if (!id || !isPaymentStatus(paymentStatusValue)) redirect("/admin/pedidos")
+
+  const paymentStatus: OrderPaymentStatus = paymentStatusValue
+  const updated = await getDb()
+    .update(orders)
+    .set({ paymentStatus, updatedAt: new Date() })
+    .where(eq(orders.id, id))
+    .returning({ id: orders.id })
+
+  if (updated.length === 0) redirect("/admin/pedidos")
+
+  revalidatePath("/admin")
   revalidatePath("/admin/pedidos")
   redirect(`/admin/pedidos/${id}`)
 }

@@ -4,7 +4,7 @@ import { useActionState, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { saveProductAction, type FormState } from "@/app/admin/actions"
 import { ImageUpload } from "@/components/admin/image-upload"
-import { TrashIcon } from "@/components/Icons"
+import { ArrowLeftIcon, ArrowRightIcon, TrashIcon } from "@/components/Icons"
 import type { AdminProduct } from "@/lib/types"
 
 interface ProductFormProps {
@@ -46,6 +46,19 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   function removeImage(url: string) {
     setImages((current) => current.filter((item) => item !== url))
+  }
+
+  function moveImage(index: number, direction: -1 | 1) {
+    setImages((current) => {
+      const target = index + direction
+      if (target < 0 || target >= current.length) return current
+
+      const next = [...current]
+      const moved = next[index]
+      next[index] = next[target]
+      next[target] = moved
+      return next
+    })
   }
 
   function addVariant() {
@@ -231,6 +244,26 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   >
                     <TrashIcon className="h-3 w-3" />
                   </button>
+                  <div className="absolute inset-x-1 bottom-1 flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => moveImage(index, -1)}
+                      disabled={index === 0}
+                      className="rounded-full bg-ink/80 p-1 text-cream transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={`Mover foto ${index + 1} antes`}
+                    >
+                      <ArrowLeftIcon className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveImage(index, 1)}
+                      disabled={index === images.length - 1}
+                      className="rounded-full bg-ink/80 p-1 text-cream transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={`Mover foto ${index + 1} después`}
+                    >
+                      <ArrowRightIcon className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

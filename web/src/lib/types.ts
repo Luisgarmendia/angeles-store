@@ -84,3 +84,5 @@ export type OrderStatus =
   | "enviado"
   | "entregado"
   | "cancelado"
+
+export type OrderPaymentStatus = "pendiente" | "pagado" | "reembolsado"

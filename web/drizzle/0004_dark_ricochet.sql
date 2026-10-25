@@ -1,0 +1,2 @@
+CREATE TYPE "public"."order_payment_status" AS ENUM('pendiente', 'pagado', 'reembolsado');--> statement-breakpoint
+ALTER TABLE "orders" ADD COLUMN "payment_status" "order_payment_status" DEFAULT 'pendiente' NOT NULL;

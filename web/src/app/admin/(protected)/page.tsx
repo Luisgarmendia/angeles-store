@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { AdminProductsView } from "@/components/admin/admin-products-view"
-import { listAdminProducts } from "@/db/queries"
+import { getAdminSummary, listAdminProducts } from "@/db/queries"
+import { formatPrice } from "@/lib/format"
 
 export const dynamic = "force-dynamic"
 
@@ -10,7 +11,7 @@ export default async function AdminProductsPage({
   searchParams: Promise<{ q?: string }>
 }) {
   const { q = "" } = await searchParams
-  const products = await listAdminProducts(q)
+  const [products, summary] = await Promise.all([listAdminProducts(q), getAdminSummary()])
 
   return (
     <div>
@@ -25,6 +26,30 @@ export default async function AdminProductsPage({
         >
           Nuevo producto
         </Link>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Link
+          href="/admin/pedidos?status=pendiente"
+          className="rounded-2xl border border-ink/10 bg-white/60 p-4 transition-colors hover:border-ink/30"
+        >
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
+            Pedidos pendientes
+          </p>
+          <p className="mt-1 font-display text-2xl text-ink">{summary.pendingOrders}</p>
+        </Link>
+        <div className="rounded-2xl border border-ink/10 bg-white/60 p-4">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">Pagos pendientes</p>
+          <p className="mt-1 font-display text-2xl text-ink">{summary.pendingPayments}</p>
+        </div>
+        <div className="rounded-2xl border border-ink/10 bg-white/60 p-4">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">Bajo stock</p>
+          <p className="mt-1 font-display text-2xl text-ink">{summary.lowStockProducts}</p>
+        </div>
+        <div className="rounded-2xl border border-ink/10 bg-white/60 p-4">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">Ventas totales</p>
+          <p className="mt-1 font-display text-2xl text-ink">{formatPrice(summary.totalSales)}</p>
+        </div>
       </div>
 
       <form method="get" className="mt-5 flex gap-2">

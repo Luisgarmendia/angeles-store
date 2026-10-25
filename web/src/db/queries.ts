@@ -4,6 +4,7 @@ import { orderItems, orders, productVariants, products, settings } from "./schem
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
 import type {
   AdminProduct,
+  OrderPaymentStatus,
   OrderStatus,
   Product,
   ProductVariant,
@@ -20,6 +21,7 @@ export interface AdminOrder {
   notes: string
   subtotal: number
   status: OrderStatus
+  paymentStatus: OrderPaymentStatus
   createdAt: Date
   itemCount: number
 }
@@ -36,6 +38,15 @@ export interface AdminOrderItem {
 
 export interface AdminOrderDetail extends AdminOrder {
   items: AdminOrderItem[]
+}
+
+export interface AdminSummary {
+  pendingOrders: number
+  confirmedOrders: number
+  pendingPayments: number
+  lowStockProducts: number
+  activeProducts: number
+  totalSales: number
 }
 
 function toProduct(row: typeof products.$inferSelect): Product {
@@ -186,8 +197,28 @@ export async function listRecommendations(
   return [...same, ...rest].slice(0, limit)
 }
 
-export async function listOrders(status?: OrderStatus): Promise<AdminOrder[]> {
+export async function listOrders(
+  status?: OrderStatus,
+  query = "",
+): Promise<AdminOrder[]> {
   const db = getDb()
+  const filters = []
+  const term = query.trim()
+
+  if (status) filters.push(eq(orders.status, status))
+  if (term) {
+    const matches = [
+      ilike(orders.customerName, `%${term}%`),
+      ilike(orders.customerPhone, `%${term}%`),
+      ilike(orders.customerAddress, `%${term}%`),
+    ]
+    const number = Number(term)
+    if (/^\d+$/.test(term) && Number.isSafeInteger(number) && number > 0) {
+      matches.push(eq(orders.number, number))
+    }
+    filters.push(or(...matches))
+  }
+
   const rows = await db
     .select({
       id: orders.id,
@@ -199,12 +230,13 @@ export async function listOrders(status?: OrderStatus): Promise<AdminOrder[]> {
       notes: orders.notes,
       subtotalCents: orders.subtotalCents,
       status: orders.status,
+      paymentStatus: orders.paymentStatus,
       createdAt: orders.createdAt,
       itemCount: sql<number>`count(${orderItems.id})::int`,
     })
     .from(orders)
     .leftJoin(orderItems, eq(orderItems.orderId, orders.id))
-    .where(status ? eq(orders.status, status) : undefined)
+    .where(filters.length > 0 ? and(...filters) : undefined)
     .groupBy(orders.id)
     .orderBy(desc(orders.createdAt))
 
@@ -227,6 +259,7 @@ export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
       notes: orders.notes,
       subtotalCents: orders.subtotalCents,
       status: orders.status,
+      paymentStatus: orders.paymentStatus,
       createdAt: orders.createdAt,
     })
     .from(orders)
@@ -254,5 +287,34 @@ export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
       quantity: item.quantity,
       lineTotal: item.lineTotalCents / 100,
     })),
+  }
+}
+
+export async function getAdminSummary(): Promise<AdminSummary> {
+  const db = getDb()
+
+  const [orderTotals] = await db
+    .select({
+      pendingOrders: sql<number>`count(*) filter (where ${orders.status} = 'pendiente')::int`,
+      confirmedOrders: sql<number>`count(*) filter (where ${orders.status} = 'confirmado')::int`,
+      pendingPayments: sql<number>`count(*) filter (where ${orders.paymentStatus} = 'pendiente' and ${orders.status} <> 'cancelado')::int`,
+      totalSalesCents: sql<string>`coalesce(sum(${orders.subtotalCents}) filter (where ${orders.status} <> 'cancelado'), 0)::bigint`,
+    })
+    .from(orders)
+
+  const [productTotals] = await db
+    .select({
+      activeProducts: sql<number>`count(*) filter (where ${products.active})::int`,
+      lowStockProducts: sql<number>`count(*) filter (where ${products.active} and not ${products.madeToOrder} and ${products.stock} between 1 and 3)::int`,
+    })
+    .from(products)
+
+  return {
+    pendingOrders: orderTotals.pendingOrders,
+    confirmedOrders: orderTotals.confirmedOrders,
+    pendingPayments: orderTotals.pendingPayments,
+    lowStockProducts: productTotals.lowStockProducts,
+    activeProducts: productTotals.activeProducts,
+    totalSales: Number(orderTotals.totalSalesCents) / 100,
   }
 }

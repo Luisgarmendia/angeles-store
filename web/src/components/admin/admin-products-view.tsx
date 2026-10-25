@@ -83,6 +83,7 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
           {products.map((product) => {
             const stock = productStock(product)
             const soldOut = stock !== null && stock <= 0
+            const lowStock = stock !== null && stock > 0 && stock <= 3
             const discount = discountPercent(product)
 
             return (
@@ -124,6 +125,11 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
                     {soldOut && (
                       <span className="rounded-full bg-wine/90 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
                         Agotado
+                      </span>
+                    )}
+                    {lowStock && (
+                      <span className="rounded-full bg-rose/90 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-ink">
+                        Bajo stock
                       </span>
                     )}
                   </div>
@@ -177,6 +183,7 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
         <div className="mt-3 space-y-2">
           {products.map((product) => {
             const stock = productStock(product)
+            const lowStock = stock !== null && stock > 0 && stock <= 3
             const discount = discountPercent(product)
 
             return (
@@ -219,6 +226,7 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
                             ? "· Agotado"
                             : `· Stock: ${stock}`}
                     </span>
+                    {lowStock && <span className="ml-2 text-wine">· Bajo stock</span>}
                     {product.variants.length > 0 && (
                       <span className="ml-1 text-xs">
                         · {product.variants.length}{" "}
