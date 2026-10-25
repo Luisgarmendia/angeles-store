@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react"
 import { config } from "../config"
+import { isValidPin, saveAdminPin, verifyAdminPin } from "../lib/adminAuth"
 import { formatPrice } from "../lib/format"
 import { formatHonduranPhone, normalizeHonduranPhone } from "../lib/phone"
 import { useModalBehavior } from "../lib/useModal"
@@ -7,6 +8,7 @@ import type { Product, StoreSettings } from "../types"
 import {
   ArrowRightIcon,
   DownloadIcon,
+  LockIcon,
   PencilIcon,
   PlusIcon,
   SearchIcon,
@@ -20,6 +22,7 @@ interface AdminPanelProps {
   products: Product[]
   settings: StoreSettings
   onClose: () => void
+  onLock: () => void
   onSaveProduct: (product: Product) => void
   onDeleteProduct: (productId: string) => void
   onSaveSettings: (settings: StoreSettings) => void
@@ -56,6 +59,7 @@ export function AdminPanel({
   products,
   settings,
   onClose,
+  onLock,
   onSaveProduct,
   onDeleteProduct,
   onSaveSettings,
@@ -142,14 +146,25 @@ export function AdminPanel({
               </p>
               <h1 className="font-display text-2xl text-ink sm:text-3xl">Tu tienda, en orden</h1>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex shrink-0 items-center gap-2 rounded-full border border-ink px-4 py-2 text-sm transition-colors hover:bg-ink hover:text-cream"
-            >
-              Ver tienda
-              <ArrowRightIcon className="h-4 w-4" />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={onLock}
+                className="flex items-center gap-2 rounded-full border border-ink/20 px-3 py-2 text-sm text-muted transition-colors hover:border-ink hover:text-ink"
+                aria-label="Bloquear el panel"
+              >
+                <LockIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Bloquear</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex items-center gap-2 rounded-full border border-ink px-4 py-2 text-sm transition-colors hover:bg-ink hover:text-cream"
+              >
+                Ver tienda
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           <div
@@ -403,6 +418,10 @@ function SettingsTab({
   const [facebook, setFacebook] = useState(settings.facebook)
   const [tiktok, setTiktok] = useState(settings.tiktok)
   const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [currentPin, setCurrentPin] = useState("")
+  const [newPin, setNewPin] = useState("")
+  const [confirmPin, setConfirmPin] = useState("")
+  const [pinMessage, setPinMessage] = useState<{ text: string; ok: boolean } | null>(null)
   const normalizedPhone = normalizeHonduranPhone(phone)
 
   function handleSettingsSubmit(event: FormEvent<HTMLFormElement>) {
@@ -422,6 +441,33 @@ function SettingsTab({
       facebook: facebook.trim(),
       tiktok: tiktok.trim(),
     })
+  }
+
+  async function handleChangePin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPinMessage(null)
+
+    if (!(await verifyAdminPin(currentPin))) {
+      setPinMessage({ text: "La clave actual no es correcta.", ok: false })
+      return
+    }
+    if (!isValidPin(newPin)) {
+      setPinMessage({ text: "La nueva clave debe tener entre 4 y 8 dígitos.", ok: false })
+      return
+    }
+    if (newPin !== confirmPin) {
+      setPinMessage({ text: "Las claves nuevas no coinciden.", ok: false })
+      return
+    }
+    if (!(await saveAdminPin(newPin))) {
+      setPinMessage({ text: "No se pudo guardar la nueva clave.", ok: false })
+      return
+    }
+
+    setCurrentPin("")
+    setNewPin("")
+    setConfirmPin("")
+    setPinMessage({ text: "Clave actualizada.", ok: true })
   }
 
   return (
@@ -557,6 +603,78 @@ function SettingsTab({
         {importError && (
           <p className="mt-3 rounded-xl bg-wine/10 px-4 py-3 text-sm text-wine" role="alert">
             {importError}
+          </p>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-ink/10 bg-white/60 p-5 lg:col-span-2">
+        <h2 className="font-display text-xl text-ink">Clave del panel</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          Cambia la clave que protege la administración. Se guarda solo en este dispositivo.
+        </p>
+
+        <form onSubmit={handleChangePin} className="mt-4 grid gap-3 sm:grid-cols-3">
+          <label className="block">
+            <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+              Clave actual
+            </span>
+            <input
+              type="password"
+              inputMode="numeric"
+              autoComplete="current-password"
+              value={currentPin}
+              onChange={(event) => setCurrentPin(event.target.value.replace(/\D/g, "").slice(0, 8))}
+              maxLength={8}
+              className={`${inputClass} w-full`}
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+              Nueva clave
+            </span>
+            <input
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              value={newPin}
+              onChange={(event) => setNewPin(event.target.value.replace(/\D/g, "").slice(0, 8))}
+              maxLength={8}
+              className={`${inputClass} w-full`}
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+              Repite la nueva
+            </span>
+            <input
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              value={confirmPin}
+              onChange={(event) => setConfirmPin(event.target.value.replace(/\D/g, "").slice(0, 8))}
+              maxLength={8}
+              className={`${inputClass} w-full`}
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-wine sm:col-span-3"
+          >
+            Cambiar clave
+          </button>
+        </form>
+
+        {pinMessage && (
+          <p
+            className={`mt-3 rounded-xl px-4 py-3 text-sm ${
+              pinMessage.ok ? "bg-sand text-ink" : "bg-wine/10 text-wine"
+            }`}
+            role={pinMessage.ok ? "status" : "alert"}
+          >
+            {pinMessage.text}
           </p>
         )}
       </section>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import seedProducts from "./data/productos.json"
 import { config } from "./config"
+import { AdminGate } from "./components/AdminGate"
 import { AdminPanel } from "./components/AdminPanel"
 import { CartDrawer } from "./components/CartDrawer"
 import { CategoryFilter } from "./components/CategoryFilter"
@@ -22,6 +23,7 @@ import {
 } from "./lib/cart"
 import { recommendProducts } from "./lib/recommendations"
 import { productIdFromHash } from "./lib/route"
+import { lockAdmin } from "./lib/adminAuth"
 import {
   loadCart,
   loadProducts,
@@ -179,18 +181,24 @@ export default function App() {
   if (view === "admin") {
     return (
       <>
-        <AdminPanel
-          products={products}
-          settings={settings}
-          onClose={() => setView("store")}
-          onSaveProduct={handleSaveProduct}
-          onDeleteProduct={handleDeleteProduct}
-          onSaveSettings={(next) => {
-            setSettings(next)
-            showToast("Ajustes guardados.")
-          }}
-          onImport={handleImport}
-        />
+        <AdminGate onExit={() => setView("store")}>
+          <AdminPanel
+            products={products}
+            settings={settings}
+            onClose={() => setView("store")}
+            onLock={() => {
+              lockAdmin()
+              setView("store")
+            }}
+            onSaveProduct={handleSaveProduct}
+            onDeleteProduct={handleDeleteProduct}
+            onSaveSettings={(next) => {
+              setSettings(next)
+              showToast("Ajustes guardados.")
+            }}
+            onImport={handleImport}
+          />
+        </AdminGate>
         {toastNode}
       </>
     )
