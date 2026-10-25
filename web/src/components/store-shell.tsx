@@ -42,6 +42,8 @@ function StoreChrome({ children }: { children: ReactNode }) {
   const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(null)
 
   async function handleCheckout(customer: Customer) {
+    const popup = window.open("about:blank", "_blank")
+
     const result = await createOrderAction({
       customer,
       items: lines.map((line) => ({
@@ -52,6 +54,7 @@ function StoreChrome({ children }: { children: ReactNode }) {
     })
 
     if (result.error) {
+      popup?.close()
       return { error: result.error }
     }
     if (
@@ -60,6 +63,7 @@ function StoreChrome({ children }: { children: ReactNode }) {
       result.total === undefined ||
       result.number === undefined
     ) {
+      popup?.close()
       return { error: "No se pudo registrar el pedido. Intentá de nuevo." }
     }
 
@@ -85,6 +89,16 @@ function StoreChrome({ children }: { children: ReactNode }) {
     setCheckoutOpen(false)
     setCartOpen(false)
     showToast("Pedido confirmado. Guardá tu comprobante.")
+
+    try {
+      if (popup && !popup.closed) {
+        popup.location.href = url
+      } else {
+        window.location.href = url
+      }
+    } catch {
+      window.location.href = url
+    }
 
     return {}
   }
