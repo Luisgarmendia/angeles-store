@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/admin/actions"
 import { getOrder } from "@/db/queries"
+import { CheckIcon } from "@/components/Icons"
 import { formatPrice } from "@/lib/format"
 import {
   ORDER_STATUS_OPTIONS,
@@ -26,10 +27,10 @@ export default async function OrderDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; ok?: string }>
 }) {
   const { id } = await params
-  const { error } = await searchParams
+  const { error, ok } = await searchParams
   const order = await getOrder(id)
 
   if (!order) notFound()
@@ -73,6 +74,26 @@ export default async function OrderDetailPage({
       {error === "reopen" && (
         <p className="mt-4 rounded-xl bg-wine/10 px-4 py-3 text-sm text-wine" role="alert">
           Un pedido cancelado no se puede reabrir. Si necesitás corregirlo, creá uno nuevo.
+        </p>
+      )}
+
+      {ok === "status" && (
+        <p
+          className="mt-4 flex items-center gap-2 rounded-xl bg-ink/5 px-4 py-3 text-sm text-ink animate-[toast-in_0.25s_ease-out]"
+          role="status"
+        >
+          <CheckIcon className="h-4 w-4 shrink-0 text-rose-dark" />
+          Estado del pedido actualizado.
+        </p>
+      )}
+
+      {ok === "payment" && (
+        <p
+          className="mt-4 flex items-center gap-2 rounded-xl bg-ink/5 px-4 py-3 text-sm text-ink animate-[toast-in_0.25s_ease-out]"
+          role="status"
+        >
+          <CheckIcon className="h-4 w-4 shrink-0 text-rose-dark" />
+          Estado del pago actualizado.
         </p>
       )}
 
