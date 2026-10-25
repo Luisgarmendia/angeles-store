@@ -19,6 +19,7 @@ Test runner: `vitest`
 - **S9 — Production bootstrap.** The Docker standalone image runs migrations on start, includes one-time seed and password-reset scripts, and reads every secret from environment variables. Dokploy keeps PostgreSQL on the internal network with backups.
 - **S10 — Admin catalog views.** The admin product list can be shown as cards or as a compact list. The choice is remembered in the browser.
 - **S11 — Store information.** Admin → Ajustes edits the store name, address, and description. Those values feed the header, footer, page metadata, admin chrome, and the WhatsApp order message; older settings rows fill the new fields from defaults.
+- **S12 — Product link previews.** Product pages expose Open Graph and Twitter metadata plus `Product` JSON-LD: product name, price, category, description, image, store name, and canonical URL. WhatsApp reads these tags when building a link preview. `SITE_URL` supplies the public base URL.
 
 ## Tasks
 
@@ -35,6 +36,7 @@ Test runner: `vitest`
 | T9 | S6, S9 | inline | done | `2879da5` · migrate/seed/password scripts |
 | T10 | S10 | inline | done | `0ffbdc2` · cards/list toggle + persisted view |
 | T11 | S11 | inline | done | `7417568` · store name, address and description in settings |
+| T12 | S12 | inline | done | `2c669d6` · Open Graph, Twitter and Product JSON-LD |
 
 - **T1 — Scaffold.** Create the Next app in `web/` and reuse Tailwind, fonts, and component patterns.
 - **T2 — Database.** Add Drizzle, schema, migration, seed, and queries.
@@ -47,6 +49,7 @@ Test runner: `vitest`
 - **T9 — Production bootstrap.** Standalone Dockerfile, migration on start, one-time seed, password reset, Dokploy documentation.
 - **T10 — Admin catalog views.** Toggle between product cards and a compact list, with the preference stored in the browser.
 - **T11 — Store information.** Editable store name, address, and description, with a settings merge for older rows and a shared settings context in the storefront.
+- **T12 — Share previews.** Product Open Graph/Twitter metadata with price and category, canonical URL, and `Product` JSON-LD.
 
 ## Log
 
@@ -64,3 +67,6 @@ Test runner: `vitest`
 - **L12 (user, verbatim):** "ok en ajustes nos hace falta la infromacion de la tienda, ejemplo nombre direccion y una descriocion que eso no esta"
 - **L13 (decision):** `StoreSettings` now carries `store: { name, address, description }`, edited in a new Ajustes card. The store layout provides the settings through a client context, so the header, footer, cart, product-image fallback, and WhatsApp message use the configured name. The admin layout and login page fetch the settings from PostgreSQL, and the store layout generates metadata from the name and description. `mergeSettings` fills the new fields for rows saved before this change.
 - **L14 (verification):** `npm test` → 7 files, 34 tests passing. `npm run build` → green. Saving a test store name, address, and description updated the header and footer; reverting restored the production values. Home title is `<store name> — Cremas…` and a product title is `<product> · <store name>`.
+- **L15 (user, verbatim):** "ok mira cuando compartan una URL por whasapp de un producto quiero que muestre asi toda la informacion necesaria"
+- **L16 (decision):** Product previews use `og:title` with the product name and price, `og:description` with the category and product description, `og:image`, `og:site_name`, `og:url`, `og:type`, locale, canonical URL, and Twitter card tags. The page also emits `Product` JSON-LD with price in HNL and availability. `SITE_URL` is the public base for canonical and preview URLs; the home page also has store-level Open Graph metadata.
+- **L17 (verification):** `npm test` → 8 files, 37 tests passing. `npm run build` → green. The rendered product HTML contains `og:title` (`Crema facial de día — L 480.00`), `og:description` (category + description), `og:image`, `og:site_name`, canonical, Twitter card, and the JSON-LD block. WhatsApp previews require a public HTTPS deployment and a public image URL; localhost cannot be previewed.
