@@ -19,7 +19,7 @@ Test runner: `vitest`
 - **S9 — Honduras regionalization.** Locale `es-HN`, currency HNL formatted as `L 1,290`, Honduran WhatsApp numbers normalized to `+504` plus 8 digits, Honduran address placeholders, vocabulary (`aretes`, `bolsos`, `falda`, `clóset`), and lempira-scale prices.
 - **S10 — Friendly tone.** Store copy uses neutral Honduran tuteo (never voseo), warm microcopy, a trust strip, actionable empty states, and clear success feedback.
 - **S11 — Admin practicality.** Tabs for products and settings, catalog search and category filter, actionable stats (including products without a photo), side-drawer editor with category chips and image preview, delete confirmation, and feedback visible inside the panel.
-- **S12 — Message rendering.** The WhatsApp order message uses WhatsApp markdown plus a small emoji set from Unicode 6.0 (2010) or older, avoiding newer characters that render as empty boxes on some devices.
+- **S12 — Message rendering.** The WhatsApp order message uses WhatsApp markdown plus decorative symbols from the Basic Multilingual Plane (★ ♥ ☎). Four-byte emoji are avoided because some devices replace them with `�`.
 - **S13 — Brand and catalog focus.** The store is named exactly `Angeles Store's` and sells mostly creams and shirts plus general women's products. Brand strings live in `src/config.ts`; the seed catalog is 18 products across Cremas, Camisas, Vestidos, Pantalones, Calzado, Bolsos, and Accesorios.
 - **S14 — Product detail.** Every product opens a hash-addressable detail section at `#producto/{id}` with image, name, category, price, description, quantity selector, add-to-cart, and a back link to the catalog. Below the detail, up to 4 recommended products appear, same category first, never the product being viewed.
 - **S15 — Catalog migration.** `DATA_VERSION` 3 replaces the legacy `p1`–`p12` seed, preserves products created by the owner, and prunes cart lines whose product no longer exists.
@@ -29,7 +29,7 @@ Test runner: `vitest`
 - **S19 — Styled selectors.** The checkout payment method and the admin category filter use a shared styled select with a custom chevron, focus ring, and consistent spacing.
 - **S20 — Admin access gate.** Opening the admin panel requires a 4–8 digit PIN created by the owner on first use. The PIN is stored as a salted hash in `localStorage`, unlocks the panel for the tab session, can be changed from Ajustes with the current PIN, and can be locked manually. This is local deterrence for a zero-backend app, not server-side authorization.
 - **S21 — Shipping cost notice.** The cart drawer, checkout, product detail, and WhatsApp order message state that shipping may carry an extra cost and is coordinated by WhatsApp.
-- **S22 — Safe emoji set.** Every emoji in the order message belongs to an allowlist of long-supported characters, enforced by a test.
+- **S22 — Basic-plane symbols.** Every symbol in the order message is a BMP character with no surrogate pairs, enforced by a test that also rejects `�`.
 
 ## Tasks
 
@@ -56,7 +56,7 @@ Test runner: `vitest`
 | T19 | S19 | inline | done | `ae825c0` · shared styled select |
 | T20 | S20 | inline | done | `549fdb8` · PIN gate, lock and key change, 3 tests |
 | T21 | S21 | inline | done | `1dafb48` · shipping notice in cart, checkout and message |
-| T22 | S12, S22 | inline | done | `1dafb48`, `715c0e0` · allowlisted emoji + test |
+| T22 | S12, S22 | inline | done | `1dafb48`, `715c0e0`, `6112dcc` · basic-plane symbols + test |
 
 - **T1 — Scaffold.** Initialize git, Vite + React + TypeScript + Tailwind, base config files.
 - **T2 — Domain data.** Central brand/config module, types, and a women's fashion seed catalog.
@@ -79,7 +79,7 @@ Test runner: `vitest`
 - **T19 — Styled selectors.** Replace the raw payment and category selects with one shared component that matches the store's visual language.
 - **T20 — Protect admin.** PIN setup and unlock screen, session unlock, manual lock, and key change from Ajustes.
 - **T21 — Shipping notice.** State in the cart, checkout, detail, and WhatsApp message that shipping may cost extra.
-- **T22 — Safe emoji message.** Keep the message personality with a conservative emoji allowlist and pin it with a test.
+- **T22 — Safe message marks.** Keep the message personality with basic-plane symbols and pin the character range with a test.
 
 ## Log
 
@@ -109,3 +109,6 @@ Test runner: `vitest`
 - **L24 (user, verbatim):** "Abrir apli pero los emogies le dan personalidad los necesito"
 - **L25 (decision):** Emojis return to the WhatsApp message, but only from Unicode 6.0 (2010) or older: 📦 👤 📱 📍 💳 📝 📋 💰 🚚 🌷. Newer characters such as 🛍️ (2014) and 🧾 (2018) were the likely cause of the empty boxes and stay out. A test asserts every emoji in the message belongs to `ORDER_EMOJI`.
 - **L26 (verification):** `npm test` → 9 files, 51 tests passing. `npm run build` → green.
+- **L27 (evidence):** The user reported `�` replacing every emoji in the WhatsApp message. The app was checked end to end: the source bytes, the Vite-served module, and `encodeURIComponent` all produce correct UTF-8 (`%F0%9F%93%A6` for 📦), so the replacement happens in the viewing device/font, not in the app.
+- **L28 (decision):** The order message now uses decorative BMP symbols instead of four-byte emoji: ★ ♥ ☎ ⌂ ✔ ✎ ◇ ◆ ➜ ✿. They keep personality, use at most three UTF-8 bytes, and render on devices that replace emoji with `�`. A test asserts every character is below `U+10000` and that the message contains no `�`.
+- **L29 (verification):** `npm test` → 9 files, 51 tests passing. `npm run build` → green.
