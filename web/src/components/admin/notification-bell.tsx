@@ -178,7 +178,7 @@ export function NotificationBell() {
       {open && (
         <div
           id={PANEL_ID}
-          className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-ink/10 bg-cream shadow-xl"
+          className="absolute left-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-ink/10 bg-cream shadow-xl sm:left-auto sm:right-0"
         >
           <div className="flex items-center justify-between gap-2 border-b border-ink/10 px-4 py-3">
             <p className="font-display text-lg text-ink">Notificaciones</p>
