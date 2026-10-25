@@ -1,0 +1,98 @@
+[
+  {
+    "id": "p1",
+    "nombre": "Vestido midi satinado",
+    "precio": 48900,
+    "categoria": "Vestidos",
+    "descripcion": "Vestido midi en satén fluido con tiras regulables y caída suave. Ideal para un evento de noche o una salida especial.",
+    "imagen": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p2",
+    "nombre": "Vestido floral de verano",
+    "precio": 39900,
+    "categoria": "Vestidos",
+    "descripcion": "Vestido liviano con estampado floral, manga corta y cintura marcada. Fresco y cómodo para todos los días.",
+    "imagen": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p3",
+    "nombre": "Blusa satinada manga larga",
+    "precio": 23900,
+    "categoria": "Tops",
+    "descripcion": "Blusa de satén con cuello camisero y puños suaves. Combina con jean, sastrero o pollera.",
+    "imagen": "https://images.unsplash.com/photo-1551163943-3f6a855d1153?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p4",
+    "nombre": "Top tejido canalé",
+    "precio": 15900,
+    "categoria": "Tops",
+    "descripcion": "Top de punto canalé con calce ajustado y escote redondo. Un básico que no puede faltar en el placard.",
+    "imagen": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p5",
+    "nombre": "Pantalón sastrero wide leg",
+    "precio": 34900,
+    "categoria": "Pantalones",
+    "descripcion": "Pantalón de pinza con pierna ancha y tiro alto. Elegancia cómoda para la oficina o una salida.",
+    "imagen": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p6",
+    "nombre": "Jean mom fit",
+    "precio": 31900,
+    "categoria": "Pantalones",
+    "descripcion": "Jean de tiro alto con calce mom y denim rígido. El clásico que combina con todo.",
+    "imagen": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p7",
+    "nombre": "Sandalia de taco cuadrado",
+    "precio": 42900,
+    "categoria": "Calzado",
+    "descripcion": "Sandalia de taco cuadrado y tiras finas. Altura justa para estar cómoda de día y de noche.",
+    "imagen": "https://images.unsplash.com/photo-1562273138-f46be4ebdf33?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p8",
+    "nombre": "Botineta de cuero",
+    "precio": 58900,
+    "categoria": "Calzado",
+    "descripcion": "Botineta de cuero con taco bajo y cierre lateral. Un imprescindible para los días frescos.",
+    "imagen": "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p9",
+    "nombre": "Cartera bandolera",
+    "precio": 37900,
+    "categoria": "Carteras",
+    "descripcion": "Cartera de cuero sintético con correa regulable y bolsillo interno. Práctica y versátil.",
+    "imagen": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p10",
+    "nombre": "Aros dorados",
+    "precio": 12900,
+    "categoria": "Accesorios",
+    "descripcion": "Aros circulares bañados en oro con cierre a presión. Livianos y luminosos.",
+    "imagen": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p11",
+    "nombre": "Pañuelo de seda",
+    "precio": 9900,
+    "categoria": "Accesorios",
+    "descripcion": "Pañuelo de seda con estampado exclusivo. Se lleva al cuello, en el pelo o en la cartera.",
+    "imagen": "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "p12",
+    "nombre": "Sérum facial vitamina C",
+    "precio": 18900,
+    "categoria": "Belleza",
+    "descripcion": "Sérum antioxidante con vitamina C y ácido hialurónico. Ilumina y hidrata la piel.",
+    "imagen": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80"
+  }
+]
