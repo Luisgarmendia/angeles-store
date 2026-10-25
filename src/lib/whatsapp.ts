@@ -13,20 +13,21 @@ export function paymentLabel(method: PaymentMethod): string {
 }
 
 /**
- * Only emoji from Unicode 6.0 (2010) and older. Newer characters such as
- * 🛍️ (2014) or 🧾 (2018) render as empty boxes on some devices.
+ * Decorative symbols from the Basic Multilingual Plane (3 bytes or less).
+ * Four-byte emoji are replaced with `�` on some devices, so the message uses
+ * these instead. They still render with personality and without boxes.
  */
-export const ORDER_EMOJI = {
-  order: "📦",
-  customer: "👤",
-  phone: "📱",
-  address: "📍",
-  payment: "💳",
-  notes: "📝",
-  detail: "📋",
-  total: "💰",
-  shipping: "🚚",
-  thanks: "🌷",
+export const ORDER_MARKS = {
+  order: "★",
+  customer: "♥",
+  phone: "☎",
+  address: "⌂",
+  payment: "✔",
+  notes: "✎",
+  detail: "◇",
+  total: "◆",
+  shipping: "➜",
+  thanks: "✿",
 } as const
 
 export interface OrderInput {
@@ -37,22 +38,22 @@ export interface OrderInput {
 }
 
 /**
- * Builds the WhatsApp message with WhatsApp markdown and a conservative emoji
- * set so every device renders it.
+ * Builds the WhatsApp message with WhatsApp markdown and basic-plane symbols
+ * so every device renders it.
  */
 export function buildOrderMessage({ brandName, customer, lines, total }: OrderInput): string {
   const rows: Array<string | null> = [
-    `${ORDER_EMOJI.order} *NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
+    `${ORDER_MARKS.order} *NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
     "",
-    `${ORDER_EMOJI.customer} *Cliente:* ${customer.nombre.trim()}`,
+    `${ORDER_MARKS.customer} *Cliente:* ${customer.nombre.trim()}`,
     customer.telefono.trim()
-      ? `${ORDER_EMOJI.phone} *Teléfono:* ${customer.telefono.trim()}`
+      ? `${ORDER_MARKS.phone} *Teléfono:* ${customer.telefono.trim()}`
       : null,
-    `${ORDER_EMOJI.address} *Entrega:* ${customer.direccion.trim()}`,
-    `${ORDER_EMOJI.payment} *Pago:* ${paymentLabel(customer.pago)}`,
-    customer.notas.trim() ? `${ORDER_EMOJI.notes} *Notas:* ${customer.notas.trim()}` : null,
+    `${ORDER_MARKS.address} *Entrega:* ${customer.direccion.trim()}`,
+    `${ORDER_MARKS.payment} *Pago:* ${paymentLabel(customer.pago)}`,
+    customer.notas.trim() ? `${ORDER_MARKS.notes} *Notas:* ${customer.notas.trim()}` : null,
     "",
-    `${ORDER_EMOJI.detail} *DETALLE DEL PEDIDO*`,
+    `${ORDER_MARKS.detail} *DETALLE DEL PEDIDO*`,
     ...lines.map(
       (line, index) =>
         `${index + 1}. *${line.product.nombre}* x${line.quantity} — ${formatPrice(
@@ -60,11 +61,11 @@ export function buildOrderMessage({ brandName, customer, lines, total }: OrderIn
         )}`,
     ),
     "",
-    `${ORDER_EMOJI.total} *TOTAL PRODUCTOS:* *${formatPrice(total)}*`,
+    `${ORDER_MARKS.total} *TOTAL PRODUCTOS:* *${formatPrice(total)}*`,
     "",
-    `${ORDER_EMOJI.shipping} *Envío:* se coordina por WhatsApp y puede tener un costo extra.`,
+    `${ORDER_MARKS.shipping} *Envío:* se coordina por WhatsApp y puede tener un costo extra.`,
     "",
-    `${ORDER_EMOJI.thanks} ¡Gracias por tu compra!`,
+    `${ORDER_MARKS.thanks} ¡Gracias por tu compra!`,
   ]
 
   return rows.filter((row): row is string => row !== null).join("\n")
