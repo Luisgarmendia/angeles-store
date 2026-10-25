@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
   title: "Angeles Store's",
   description:
     "Angeles Store's: cremas, camisas y piezas para mujer en Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",

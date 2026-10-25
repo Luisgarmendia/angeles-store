@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ProductDetail } from "@/components/ProductDetail"
-import { getProduct, listRecommendations } from "@/db/queries"
+import { getProduct, getStoreSettings, listRecommendations } from "@/db/queries"
+import { productShareDescription, productShareTitle } from "@/lib/product-share"
 
 export const dynamic = "force-dynamic"
 
@@ -15,13 +16,31 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   if (!product) return { title: "Producto no encontrado" }
 
+  const settings = await getStoreSettings()
+  const image = product.imagen || settings.hero.image
+  const title = productShareTitle(product)
+  const description = productShareDescription(product)
+
   return {
-    title: product.nombre,
-    description: product.descripcion,
+    title,
+    description,
+    alternates: {
+      canonical: `/producto/${product.id}`,
+    },
     openGraph: {
-      title: product.nombre,
-      description: product.descripcion,
-      images: product.imagen ? [product.imagen] : [],
+      title,
+      description,
+      url: `/producto/${product.id}`,
+      siteName: settings.store.name,
+      locale: "es_HN",
+      type: "website",
+      images: image ? [{ url: image, alt: product.nombre }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: image ? [image] : [],
     },
   }
 }
@@ -32,7 +51,42 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product) notFound()
 
-  const recommended = await listRecommendations(product)
+  const [recommended, settings] = await Promise.all([
+    listRecommendations(product),
+    getStoreSettings(),
+  ])
 
-  return <ProductDetail product={product} recommended={recommended} />
+  const siteUrl = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
+  const image = product.imagen || settings.hero.image
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.nombre,
+    description: product.descripcion,
+    category: product.categoria,
+    brand: {
+      "@type": "Brand",
+      name: settings.store.name,
+    },
+    ...(image ? { image: [image] } : {}),
+    offers: {
+      "@type": "Offer",
+      url: `${siteUrl}/producto/${product.id}`,
+      price: product.precio.toFixed(2),
+      priceCurrency: "HNL",
+      availability: "https://schema.org/InStock",
+    },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <ProductDetail product={product} recommended={recommended} />
+    </>
+  )
 }

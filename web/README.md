@@ -40,6 +40,7 @@ npm run db:admin
 | `DATABASE_URL` | PostgreSQL connection string. |
 | `ADMIN_EMAIL` | Admin login email used by the seed. |
 | `ADMIN_PASSWORD` | Admin password used by the seed. Use 12+ characters in production. |
+| `SITE_URL` | Public site URL used for canonical and Open Graph metadata. Set it to the production domain. |
 | `R2_ENDPOINT` | `https://<account-id>.r2.cloudflarestorage.com` |
 | `R2_BUCKET` | Bucket name, for example `angeles-store`. |
 | `R2_PUBLIC_URL` | Public base URL for uploaded objects. |
@@ -67,7 +68,7 @@ allow `PUT`/`POST`, the application origin, and expose `ETag`.
 1. Create a **PostgreSQL** service in Dokploy. Do not publish its port publicly.
 2. Create an application from this repository with base directory `web/` and Dockerfile build.
 3. Set the environment variables from the table above. Use the internal Postgres hostname in
-   `DATABASE_URL`.
+   `DATABASE_URL` and the public domain in `SITE_URL`.
 4. Expose container port `3000`, attach the domain, and use `/api/health` as the health check.
 5. Deploy. The container runs `migrate.mjs` before starting the server, so migrations are
    applied automatically.
@@ -77,6 +78,21 @@ allow `PUT`/`POST`, the application origin, and expose `ETag`.
 7. To change the admin password later, update `ADMIN_PASSWORD` and run
    `node set-admin-password.mjs` once in the container.
 8. Configure PostgreSQL backups in Dokploy to an S3-compatible destination (R2 works).
+
+## Sharing and SEO
+
+Product pages expose Open Graph and Twitter metadata plus `Product` JSON-LD: name, price,
+category, description, image, store name, and canonical URL. WhatsApp reads the Open Graph
+tags when it builds a link preview.
+
+- `SITE_URL` must be the public HTTPS domain in production, otherwise the preview URL points
+  to localhost.
+- WhatsApp cannot preview a `localhost` page. Deploy first and share the public URL.
+- The product image must be publicly reachable. `r2.dev` works; a custom domain behind
+  Cloudflare Access will not.
+- WhatsApp caches previews. If a URL was shared before the metadata existed, append a query
+  string such as `?v=2` to force a fresh preview.
+- Portrait photos are cropped by WhatsApp. A square or landscape image previews better.
 
 ## Security notes
 
