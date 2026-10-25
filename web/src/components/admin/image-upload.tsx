@@ -7,9 +7,15 @@ interface ImageUploadProps {
   folder: "productos" | "portada"
   onUploaded: (url: string) => void
   label?: string
+  className?: string
 }
 
-export function ImageUpload({ folder, onUploaded, label = "Subir foto" }: ImageUploadProps) {
+export function ImageUpload({
+  folder,
+  onUploaded,
+  label = "Subir foto",
+  className = "",
+}: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +63,7 @@ export function ImageUpload({ folder, onUploaded, label = "Subir foto" }: ImageU
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-xl border border-ink/20 px-3 py-2 text-sm transition-colors hover:border-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-60"
+        className={`inline-flex items-center gap-2 rounded-xl border border-ink/20 px-3 py-2 text-sm transition-colors hover:border-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
       >
         <UploadIcon className="h-4 w-4" />
         {busy ? "Subiendo…" : label}

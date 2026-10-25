@@ -294,7 +294,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     setNewImage("")
                   }}
                   disabled={!newImage.trim()}
-                  className="shrink-0 rounded-xl border border-ink/20 px-4 py-2 text-sm transition-colors hover:border-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full shrink-0 rounded-xl border border-ink/20 px-4 py-2 text-sm transition-colors hover:border-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   Agregar
                 </button>
@@ -313,7 +313,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         </div>
 
         <div className="border-t border-ink/10 pt-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-xs uppercase tracking-[0.16em] text-muted">
                 Opciones / variantes
@@ -327,9 +327,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             <button
               type="button"
               onClick={addVariant}
-              className="shrink-0 rounded-full border border-ink/20 px-3 py-1.5 text-xs transition-colors hover:border-ink hover:bg-sand"
+              className="w-full shrink-0 rounded-full border border-ink/20 px-3 py-1.5 text-xs transition-colors hover:border-ink hover:bg-sand sm:w-auto"
             >
-              + Agregar
+              + Agregar opción
             </button>
           </div>
 
@@ -340,7 +340,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   key={index}
                   className="space-y-2 rounded-xl border border-ink/10 bg-white/50 p-3"
                 >
-                  <div className="grid grid-cols-[1fr_4.5rem_5.5rem_auto] items-center gap-2">
+                  <div className="grid gap-2 sm:grid-cols-[1fr_4.5rem_5.5rem_auto] sm:items-center">
                     <input
                       type="text"
                       value={variant.label}
@@ -351,40 +351,42 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                       placeholder="Talla M · Negro"
                       aria-label={`Etiqueta de la opción ${index + 1}`}
                     />
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={variant.stock}
-                      onChange={(event) =>
-                        updateVariant(index, "stock", event.target.value)
-                      }
-                      className={`${inputClass} min-w-0`}
-                      placeholder="Stock"
-                      aria-label={`Stock de la opción ${index + 1}`}
-                    />
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={variant.price}
-                      onChange={(event) =>
-                        updateVariant(index, "price", event.target.value)
-                      }
-                      className={`${inputClass} min-w-0`}
-                      placeholder="Precio"
-                      aria-label={`Precio de la opción ${index + 1}`}
-                    />
+                    <div className="grid grid-cols-2 gap-2 sm:contents">
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={variant.stock}
+                        onChange={(event) =>
+                          updateVariant(index, "stock", event.target.value)
+                        }
+                        className={`${inputClass} min-w-0`}
+                        placeholder="Stock"
+                        aria-label={`Stock de la opción ${index + 1}`}
+                      />
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={variant.price}
+                        onChange={(event) =>
+                          updateVariant(index, "price", event.target.value)
+                        }
+                        className={`${inputClass} min-w-0`}
+                        placeholder="Precio"
+                        aria-label={`Precio de la opción ${index + 1}`}
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeVariant(index)}
-                      className="rounded-full p-2 text-muted transition-colors hover:bg-wine/10 hover:text-wine"
+                      className="justify-self-end rounded-full p-2 text-muted transition-colors hover:bg-wine/10 hover:text-wine sm:justify-self-auto"
                       aria-label={`Quitar opción ${index + 1}`}
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <input
                       type="text"
                       inputMode="url"
@@ -400,6 +402,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                       folder="productos"
                       label="Subir"
                       onUploaded={(url) => updateVariant(index, "image", url)}
+                      className="w-full justify-center sm:w-auto"
                     />
                   </div>
 

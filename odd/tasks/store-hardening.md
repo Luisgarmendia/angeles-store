@@ -11,7 +11,7 @@ Test runner: `vitest` (`cd web && npm test`)
 - **S1 — Trust and legal.** The checkout no longer claims that order data stays only on the device. The store has privacy, terms, shipping/returns, and FAQ pages linked from the footer. The sitemap includes them. The store emits `Organization` and `WebSite` JSON-LD. Admin pages are `noindex`.
 - **S2 — Checkout integrity.** The checkout requires a valid Honduran phone, the server normalizes it, the cart cannot exceed available stock, and public order creation is rate-limited per client.
 - **S3 — Storefront UX.** The header has a mobile menu. The catalog can filter only offers and only made-to-order products. Cart and checkout dialogs trap focus and restore it on close.
-- **S4 — Admin operations.** Orders have a payment status. The admin landing page shows pending orders, pending payments, low stock, and total sales. Orders can be searched by number, customer, phone, or address. Product gallery photos can be reordered. Low-stock products are flagged. The order detail shows each item's image, a link to the admin product editor, and a public "Ver en la tienda" link. Order and payment status changes show a toast notification.
+- **S4 — Admin operations.** Orders have a payment status. The admin landing page shows pending orders, pending payments, low stock, and total sales. Orders can be searched by number, customer, phone, or address. Product gallery photos can be reordered. Low-stock products are flagged. The order detail shows each item's image, a link to the admin product editor, and a public "Ver en la tienda" link. Order and payment status changes show a toast notification. The admin product form is responsive on mobile, including the variant editor.
 - **S5 — Quality.** Unit tests cover the new cart, pricing, catalog, phone, and rate-limit behavior. TypeScript, the Next build, migrations, and storefront/admin smoke tests pass.
 
 ## Tasks
@@ -21,7 +21,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | T1 | S1 | inline | done | legal pages, footer links, checkout privacy copy, sitemap/robots, JSON-LD, admin noindex |
 | T2 | S2 | inline | done | phone validation, cart cap, order rate limit |
 | T3 | S3 | inline | done | mobile menu, offers/made-to-order filters, focus trap |
-| T4 | S4 | inline | done | payment status, admin summary, order search, image reorder, low stock, order item images/links, status toast |
+| T4 | S4 | inline | done | payment status, admin summary, order search, image reorder, low stock, order item images/links, status toast, mobile variant editor |
 | T5 | S5 | inline | done | independent verifier pass; 15 test files / 85 tests, typecheck, build, migration, smoke |
 
 - **T1 — Trust and SEO.** Fix the checkout privacy copy; add `/privacidad`, `/terminos`, `/envios-y-devoluciones`, and `/preguntas-frecuentes`; link them in the footer; add `sitemap.xml`, `robots.txt`, store JSON-LD, and admin `noindex`.
@@ -57,3 +57,6 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L23 (user, verbatim):** "mmmm no sale mejor un tast que un mensaje asi?"
 - **L24 (implementation):** Replaced the persistent order-detail banners with the storefront toast system. The admin root layout now wraps pages in `ToastProvider`; `AdminStatusToast` reads `?ok=status`/`?ok=payment`, shows the matching toast, and calls `router.replace` to remove the query param so a refresh does not repeat it. The toast auto-dismisses after 4.5 seconds.
 - **L25 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. Authenticated smoke: the status form still redirects to `?ok=status`, the old banner is absent from the page, and the toast component/message is present in the client bundle. The toast itself is client-rendered; no DOM-level test runner is installed.
+- **L26 (user, verbatim):** "la parte de crear un nuevo producto en version movil no se ve de forma optima mas la seccion de variantes que no se puede visualizar bien ya que el los input se quedan pequenios"
+- **L27 (implementation):** The variant editor now stacks on mobile: the variant label is full width, stock and price share a comfortable two-column row, the remove button sits on its own right-aligned row, and the image URL plus "Subir" button stack with a full-width upload button. The "Agregar opción" and gallery "Agregar" buttons are full width on mobile. Desktop keeps the original four-column variant row via `sm:` rules.
+- **L28 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. The mobile layout is CSS-only; no browser viewport test runner is installed, so the responsive classes were verified by build and code review.
