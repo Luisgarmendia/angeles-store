@@ -25,7 +25,7 @@ export function DeleteUserButton({
         type="submit"
         disabled={disabled}
         title={disabled ? "No podés eliminar al último dueño." : undefined}
-        className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-muted transition-colors hover:border-wine hover:text-wine disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-ink/15 disabled:hover:text-muted"
+        className="w-full rounded-full border border-ink/15 px-4 py-2 text-sm text-muted transition-colors hover:border-wine hover:text-wine disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-ink/15 disabled:hover:text-muted sm:w-auto"
       >
         Eliminar
       </button>

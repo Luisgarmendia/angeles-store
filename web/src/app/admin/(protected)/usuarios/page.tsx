@@ -1,6 +1,7 @@
 import { AdminUserForm } from "@/components/admin/admin-user-form"
 import { DeleteUserButton } from "@/components/admin/delete-user-button"
 import { Select } from "@/components/Select"
+import { LockIcon } from "@/components/Icons"
 import { listAdminUsers } from "@/db/queries"
 import { requireOwner } from "@/lib/auth"
 import { ADMIN_ROLE_OPTIONS, roleLabel } from "@/lib/roles"
@@ -116,19 +117,17 @@ export default async function AdminUsersPage({
                 <div className="mt-3 flex flex-col gap-3 border-t border-ink/10 pt-3">
                   <form
                     action={updateAdminRoleAction}
-                    className="flex flex-wrap items-end gap-2"
+                    className="flex flex-col gap-2 sm:flex-row sm:items-end"
                   >
                     <input type="hidden" name="id" value={user.id} />
-                    <label className="block">
+                    <label className="block sm:w-40">
                       <span className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-muted">
                         Rol
                       </span>
                       <Select
-                        variant="pill"
                         name="role"
                         defaultValue={user.role}
                         aria-label={`Rol de ${user.email}`}
-                        className="min-w-32"
                       >
                         {ADMIN_ROLE_OPTIONS.map((option) => (
                           <option key={option.id} value={option.id}>
@@ -139,7 +138,7 @@ export default async function AdminUsersPage({
                     </label>
                     <button
                       type="submit"
-                      className="rounded-full border border-ink/20 px-3 py-1.5 text-xs transition-colors hover:border-ink hover:bg-sand"
+                      className="w-full rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-wine sm:w-auto"
                     >
                       Cambiar rol
                     </button>
@@ -147,7 +146,8 @@ export default async function AdminUsersPage({
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <details>
-                      <summary className="w-fit cursor-pointer list-none rounded-full border border-ink/15 px-3 py-1.5 text-xs text-muted transition-colors hover:border-ink hover:text-ink">
+                      <summary className="inline-flex w-full cursor-pointer list-none items-center justify-center gap-2 rounded-full border border-ink/20 px-4 py-2 text-sm text-ink transition-colors hover:border-ink hover:bg-sand sm:w-fit sm:justify-start">
+                        <LockIcon className="h-4 w-4" />
                         Cambiar contraseña
                       </summary>
                       <form
@@ -162,11 +162,11 @@ export default async function AdminUsersPage({
                           minLength={12}
                           required
                           placeholder="Nueva contraseña (12+)"
-                          className="w-full rounded-xl border border-ink/15 bg-white px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-rose focus:ring-2 focus:ring-rose/20 sm:w-52"
+                          className="w-full rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-rose focus:ring-2 focus:ring-rose/20 sm:w-56"
                         />
                         <button
                           type="submit"
-                          className="rounded-full bg-ink px-4 py-2 text-xs font-medium text-cream transition-colors hover:bg-wine"
+                          className="w-full rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-wine sm:w-auto"
                         >
                           Guardar contraseña
                         </button>
