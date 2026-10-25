@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { Product, StoreSettings } from "../types"
+import type { CartItem, Product, StoreSettings } from "../types"
 import { migrateStorage } from "./storage"
 
 const store = new Map<string, string>()
@@ -11,7 +11,7 @@ vi.stubGlobal("localStorage", {
   clear: () => store.clear(),
 })
 
-const seed: Product[] = [product("p1", 1290)]
+const seed: Product[] = [product("c1", 480)]
 const settings: StoreSettings = { whatsapp: "50499998888" }
 
 function product(id: string, precio: number): Product {
@@ -19,7 +19,7 @@ function product(id: string, precio: number): Product {
     id,
     nombre: `Producto ${id}`,
     precio,
-    categoria: "Vestidos",
+    categoria: "Cremas",
     descripcion: "",
     imagen: "",
   }
@@ -38,14 +38,40 @@ describe("migrateStorage", () => {
   it("replaces the old seed prices and keeps custom products", () => {
     store.set(
       "amapola.productos",
-      JSON.stringify([product("p1", 48900), product("custom", 500)]),
+      JSON.stringify([product("c1", 48900), product("custom", 500)]),
     )
 
     migrateStorage(seed, settings)
 
     const products = read<Product[]>("amapola.productos") ?? []
-    expect(products.find((item) => item.id === "p1")?.precio).toBe(1290)
+    expect(products.find((item) => item.id === "c1")?.precio).toBe(480)
     expect(products.find((item) => item.id === "custom")?.precio).toBe(500)
+  })
+
+  it("drops products from the legacy seed catalog", () => {
+    store.set(
+      "amapola.productos",
+      JSON.stringify([product("p1", 1290), product("p7", 890), product("custom", 500)]),
+    )
+
+    migrateStorage(seed, settings)
+
+    const ids = (read<Product[]>("amapola.productos") ?? []).map((item) => item.id)
+    expect(ids).toEqual(["c1", "custom"])
+  })
+
+  it("prunes cart lines for products that no longer exist", () => {
+    store.set(
+      "amapola.carrito",
+      JSON.stringify([
+        { productId: "c1", quantity: 2 },
+        { productId: "p3", quantity: 1 },
+      ]),
+    )
+
+    migrateStorage(seed, settings)
+
+    expect(read<CartItem[]>("amapola.carrito")).toEqual([{ productId: "c1", quantity: 2 }])
   })
 
   it("replaces the old Argentine placeholder phone", () => {
@@ -73,7 +99,7 @@ describe("migrateStorage", () => {
   it("runs only once", () => {
     migrateStorage(seed, settings)
 
-    store.set("amapola.productos", JSON.stringify([product("p1", 1500)]))
+    store.set("amapola.productos", JSON.stringify([product("c1", 1500)]))
     migrateStorage(seed, settings)
 
     expect(read<Product[]>("amapola.productos")?.[0].precio).toBe(1500)

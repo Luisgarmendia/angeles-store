@@ -9,7 +9,10 @@ const VERSION_KEY = "amapola.data.version"
  * Bump this when the seed catalog or the default settings change in a way that
  * must reach browsers that already stored the previous version.
  */
-const DATA_VERSION = 2
+const DATA_VERSION = 3
+
+/** Seed IDs from the previous catalog. They are replaced, never kept as custom. */
+const LEGACY_SEED_IDS = new Set(Array.from({ length: 12 }, (_, index) => `p${index + 1}`))
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -30,21 +33,32 @@ function writeJson(key: string, value: unknown): void {
 }
 
 /**
- * One-time migration for browsers that already ran the previous version:
- * refreshes the seed products, keeps products created by the owner, and
- * replaces the old Argentine placeholder phone while preserving a real one.
+ * One-time migration for browsers that already ran a previous version:
+ * refreshes the seed catalog, drops products from the legacy seed, keeps
+ * products created by the owner, removes cart lines for products that no
+ * longer exist, and replaces the old Argentine placeholder phone while
+ * preserving a real one.
  */
 export function migrateStorage(fallbackProducts: Product[], fallbackSettings: StoreSettings): void {
   const version = readJson<number>(VERSION_KEY, 0)
   if (version >= DATA_VERSION) return
 
   const storedProducts = readJson<Product[] | null>(PRODUCTS_KEY, null)
-  if (Array.isArray(storedProducts) && storedProducts.length > 0) {
-    const seedIds = new Set(fallbackProducts.map((product) => product.id))
-    const customProducts = storedProducts.filter((product) => !seedIds.has(product.id))
-    writeJson(PRODUCTS_KEY, [...fallbackProducts, ...customProducts])
-  } else {
-    writeJson(PRODUCTS_KEY, fallbackProducts)
+  const seedIds = new Set(fallbackProducts.map((product) => product.id))
+  const storedList = Array.isArray(storedProducts) ? storedProducts : []
+  const customProducts = storedList.filter(
+    (product) => !seedIds.has(product.id) && !LEGACY_SEED_IDS.has(product.id),
+  )
+  const catalog = [...fallbackProducts, ...customProducts]
+  writeJson(PRODUCTS_KEY, catalog)
+
+  const availableIds = new Set(catalog.map((product) => product.id))
+  const storedCart = readJson<CartItem[] | null>(CART_KEY, null)
+  if (Array.isArray(storedCart)) {
+    writeJson(
+      CART_KEY,
+      storedCart.filter((item) => availableIds.has(item.productId)),
+    )
   }
 
   const storedSettings = readJson<Partial<StoreSettings>>(SETTINGS_KEY, {})
