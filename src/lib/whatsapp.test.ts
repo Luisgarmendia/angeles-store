@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Customer, Product } from "../types"
-import { buildOrderMessage, paymentLabel, whatsappUrl } from "./whatsapp"
+import { ORDER_EMOJI, buildOrderMessage, paymentLabel, whatsappUrl } from "./whatsapp"
 
 const dress: Product = {
   id: "p1",
@@ -49,7 +49,7 @@ describe("buildOrderMessage", () => {
     expect(message).not.toContain("Notas")
   })
 
-  it("uses plain text so no device shows missing emoji boxes", () => {
+  it("uses only long-supported emoji so no device shows boxes", () => {
     const message = buildOrderMessage({
       brandName: "Angeles Store's",
       customer,
@@ -57,7 +57,13 @@ describe("buildOrderMessage", () => {
       total: 1290,
     })
 
-    expect(message).not.toMatch(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u)
+    const found = message.match(/\p{Extended_Pictographic}/gu) ?? []
+    const allowed = new Set<string>(Object.values(ORDER_EMOJI))
+
+    expect(found.length).toBeGreaterThan(0)
+    for (const emoji of found) {
+      expect(allowed.has(emoji)).toBe(true)
+    }
   })
 })
 

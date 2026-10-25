@@ -12,6 +12,23 @@ export function paymentLabel(method: PaymentMethod): string {
   return PAYMENT_LABELS[method]
 }
 
+/**
+ * Only emoji from Unicode 6.0 (2010) and older. Newer characters such as
+ * 🛍️ (2014) or 🧾 (2018) render as empty boxes on some devices.
+ */
+export const ORDER_EMOJI = {
+  order: "📦",
+  customer: "👤",
+  phone: "📱",
+  address: "📍",
+  payment: "💳",
+  notes: "📝",
+  detail: "📋",
+  total: "💰",
+  shipping: "🚚",
+  thanks: "🌷",
+} as const
+
 export interface OrderInput {
   brandName: string
   customer: Customer
@@ -20,20 +37,22 @@ export interface OrderInput {
 }
 
 /**
- * Builds the WhatsApp message with plain text and WhatsApp markdown only.
- * Emojis were removed because they render as empty boxes on some devices.
+ * Builds the WhatsApp message with WhatsApp markdown and a conservative emoji
+ * set so every device renders it.
  */
 export function buildOrderMessage({ brandName, customer, lines, total }: OrderInput): string {
   const rows: Array<string | null> = [
-    `*NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
+    `${ORDER_EMOJI.order} *NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
     "",
-    `*Cliente:* ${customer.nombre.trim()}`,
-    customer.telefono.trim() ? `*Teléfono:* ${customer.telefono.trim()}` : null,
-    `*Entrega:* ${customer.direccion.trim()}`,
-    `*Pago:* ${paymentLabel(customer.pago)}`,
-    customer.notas.trim() ? `*Notas:* ${customer.notas.trim()}` : null,
+    `${ORDER_EMOJI.customer} *Cliente:* ${customer.nombre.trim()}`,
+    customer.telefono.trim()
+      ? `${ORDER_EMOJI.phone} *Teléfono:* ${customer.telefono.trim()}`
+      : null,
+    `${ORDER_EMOJI.address} *Entrega:* ${customer.direccion.trim()}`,
+    `${ORDER_EMOJI.payment} *Pago:* ${paymentLabel(customer.pago)}`,
+    customer.notas.trim() ? `${ORDER_EMOJI.notes} *Notas:* ${customer.notas.trim()}` : null,
     "",
-    "*DETALLE DEL PEDIDO*",
+    `${ORDER_EMOJI.detail} *DETALLE DEL PEDIDO*`,
     ...lines.map(
       (line, index) =>
         `${index + 1}. *${line.product.nombre}* x${line.quantity} — ${formatPrice(
@@ -41,11 +60,11 @@ export function buildOrderMessage({ brandName, customer, lines, total }: OrderIn
         )}`,
     ),
     "",
-    `*TOTAL PRODUCTOS:* *${formatPrice(total)}*`,
+    `${ORDER_EMOJI.total} *TOTAL PRODUCTOS:* *${formatPrice(total)}*`,
     "",
-    "*Envío:* se coordina por WhatsApp y puede tener un costo extra.",
+    `${ORDER_EMOJI.shipping} *Envío:* se coordina por WhatsApp y puede tener un costo extra.`,
     "",
-    "¡Gracias por tu compra!",
+    `${ORDER_EMOJI.thanks} ¡Gracias por tu compra!`,
   ]
 
   return rows.filter((row): row is string => row !== null).join("\n")
