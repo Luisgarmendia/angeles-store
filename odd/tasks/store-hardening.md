@@ -20,7 +20,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | --- | --- | --- | --- | --- |
 | T1 | S1 | inline | done | legal pages, footer links, checkout privacy copy, sitemap/robots, JSON-LD, admin noindex |
 | T2 | S2 | inline | done | phone validation, cart cap, order rate limit |
-| T3 | S3 | inline | pending | mobile menu, offers/made-to-order filters, focus trap |
+| T3 | S3 | inline | done | mobile menu, offers/made-to-order filters, focus trap |
 | T4 | S4 | inline | pending | payment status, admin summary, order search, image reorder, low stock |
 | T5 | S5 | inline | pending | tests, typecheck, build, migrations, smoke |
 
@@ -42,3 +42,5 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L8 (open review):** The legal copy is a first draft for the owner to review. It uses only live store settings and WhatsApp coordination; no email, street address, or delivery-time promise was invented.
 - **L9 (T2 verification):** The checkout now requires and normalizes a Honduran phone on the client and server; the cart caps add/setQuantity to available stock and disables `+` at the cap; public order creation is limited to 10 successful orders per forwarded IP per hour. `npm test` → 13 files, 72 tests; `npm run typecheck` clean; `npm run build` green. The worker observed RED (10 failing tests) before GREEN and ran a 96-scenario differential check with 0 regressions for unlimited/made-to-order products.
 - **L10 (T2 risk):** The order limiter is in-memory and per process, so restarts reset it and multiple instances do not share state. A cart persisted before this change is re-capped on the next add/quantity change; the server still rejects over-stock orders.
+- **L11 (T3 verification):** The header has a mobile menu with Catálogo, Cómo comprar, Contacto, Envíos y devoluciones, and Preguntas frecuentes; the catalog panel has "Solo ofertas" and "Solo por encargo" toggles; cart and checkout dialogs trap Tab/Shift+Tab, move focus in, and restore it on close. `npm test` → 13 files, 78 tests; `npm run typecheck` clean; `npm run build` green. SSR smoke: `/` contains `aria-controls="mobile-menu"`, the mobile FAQ link, and the existing filters button.
+- **L12 (T3 risk):** The repo's Vitest environment is node-only, so the focus trap and mobile menu have no DOM-level automated test; they are covered by typecheck, build, SSR smoke, and code review. The mobile panel is always rendered with `hidden` when closed so it stays out of the accessibility tree.
