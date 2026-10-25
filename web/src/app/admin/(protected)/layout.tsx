@@ -5,6 +5,7 @@ import { roleLabel } from "@/lib/roles"
 import { logoutAction } from "../actions"
 import { AdminTabs } from "@/components/admin/admin-tabs"
 import { NotificationBell } from "@/components/admin/notification-bell"
+import { ForegroundPushListener } from "@/components/admin/foreground-push-listener"
 
 export const dynamic = "force-dynamic"
 
@@ -53,6 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <ForegroundPushListener />
     </div>
   )
 }

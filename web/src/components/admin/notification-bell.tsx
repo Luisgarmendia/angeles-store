@@ -92,6 +92,15 @@ export function NotificationBell() {
   }, [refresh])
 
   useEffect(() => {
+    const onRefresh = () => void refresh()
+    window.addEventListener("admin-notifications:refresh", onRefresh)
+
+    return () => {
+      window.removeEventListener("admin-notifications:refresh", onRefresh)
+    }
+  }, [refresh])
+
+  useEffect(() => {
     if (!open) return
 
     const onPointerDown = (event: PointerEvent) => {
