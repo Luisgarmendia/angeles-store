@@ -2,7 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/admin/actions"
 import { getOrder } from "@/db/queries"
-import { CheckIcon } from "@/components/Icons"
+import { AdminStatusToast } from "@/components/admin/admin-status-toast"
 import { formatPrice } from "@/lib/format"
 import {
   ORDER_STATUS_OPTIONS,
@@ -77,25 +77,7 @@ export default async function OrderDetailPage({
         </p>
       )}
 
-      {ok === "status" && (
-        <p
-          className="mt-4 flex items-center gap-2 rounded-xl bg-ink/5 px-4 py-3 text-sm text-ink animate-[toast-in_0.25s_ease-out]"
-          role="status"
-        >
-          <CheckIcon className="h-4 w-4 shrink-0 text-rose-dark" />
-          Estado del pedido actualizado.
-        </p>
-      )}
-
-      {ok === "payment" && (
-        <p
-          className="mt-4 flex items-center gap-2 rounded-xl bg-ink/5 px-4 py-3 text-sm text-ink animate-[toast-in_0.25s_ease-out]"
-          role="status"
-        >
-          <CheckIcon className="h-4 w-4 shrink-0 text-rose-dark" />
-          Estado del pago actualizado.
-        </p>
-      )}
+      <AdminStatusToast ok={ok} />
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <section className="rounded-2xl border border-ink/10 bg-white/60 p-5">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { ToastProvider } from "@/components/toast-provider"
 
 export const metadata: Metadata = {
   robots: {
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 }
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return <ToastProvider>{children}</ToastProvider>
 }
