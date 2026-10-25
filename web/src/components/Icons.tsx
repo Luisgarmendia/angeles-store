@@ -221,3 +221,12 @@ export function HeartIcon({ className }: IconProps) {
     </Icon>
   )
 }
+
+export function ClockIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v4l2.5 1.5" />
+    </Icon>
+  )
+}

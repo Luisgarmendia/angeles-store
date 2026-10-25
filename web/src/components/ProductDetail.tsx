@@ -5,10 +5,13 @@ import Link from "next/link"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
 import { galleryImages } from "@/lib/gallery"
+import { compareAtPrice, discountPercent } from "@/lib/pricing"
+import { availableStock } from "@/lib/stock"
 import type { Product } from "@/lib/types"
 import {
   ArrowLeftIcon,
   CheckIcon,
+  ClockIcon,
   MessageIcon,
   MinusIcon,
   PlusIcon,
@@ -40,8 +43,9 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
   const selectedVariant =
     product.variants.find((variant) => variant.id === selectedVariantId) ?? null
   const unitPrice = selectedVariant?.precio ?? product.precio
-  const available =
-    product.variants.length > 0 ? (selectedVariant?.stock ?? 0) : product.stock
+  const discount = discountPercent(product)
+  const previousPrice = compareAtPrice(product, unitPrice)
+  const available = availableStock(product, selectedVariant?.id ?? null)
   const soldOut = available !== null && available <= 0
   const maxQuantity = available === null ? 99 : Math.max(1, Math.min(99, available))
   const images = galleryImages(product, selectedVariant)
@@ -97,13 +101,32 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
         <ProductGallery key={selectedVariantId} images={images} alt={product.nombre} />
 
         <div className="flex flex-col">
-          <p className="text-[10px] uppercase tracking-[0.24em] text-rose-dark">
-            {product.categoria}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-rose-dark">
+              {product.categoria}
+            </p>
+            {discount !== null && previousPrice !== null && (
+              <span className="rounded-full bg-wine px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-cream">
+                -{discount}%
+              </span>
+            )}
+            {product.porEncargo && (
+              <span className="rounded-full bg-rose-dark px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                Por encargo
+              </span>
+            )}
+          </div>
           <h1 className="mt-3 font-display text-4xl leading-tight text-ink sm:text-5xl">
             {product.nombre}
           </h1>
-          <p className="mt-4 font-display text-3xl text-wine">{formatPrice(unitPrice)}</p>
+          <div className="mt-4 flex flex-wrap items-baseline gap-3">
+            <p className="font-display text-3xl text-wine">{formatPrice(unitPrice)}</p>
+            {previousPrice !== null && (
+              <p className="font-display text-xl text-muted line-through">
+                {formatPrice(previousPrice)}
+              </p>
+            )}
+          </div>
           <p className="mt-4 text-base leading-relaxed text-muted">{product.descripcion}</p>
 
           {product.variants.length > 0 && (
@@ -116,12 +139,16 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
                 onChange={(event) => setSelectedVariantId(event.target.value)}
                 aria-label="Elegir opción del producto"
               >
-                {product.variants.map((variant) => (
-                  <option key={variant.id} value={variant.id} disabled={variant.stock <= 0}>
-                    {variant.label}
-                    {variant.stock <= 0 ? " (agotado)" : ""}
-                  </option>
-                ))}
+                {product.variants.map((variant) => {
+                  const variantSoldOut = !product.porEncargo && variant.stock <= 0
+
+                  return (
+                    <option key={variant.id} value={variant.id} disabled={variantSoldOut}>
+                      {variant.label}
+                      {variantSoldOut ? " (agotado)" : ""}
+                    </option>
+                  )
+                })}
               </Select>
             </div>
           )}
@@ -195,6 +222,13 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
           </div>
 
           <ul className="mt-6 grid gap-3 border-t border-ink/10 pt-6 text-sm text-muted">
+            {product.porEncargo && (
+              <li className="flex items-start gap-2">
+                <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-rose-dark" />
+                Por encargo: se prepara especialmente para ti. Coordinamos el tiempo de entrega
+                por WhatsApp.
+              </li>
+            )}
             <li className="flex items-start gap-2">
               <TruckIcon className="mt-0.5 h-4 w-4 shrink-0 text-rose-dark" />
               {config.shipping.note}
