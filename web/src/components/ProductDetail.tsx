@@ -63,7 +63,7 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
 
   function handleAdd() {
     if (soldOut) return
-    add(product.id, selectedVariant?.id ?? null, quantity)
+    add(product, selectedVariant?.id ?? null, quantity)
     setAdded(true)
   }
 

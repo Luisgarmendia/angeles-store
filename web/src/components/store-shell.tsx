@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react"
 import { createOrderAction } from "@/app/(store)/actions"
 import { buildOrderMessage, whatsappUrl } from "@/lib/whatsapp"
-import type { Customer, Product, StoreSettings } from "@/lib/types"
+import type { Customer, StoreSettings } from "@/lib/types"
 import { CartDrawer } from "./CartDrawer"
 import { CheckoutModal } from "./CheckoutModal"
 import { CherryBlossomBackground } from "./CherryBlossomBackground"
@@ -16,16 +16,14 @@ import { ToastProvider, useToast } from "./toast-provider"
 
 export function StoreShell({
   settings,
-  products,
   children,
 }: {
   settings: StoreSettings
-  products: Product[]
   children: ReactNode
 }) {
   return (
     <StoreSettingsProvider settings={settings}>
-      <StoreProvider products={products}>
+      <StoreProvider>
         <ToastProvider>
           <StoreChrome>{children}</StoreChrome>
         </ToastProvider>
@@ -36,7 +34,7 @@ export function StoreShell({
 
 function StoreChrome({ children }: { children: ReactNode }) {
   const settings = useStoreSettings()
-  const { lines, total, count, remove, setQuantity, clear } = useCart()
+  const { lines, total, count, ready, remove, setQuantity, clear } = useCart()
   const { showToast } = useToast()
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
@@ -117,6 +115,7 @@ function StoreChrome({ children }: { children: ReactNode }) {
         open={cartOpen}
         lines={lines}
         total={total}
+        ready={ready}
         onClose={() => setCartOpen(false)}
         onQuantity={(productId, variantId, quantity) =>
           setQuantity(productId, variantId, quantity)

@@ -13,6 +13,7 @@ interface CartDrawerProps {
   open: boolean
   lines: CartLine[]
   total: number
+  ready: boolean
   onClose: () => void
   onQuantity: (productId: string, variantId: string | null, quantity: number) => void
   onRemove: (productId: string, variantId: string | null) => void
@@ -23,6 +24,7 @@ export function CartDrawer({
   open,
   lines,
   total,
+  ready,
   onClose,
   onQuantity,
   onRemove,
@@ -71,7 +73,11 @@ export function CartDrawer({
           </button>
         </div>
 
-        {lines.length === 0 ? (
+        {!ready ? (
+          <div className="flex flex-1 items-center justify-center px-8 text-center">
+            <p className="text-sm text-muted">Cargando tu carrito…</p>
+          </div>
+        ) : lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
             <BagIcon className="h-10 w-10 text-rose" />
             <p className="font-display text-2xl text-ink">Tu carrito está vacío</p>

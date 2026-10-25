@@ -1,17 +1,18 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { loadCatalogPageAction } from "@/app/(store)/catalog-actions"
+import {
+  DEFAULT_CATALOG_FILTERS,
+  type CatalogFilterInput,
+  type CatalogSort,
+  type CategoryCount,
+} from "@/lib/catalog"
+import type { CatalogPage } from "@/lib/catalog-query"
 import { ChevronDownIcon, FilterIcon, SearchIcon } from "./Icons"
 import { CategoryFilter } from "./CategoryFilter"
 import { ProductCard } from "./ProductCard"
 import { Select } from "./Select"
-import {
-  DEFAULT_CATALOG_FILTERS,
-  filterAndSortProducts,
-  type CatalogFilterInput,
-  type CatalogSort,
-} from "@/lib/catalog"
-import type { Product } from "@/lib/types"
 
 const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
   { value: "destacados", label: "Destacados" },
@@ -20,19 +21,101 @@ const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
   { value: "precio-desc", label: "Mayor precio" },
 ]
 
-export function Catalog({ products }: { products: Product[] }) {
+type LoadStatus = "idle" | "filtering" | "loadingMore"
+
+interface CatalogProps {
+  initialPage: CatalogPage
+  categories: CategoryCount[]
+}
+
+export function Catalog({ initialPage, categories }: CatalogProps) {
   const [filters, setFilters] = useState<CatalogFilterInput>(DEFAULT_CATALOG_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [items, setItems] = useState(initialPage.products)
+  const [cursor, setCursor] = useState<string | null>(initialPage.nextCursor)
+  const [total, setTotal] = useState(initialPage.total)
+  const [hasMore, setHasMore] = useState(initialPage.nextCursor !== null)
+  const [status, setStatus] = useState<LoadStatus>("idle")
+  const [error, setError] = useState<string | null>(null)
 
-  const categories = useMemo(
-    () => ["Todos", ...Array.from(new Set(products.map((product) => product.categoria)))],
-    [products],
+  const requestRef = useRef(0)
+  const filtersKey = JSON.stringify(filters)
+  const lastFiltersKeyRef = useRef(JSON.stringify(DEFAULT_CATALOG_FILTERS))
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  const fetchPage = useCallback(
+    async (
+      nextFilters: CatalogFilterInput,
+      nextCursor: string | null,
+      mode: "replace" | "append",
+    ) => {
+      const requestId = ++requestRef.current
+      setStatus(mode === "replace" ? "filtering" : "loadingMore")
+      setError(null)
+
+      try {
+        const page = await loadCatalogPageAction({
+          filters: nextFilters,
+          cursor: nextCursor,
+        })
+
+        if (requestRef.current !== requestId) return
+
+        if (mode === "replace") {
+          setItems(page.products)
+          setTotal(page.total)
+        } else {
+          setItems((current) => {
+            const seen = new Set(current.map((product) => product.id))
+            return [
+              ...current,
+              ...page.products.filter((product) => !seen.has(product.id)),
+            ]
+          })
+        }
+
+        setCursor(page.nextCursor)
+        setHasMore(page.nextCursor !== null)
+        setStatus("idle")
+      } catch {
+        if (requestRef.current !== requestId) return
+        setStatus("idle")
+        setError("No pudimos cargar el catálogo. Intentá de nuevo.")
+      }
+    },
+    [],
   )
 
-  const filtered = useMemo(
-    () => filterAndSortProducts(products, filters),
-    [products, filters],
-  )
+  useEffect(() => {
+    if (filtersKey === lastFiltersKeyRef.current) return
+    lastFiltersKeyRef.current = filtersKey
+
+    const timer = window.setTimeout(() => {
+      void fetchPage(filters, null, "replace")
+    }, 300)
+
+    return () => window.clearTimeout(timer)
+  }, [filters, filtersKey, fetchPage])
+
+  const loadMore = useCallback(() => {
+    if (status !== "idle" || !hasMore || !cursor) return
+    void fetchPage(filters, cursor, "append")
+  }, [status, hasMore, cursor, filters, fetchPage])
+
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (!node || !hasMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore()
+      },
+      { rootMargin: "600px 0px" },
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [hasMore, loadMore])
 
   const hasActiveFilters =
     filters.search !== "" ||
@@ -59,6 +142,11 @@ export function Catalog({ products }: { products: Product[] }) {
 
   function clearFilters() {
     setFilters(DEFAULT_CATALOG_FILTERS)
+  }
+
+  function retry() {
+    if (items.length === 0) void fetchPage(filters, null, "replace")
+    else loadMore()
   }
 
   return (
@@ -137,7 +225,9 @@ export function Catalog({ products }: { products: Product[] }) {
           </div>
 
           <p className="text-xs uppercase tracking-[0.18em] text-muted">
-            {filtered.length} {filtered.length === 1 ? "producto" : "productos"}
+            {status === "filtering"
+              ? "Buscando…"
+              : `${total} ${total === 1 ? "producto" : "productos"}`}
           </p>
         </div>
 
@@ -252,28 +342,71 @@ export function Catalog({ products }: { products: Product[] }) {
           </div>
         )}
 
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink/15 px-6 py-16 text-center animate-fade-up">
-            <SearchIcon className="h-8 w-8 text-rose" />
-            <p className="font-display text-2xl text-ink">No encontramos nada así</p>
-            <p className="max-w-sm text-sm leading-relaxed text-muted">
-              Prueba con otra palabra, otro rango de precio o revisa otra categoría. Seguro hay
-              algo que te va a encantar.
-            </p>
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="mt-2 rounded-full border border-ink px-6 py-2.5 text-sm transition-colors hover:bg-ink hover:text-cream"
-            >
-              Ver todo el catálogo
-            </button>
-          </div>
+        {items.length === 0 ? (
+          status === "filtering" ? (
+            <div className="py-16 text-center text-sm text-muted">Buscando productos…</div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink/15 px-6 py-16 text-center animate-fade-up">
+              <SearchIcon className="h-8 w-8 text-rose" />
+              <p className="font-display text-2xl text-ink">No encontramos nada así</p>
+              <p className="max-w-sm text-sm leading-relaxed text-muted">
+                Prueba con otra palabra, otro rango de precio o revisa otra categoría. Seguro hay
+                algo que te va a encantar.
+              </p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-2 rounded-full border border-ink px-6 py-2.5 text-sm transition-colors hover:bg-ink hover:text-cream"
+              >
+                Ver todo el catálogo
+              </button>
+            </div>
+          )
         ) : (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((product, index) => (
+          <div
+            className={`grid grid-cols-2 gap-x-4 gap-y-10 transition-opacity sm:gap-x-6 lg:grid-cols-3 xl:grid-cols-4 ${
+              status === "filtering" ? "opacity-60" : ""
+            }`}
+          >
+            {items.map((product, index) => (
               <ProductCard key={product.id} product={product} index={index} />
             ))}
           </div>
+        )}
+
+        {error && (
+          <div className="mt-6 flex flex-col items-center gap-2 text-center">
+            <p className="text-sm text-muted">{error}</p>
+            <button
+              type="button"
+              onClick={retry}
+              className="text-xs uppercase tracking-[0.14em] text-ink underline underline-offset-4"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {hasMore && (
+          <>
+            <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={status === "loadingMore"}
+                className="rounded-full border border-ink px-6 py-2.5 text-sm transition-colors hover:bg-ink hover:text-cream disabled:cursor-wait disabled:opacity-60"
+              >
+                {status === "loadingMore" ? "Cargando…" : "Cargar más"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {!hasMore && items.length > 24 && (
+          <p className="mt-8 text-center text-[10px] uppercase tracking-[0.2em] text-muted">
+            Eso es todo por ahora
+          </p>
         )}
       </div>
     </section>

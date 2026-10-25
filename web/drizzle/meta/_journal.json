@@ -64,6 +64,13 @@
       "when": 1792960840722,
       "tag": "0008_minor_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792963914340,
+      "tag": "0009_icy_kate_bishop",
+      "breakpoints": true
     }
   ]
 }

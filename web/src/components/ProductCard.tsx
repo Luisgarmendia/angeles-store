@@ -23,7 +23,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const hasVariants = product.variants.length > 0
   const discount = discountPercent(product)
   const previousPrice = compareAtPrice(product)
-  const animationDelay = Math.min(index, 8) * 70
+  const animationDelay = Math.min(index % 12, 8) * 70
 
   useEffect(() => {
     if (!added) return
@@ -33,13 +33,13 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   function handleAdd() {
     if (soldOut) return
-    add(product.id, null)
+    add(product, null)
     setAdded(true)
   }
 
   return (
     <article
-      className="group flex animate-fade-up flex-col transition-transform duration-300 hover:-translate-y-1"
+      className="catalog-card group flex animate-fade-up flex-col transition-transform duration-300 hover:-translate-y-1"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-sand">

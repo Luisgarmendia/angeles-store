@@ -5,6 +5,7 @@ import {
   cartCount,
   cartTotal,
   removeFromCart,
+  sanitizeCart,
   setQuantity,
 } from "./cart"
 import type { Product } from "./types"
@@ -165,5 +166,42 @@ describe("cart", () => {
         products,
       ),
     ).toBe(3600)
+  })
+})
+
+describe("sanitizeCart", () => {
+  it("drops malformed entries, floors quantities and collapses duplicate lines", () => {
+    expect(
+      sanitizeCart([
+        { productId: "p1", variantId: null, quantity: 2 },
+        { productId: "p1", variantId: null, quantity: 3 },
+        { productId: "", variantId: null, quantity: 1 },
+        { productId: "p2", variantId: null, quantity: 0 },
+        { productId: "p3", variantId: null, quantity: 1.8 },
+        { productId: "p4", variantId: 42, quantity: 1 },
+        "nope",
+        null,
+      ]),
+    ).toEqual([
+      { productId: "p1", variantId: null, quantity: 2 },
+      { productId: "p3", variantId: null, quantity: 1 },
+    ])
+  })
+
+  it("keeps variant lines separate from the base product", () => {
+    expect(
+      sanitizeCart([
+        { productId: "p1", variantId: null, quantity: 1 },
+        { productId: "p1", variantId: "v-m", quantity: 2 },
+      ]),
+    ).toEqual([
+      { productId: "p1", variantId: null, quantity: 1 },
+      { productId: "p1", variantId: "v-m", quantity: 2 },
+    ])
+  })
+
+  it("returns an empty cart for non-array values", () => {
+    expect(sanitizeCart(null)).toEqual([])
+    expect(sanitizeCart({ productId: "p1" })).toEqual([])
   })
 })

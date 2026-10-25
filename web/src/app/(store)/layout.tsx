@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { StoreShell } from "@/components/store-shell"
-import { getStoreSettings, listProducts } from "@/db/queries"
+import { getStoreSettings } from "@/db/queries"
 import { normalizeHonduranPhone } from "@/lib/phone"
 import { socialHref } from "@/lib/social"
 
@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const [settings, products] = await Promise.all([getStoreSettings(), listProducts()])
+  const settings = await getStoreSettings()
 
   const siteUrl = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
   const telephone = normalizeHonduranPhone(settings.whatsapp)
@@ -89,7 +89,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <StoreShell settings={settings} products={products}>
+      <StoreShell settings={settings}>
         {children}
       </StoreShell>
     </>
