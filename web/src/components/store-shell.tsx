@@ -40,6 +40,8 @@ function StoreChrome({ children }: { children: ReactNode }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
 
   async function handleCheckout(customer: Customer) {
+    const popup = window.open("about:blank", "_blank")
+
     const result = await createOrderAction({
       customer,
       items: lines.map((line) => ({
@@ -49,8 +51,12 @@ function StoreChrome({ children }: { children: ReactNode }) {
       })),
     })
 
-    if (result.error) return { error: result.error }
+    if (result.error) {
+      popup?.close()
+      return { error: result.error }
+    }
     if (!result.lines || result.total === undefined || result.number === undefined) {
+      popup?.close()
       return { error: "No se pudo registrar el pedido. Intentá de nuevo." }
     }
 
@@ -61,12 +67,23 @@ function StoreChrome({ children }: { children: ReactNode }) {
       total: result.total,
       orderNumber: result.number,
     })
+    const url = whatsappUrl(settings.whatsapp, message)
 
-    window.open(whatsappUrl(settings.whatsapp, message), "_blank", "noopener,noreferrer")
     clear()
     setCheckoutOpen(false)
     setCartOpen(false)
     showToast("Pedido listo. Envíalo por WhatsApp para confirmarlo.")
+
+    try {
+      if (popup && !popup.closed) {
+        popup.location.href = url
+      } else {
+        window.location.href = url
+      }
+    } catch {
+      window.location.href = url
+    }
+
     return {}
   }
 
