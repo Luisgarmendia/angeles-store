@@ -46,7 +46,7 @@ export function SettingsForm({ settings }: { settings: StoreSettings }) {
             />
           </Field>
 
-          <Field label="Descripción">
+          <Field label="Descripción de la tienda">
             <textarea
               name="storeDescription"
               defaultValue={settings.store.description}
@@ -97,7 +97,7 @@ export function SettingsForm({ settings }: { settings: StoreSettings }) {
             />
           </Field>
 
-          <Field label="Descripción" className="sm:col-span-2">
+          <Field label="Descripción de la portada" className="sm:col-span-2">
             <textarea
               name="description"
               defaultValue={settings.hero.description}
