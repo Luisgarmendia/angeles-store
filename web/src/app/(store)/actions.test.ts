@@ -20,7 +20,12 @@ vi.mock("@/lib/orders-server", () => {
         state.failNext = false
         throw new OrderError("No hay stock suficiente.")
       }
-      return { number: state.calls.length, lines: [], total: 0 }
+      return {
+        id: `order-${state.calls.length}`,
+        number: state.calls.length,
+        lines: [],
+        total: 0,
+      }
     }),
   }
 })
@@ -57,6 +62,7 @@ describe("createOrderAction checkout integrity (S2)", () => {
     expect(result.error).toBeUndefined()
     expect(state.calls).toHaveLength(1)
     expect(state.calls[0].customer.telefono).toBe("50499998888")
+    expect(result.id).toBe("order-1")
   })
 
   it("allows ten successful orders per forwarded IP and blocks the eleventh", async () => {

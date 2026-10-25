@@ -20,6 +20,7 @@ export interface CreateOrderInput {
 
 export interface CreateOrderResult {
   error?: string
+  id?: string
   number?: number
   lines?: CartLine[]
   total?: number
