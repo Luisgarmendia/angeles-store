@@ -11,12 +11,14 @@ import {
   MessageIcon,
   MinusIcon,
   PlusIcon,
+  ShareIcon,
   TruckIcon,
   WalletIcon,
 } from "./Icons"
 import { ProductCard } from "./ProductCard"
 import { ProductImage } from "./ProductImage"
 import { useCart } from "./store-provider"
+import { useStoreSettings } from "./store-settings-provider"
 
 interface ProductDetailProps {
   product: Product
@@ -25,6 +27,7 @@ interface ProductDetailProps {
 
 export function ProductDetail({ product, recommended }: ProductDetailProps) {
   const { add } = useCart()
+  const { store } = useStoreSettings()
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
 
@@ -37,6 +40,26 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
   function handleAdd() {
     add(product.id, quantity)
     setAdded(true)
+  }
+
+  async function handleShare() {
+    const url = `${window.location.origin}/producto/${product.id}`
+    const text = `${product.nombre} — ${formatPrice(product.precio)} · ${store.name}`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.nombre, text, url })
+      } catch {
+        // The user cancelled the share sheet.
+      }
+      return
+    }
+
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
+      "_blank",
+      "noopener,noreferrer",
+    )
   }
 
   return (
@@ -102,6 +125,20 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
               {added ? <CheckIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
               {added ? "Agregado al carrito" : "Agregar al carrito"}
             </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 rounded-full border border-ink/20 px-5 py-2.5 text-sm text-ink transition-colors hover:border-ink hover:bg-sand"
+            >
+              <ShareIcon className="h-4 w-4" />
+              Compartir
+            </button>
+            <span className="text-xs text-muted">
+              Se comparte con foto, precio y descripción.
+            </span>
           </div>
 
           <ul className="mt-6 grid gap-3 border-t border-ink/10 pt-6 text-sm text-muted">

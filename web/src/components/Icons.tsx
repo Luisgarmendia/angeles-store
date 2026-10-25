@@ -116,6 +116,17 @@ export function ListIcon({ className }: IconProps) {
   )
 }
 
+export function ShareIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 10.7 6.8-4.2M8.6 13.3l6.8 4.2" />
+    </Icon>
+  )
+}
+
 export function LockIcon({ className }: IconProps) {
   return (
     <Icon className={className}>
