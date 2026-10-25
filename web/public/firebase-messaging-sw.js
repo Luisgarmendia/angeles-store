@@ -2,16 +2,24 @@ importScripts("https://www.gstatic.com/firebasejs/13.1.0/firebase-app-compat.js"
 importScripts("https://www.gstatic.com/firebasejs/13.1.0/firebase-messaging-compat.js")
 importScripts("/firebase-config")
 
+self.addEventListener("install", () => {
+  self.skipWaiting()
+})
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim())
+})
+
 if (self.FIREBASE_CONFIG) {
   firebase.initializeApp(self.FIREBASE_CONFIG)
   const messaging = firebase.messaging()
 
   messaging.onBackgroundMessage((payload) => {
-    const notification = payload.notification || {}
     const data = payload.data || {}
 
-    self.registration.showNotification(notification.title || "Nuevo pedido", {
-      body: notification.body || "",
+    self.registration.showNotification(data.title || "Nuevo pedido", {
+      body: data.body || "",
+      icon: "/favicon.ico",
       data: { url: data.url || "/admin/pedidos" },
     })
   })

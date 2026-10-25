@@ -137,11 +137,11 @@ export async function sendOrderPushNotification(input: OrderNotificationInput): 
 
     const response = await getMessaging(app).sendEachForMulticast({
       tokens,
-      notification: {
+      data: {
         title: notification.title,
         body: notification.body,
+        url: notification.data.url,
       },
-      data: notification.data,
       webpush: {
         fcmOptions: { link: `${siteUrl}${notification.data.url}` },
       },

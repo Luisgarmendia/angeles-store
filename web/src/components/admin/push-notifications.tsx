@@ -109,7 +109,10 @@ export function PushNotifications() {
 
       const registration = await navigator.serviceWorker.register(
         "/firebase-messaging-sw.js",
+        { updateViaCache: "none" },
       )
+      await registration.update()
+      await navigator.serviceWorker.ready
       const token = await getToken(messaging, {
         vapidKey: PUBLIC_CONFIG.vapidKey,
         serviceWorkerRegistration: registration,
