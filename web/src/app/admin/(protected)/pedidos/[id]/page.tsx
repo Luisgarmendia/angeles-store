@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/admin/actions"
 import { getOrder } from "@/db/queries"
 import { AdminStatusToast } from "@/components/admin/admin-status-toast"
+import { OrderReceiptQr } from "@/components/admin/order-receipt-qr"
 import { formatPrice } from "@/lib/format"
 import {
   ORDER_STATUS_OPTIONS,
@@ -39,6 +40,8 @@ export default async function OrderDetailPage({
     dateStyle: "long",
     timeStyle: "short",
   })
+  const siteUrl = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
+  const receiptUrl = `${siteUrl}/pedido/${order.id}`
   const phoneDigits = order.customerPhone.replace(/\D/g, "")
   const whatsappHref =
     phoneDigits.length > 0
@@ -176,6 +179,27 @@ export default async function OrderDetailPage({
           </form>
         </section>
       </div>
+
+      <section className="mt-4 flex flex-col gap-4 rounded-2xl border border-ink/10 bg-white/60 p-5 sm:flex-row sm:items-center">
+        <div className="w-fit rounded-2xl bg-white p-3">
+          <OrderReceiptQr value={receiptUrl} />
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-display text-xl text-ink">Comprobante del cliente</h3>
+          <p className="mt-1 max-w-md text-sm leading-relaxed text-muted">
+            Este QR abre el comprobante privado del pedido. El cliente puede escanearlo para
+            ver, guardar o imprimir su respaldo.
+          </p>
+          <Link
+            href={receiptUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex rounded-full border border-ink/20 px-4 py-2 text-sm transition-colors hover:border-ink hover:bg-sand"
+          >
+            Abrir comprobante
+          </Link>
+        </div>
+      </section>
 
       <section className="mt-4 rounded-2xl border border-ink/10 bg-white/60 p-5">
         <h3 className="font-display text-xl text-ink">Productos</h3>
