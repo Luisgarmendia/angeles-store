@@ -27,6 +27,9 @@ Open http://localhost:3000 and http://localhost:3000/admin/login.
 `db:seed` inserts the catalog, the default settings, and the admin user only when they do
 not exist yet. Re-running it is safe.
 
+The production bootstrap is different: `node seed.mjs` creates the settings and the admin but
+**leaves the product catalog empty** unless `SEED_PRODUCTS=true` is set.
+
 If you forget the admin password:
 
 ```bash
@@ -39,8 +42,10 @@ npm run db:admin
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string. |
 | `ADMIN_EMAIL` | Admin login email used by the seed. |
-| `ADMIN_PASSWORD` | Admin password used by the seed. Use 12+ characters in production. |
-| `SITE_URL` | Public site URL used for canonical and Open Graph metadata. Set it to the production domain. |
+| `ADMIN_PASSWORD` | Admin password used by the seed. Production requires 12+ characters. |
+| `SITE_URL` | Public site URL used for canonical and Open Graph metadata. Use `https://angelesstore.styledflow.com`. |
+| `STORE_WHATSAPP` | Optional seed override for the business WhatsApp. 8 local digits or 11 including 504. |
+| `SEED_PRODUCTS` | `false` (default) leaves the production store empty. Set `true` to load the demo catalog. |
 | `R2_ENDPOINT` | `https://<account-id>.r2.cloudflarestorage.com` |
 | `R2_BUCKET` | Bucket name, for example `angeles-store`. |
 | `R2_PUBLIC_URL` | Public base URL for uploaded objects. |
@@ -73,11 +78,13 @@ allow `PUT`/`POST`, the application origin, and expose `ETag`.
 5. Deploy. The container runs `migrate.mjs` before starting the server, so migrations are
    applied automatically.
 6. On the first deploy, run `node seed.mjs` once in the Dokploy container terminal. It inserts
-   the catalog and settings only if the database is empty, and creates the admin user if it is
-   missing.
+   the settings and the admin user, but leaves the catalog empty. Set `SEED_PRODUCTS=true`
+   only if you want the demo catalog.
 7. To change the admin password later, update `ADMIN_PASSWORD` and run
    `node set-admin-password.mjs` once in the container.
-8. Configure PostgreSQL backups in Dokploy to an S3-compatible destination (R2 works).
+8. Set `SITE_URL=https://angelesstore.styledflow.com` and
+   `R2_PUBLIC_URL=https://angelesfile.styledflow.com` in the production environment.
+9. Configure PostgreSQL backups in Dokploy to an S3-compatible destination (R2 works).
 
 ## Sharing and SEO
 

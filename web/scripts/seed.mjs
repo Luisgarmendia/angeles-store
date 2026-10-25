@@ -6,19 +6,48 @@ import pg from "pg"
 const connectionString = process.env.DATABASE_URL
 if (!connectionString) throw new Error("DATABASE_URL is required")
 
-const products = JSON.parse(
-  readFileSync(path.join(process.cwd(), "data/productos.json"), "utf8"),
-)
 const settings = JSON.parse(
   readFileSync(path.join(process.cwd(), "data/seed-settings.json"), "utf8"),
 )
 
-const pool = new pg.Pool({ connectionString })
+const storeWhatsapp = (process.env.STORE_WHATSAPP ?? "").trim()
+if (storeWhatsapp) {
+  const digits = storeWhatsapp.replace(/\D/g, "")
+  if (digits.length !== 8 && digits.length !== 11) {
+    throw new Error("STORE_WHATSAPP must have 8 local digits or 11 digits including 504.")
+  }
+  settings.whatsapp = digits.length === 8 ? `504${digits}` : digits
+}
 
+if (settings.whatsapp === "50499998888") {
+  console.warn(
+    "STORE_WHATSAPP is still the placeholder 50499998888. Change it in Ajustes or set STORE_WHATSAPP.",
+  )
+}
+
+const email = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase()
+const password = process.env.ADMIN_PASSWORD ?? ""
+const weakPasswords = new Set([
+  "change-me-with-12-plus",
+  "replace-this-with-a-real-password",
+  "change-me-please",
+])
+
+if (!email) throw new Error("ADMIN_EMAIL is required")
+if (password.length < 12 || weakPasswords.has(password)) {
+  throw new Error("ADMIN_PASSWORD must be a real password of at least 12 characters.")
+}
+
+const pool = new pg.Pool({ connectionString })
+const seedProducts = process.env.SEED_PRODUCTS === "true"
 const { rows } = await pool.query("select count(*)::int as count from products")
 const hasProducts = (rows[0]?.count ?? 0) > 0
 
-if (!hasProducts) {
+if (seedProducts && !hasProducts) {
+  const products = JSON.parse(
+    readFileSync(path.join(process.cwd(), "data/productos.json"), "utf8"),
+  )
+
   for (const [index, product] of products.entries()) {
     await pool.query(
       `insert into products (id, name, price_cents, category, description, image, active, sort_order)
@@ -42,9 +71,11 @@ if (!hasProducts) {
       ],
     )
   }
-  console.log(`Seeded ${products.length} products.`)
-} else {
+  console.log(`Seeded ${products.length} demo products.`)
+} else if (seedProducts) {
   console.log("Products already exist; skipping product seed.")
+} else {
+  console.log("Skipping product seed; the production store starts empty.")
 }
 
 await pool.query(
@@ -52,18 +83,11 @@ await pool.query(
   [JSON.stringify(settings)],
 )
 
-const email = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase()
-const password = process.env.ADMIN_PASSWORD ?? ""
+const passwordHash = await bcrypt.hash(password, 12)
+await pool.query(
+  `insert into admin_users (email, password_hash) values ($1, $2) on conflict (email) do nothing`,
+  [email, passwordHash],
+)
 
-if (email && password) {
-  const passwordHash = await bcrypt.hash(password, 12)
-  await pool.query(
-    `insert into admin_users (email, password_hash) values ($1, $2) on conflict (email) do nothing`,
-    [email, passwordHash],
-  )
-  console.log(`Admin ready: ${email}.`)
-} else {
-  console.warn("ADMIN_EMAIL or ADMIN_PASSWORD missing; admin user was not created.")
-}
-
+console.log(`Settings ready. Admin ready: ${email}.`)
 await pool.end()

@@ -6,9 +6,14 @@ if (!connectionString) throw new Error("DATABASE_URL is required")
 
 const email = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase()
 const password = process.env.ADMIN_PASSWORD ?? ""
+const weakPasswords = new Set([
+  "change-me-with-12-plus",
+  "replace-this-with-a-real-password",
+  "change-me-please",
+])
 
-if (!email || password.length < 8) {
-  throw new Error("Set ADMIN_EMAIL and an ADMIN_PASSWORD of at least 8 characters.")
+if (!email || password.length < 12 || weakPasswords.has(password)) {
+  throw new Error("Set ADMIN_EMAIL and a real ADMIN_PASSWORD of at least 12 characters.")
 }
 
 const pool = new pg.Pool({ connectionString })
