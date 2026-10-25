@@ -10,6 +10,7 @@ function product(id: string, categoria: string): Product {
     categoria,
     descripcion: "",
     imagen: "",
+    imagenes: [],
     stock: null,
     variants: [],
   }

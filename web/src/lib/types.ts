@@ -3,6 +3,7 @@ export interface ProductVariant {
   label: string
   stock: number
   precio: number | null
+  imagen: string | null
 }
 
 export interface Product {
@@ -12,6 +13,7 @@ export interface Product {
   categoria: string
   descripcion: string
   imagen: string
+  imagenes: string[]
   stock: number | null
   variants: ProductVariant[]
 }

@@ -17,26 +17,40 @@ interface VariantDraft {
   label: string
   stock: string
   price: string
+  image: string
 }
 
+const MAX_GALLERY_IMAGES = 8
 const initialState: FormState = {}
 
 export function ProductForm({ product, categories }: ProductFormProps) {
   const [state, formAction, pending] = useActionState(saveProductAction, initialState)
-  const [image, setImage] = useState(product?.imagen ?? "")
+  const [images, setImages] = useState<string[]>(() => product?.imagenes ?? [])
+  const [newImage, setNewImage] = useState("")
   const [variants, setVariants] = useState<VariantDraft[]>(() =>
     (product?.variants ?? []).map((variant) => ({
       id: variant.id,
       label: variant.label,
       stock: String(variant.stock),
       price: variant.precio === null ? "" : variant.precio.toFixed(2),
+      image: variant.imagen ?? "",
     })),
   )
+
+  function addImage(url: string) {
+    const value = url.trim()
+    if (!value || images.includes(value) || images.length >= MAX_GALLERY_IMAGES) return
+    setImages((current) => [...current, value])
+  }
+
+  function removeImage(url: string) {
+    setImages((current) => current.filter((item) => item !== url))
+  }
 
   function addVariant() {
     setVariants((current) => [
       ...current,
-      { id: "", label: "", stock: "0", price: "" },
+      { id: "", label: "", stock: "0", price: "", image: "" },
     ])
   }
 
@@ -58,6 +72,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       label: variant.label,
       stock: variant.stock,
       price: variant.price,
+      image: variant.image,
     })),
   )
 
@@ -81,6 +96,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         className="mt-5 space-y-4 rounded-2xl border border-ink/10 bg-white/60 p-5"
       >
         {product && <input type="hidden" name="id" value={product.id} />}
+        <input type="hidden" name="images" value={JSON.stringify(images)} />
         <input type="hidden" name="variants" value={variantsJson} />
 
         <Field label="Nombre">
@@ -159,32 +175,90 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           />
         </Field>
 
-        <Field label="Imagen (URL)">
-          <div className="space-y-2">
-            <input
-              type="text"
-              name="image"
-              inputMode="url"
-              value={image}
-              onChange={(event) => setImage(event.target.value)}
-              className={inputClass}
-              placeholder="https://angelesfile.styledflow.com/productos/foto.jpg"
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <ImageUpload folder="productos" onUploaded={(url) => setImage(url)} />
-              <span className="text-xs text-muted">o pegá una URL</span>
+        <div className="border-t border-ink/10 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xs uppercase tracking-[0.16em] text-muted">
+                Galería del producto
+              </h3>
+              <p className="mt-1 text-xs text-muted">
+                Hasta {MAX_GALLERY_IMAGES} fotos. La primera es la portada que se usa en las
+                tarjetas, el carrito y WhatsApp.
+              </p>
             </div>
-            <p className="text-xs text-muted">
-              La foto se sube al bucket R2 y queda con URL pública.
-            </p>
+            <span className="shrink-0 text-xs text-muted">
+              {images.length}/{MAX_GALLERY_IMAGES}
+            </span>
           </div>
-        </Field>
 
-        {image && (
-          <div className="h-32 w-28 overflow-hidden rounded-xl border border-ink/10 bg-sand">
-            <img src={image} alt="" className="h-full w-full object-cover" />
-          </div>
-        )}
+          {images.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {images.map((url, index) => (
+                <div
+                  key={url}
+                  className="relative h-28 w-24 overflow-hidden rounded-xl border border-ink/10 bg-sand"
+                >
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  {index === 0 && (
+                    <span className="absolute left-1 top-1 rounded-full bg-ink/85 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] text-cream">
+                      Portada
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(url)}
+                    className="absolute right-1 top-1 rounded-full bg-wine/90 p-1 text-cream transition-colors hover:bg-wine"
+                    aria-label={`Quitar foto ${index + 1}`}
+                  >
+                    <TrashIcon className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {images.length < MAX_GALLERY_IMAGES && (
+            <div className="mt-3 space-y-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  inputMode="url"
+                  value={newImage}
+                  onChange={(event) => setNewImage(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return
+                    event.preventDefault()
+                    addImage(newImage)
+                    setNewImage("")
+                  }}
+                  className={`${inputClass} min-w-0 flex-1`}
+                  placeholder="https://angelesfile.styledflow.com/productos/foto.jpg"
+                  aria-label="URL de la nueva foto"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    addImage(newImage)
+                    setNewImage("")
+                  }}
+                  disabled={!newImage.trim()}
+                  className="shrink-0 rounded-xl border border-ink/20 px-4 py-2 text-sm transition-colors hover:border-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Agregar
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <ImageUpload folder="productos" onUploaded={addImage} label="Subir foto" />
+                <span className="text-xs text-muted">o pegá una URL</span>
+              </div>
+            </div>
+          )}
+
+          <p className="mt-2 text-xs text-muted">
+            Las fotos se suben al bucket R2 y quedan con URL pública.
+          </p>
+        </div>
 
         <div className="border-t border-ink/10 pt-4">
           <div className="flex items-center justify-between gap-3">
@@ -211,49 +285,85 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               {variants.map((variant, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-[1fr_4.5rem_5.5rem_auto] items-center gap-2"
+                  className="space-y-2 rounded-xl border border-ink/10 bg-white/50 p-3"
                 >
-                  <input
-                    type="text"
-                    value={variant.label}
-                    onChange={(event) =>
-                      updateVariant(index, "label", event.target.value)
-                    }
-                    className={`${inputClass} min-w-0`}
-                    placeholder="Talla M · Negro"
-                    aria-label={`Etiqueta de la opción ${index + 1}`}
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={variant.stock}
-                    onChange={(event) =>
-                      updateVariant(index, "stock", event.target.value)
-                    }
-                    className={`${inputClass} min-w-0`}
-                    placeholder="Stock"
-                    aria-label={`Stock de la opción ${index + 1}`}
-                  />
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={variant.price}
-                    onChange={(event) =>
-                      updateVariant(index, "price", event.target.value)
-                    }
-                    className={`${inputClass} min-w-0`}
-                    placeholder="Precio"
-                    aria-label={`Precio de la opción ${index + 1}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(index)}
-                    className="rounded-full p-2 text-muted transition-colors hover:bg-wine/10 hover:text-wine"
-                    aria-label={`Quitar opción ${index + 1}`}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
+                  <div className="grid grid-cols-[1fr_4.5rem_5.5rem_auto] items-center gap-2">
+                    <input
+                      type="text"
+                      value={variant.label}
+                      onChange={(event) =>
+                        updateVariant(index, "label", event.target.value)
+                      }
+                      className={`${inputClass} min-w-0`}
+                      placeholder="Talla M · Negro"
+                      aria-label={`Etiqueta de la opción ${index + 1}`}
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={variant.stock}
+                      onChange={(event) =>
+                        updateVariant(index, "stock", event.target.value)
+                      }
+                      className={`${inputClass} min-w-0`}
+                      placeholder="Stock"
+                      aria-label={`Stock de la opción ${index + 1}`}
+                    />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={variant.price}
+                      onChange={(event) =>
+                        updateVariant(index, "price", event.target.value)
+                      }
+                      className={`${inputClass} min-w-0`}
+                      placeholder="Precio"
+                      aria-label={`Precio de la opción ${index + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeVariant(index)}
+                      className="rounded-full p-2 text-muted transition-colors hover:bg-wine/10 hover:text-wine"
+                      aria-label={`Quitar opción ${index + 1}`}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      inputMode="url"
+                      value={variant.image}
+                      onChange={(event) =>
+                        updateVariant(index, "image", event.target.value)
+                      }
+                      className={`${inputClass} min-w-0 flex-1`}
+                      placeholder="Foto de esta opción (opcional)"
+                      aria-label={`Foto de la opción ${index + 1}`}
+                    />
+                    <ImageUpload
+                      folder="productos"
+                      label="Subir"
+                      onUploaded={(url) => updateVariant(index, "image", url)}
+                    />
+                  </div>
+
+                  {variant.image && (
+                    <div className="flex items-center gap-2">
+                      <div className="h-16 w-14 overflow-hidden rounded-lg border border-ink/10 bg-sand">
+                        <img
+                          src={variant.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <p className="text-xs text-muted">
+                        Se muestra primero al elegir esta opción.
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
               <p className="text-xs text-muted">

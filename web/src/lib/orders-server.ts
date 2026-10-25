@@ -107,7 +107,8 @@ export async function createOrderInDb(input: {
         precio: product.priceCents / 100,
         categoria: product.category,
         descripcion: product.description,
-        imagen: product.image,
+        imagen: product.images?.[0] ?? product.image,
+        imagenes: product.images?.length ? product.images : product.image ? [product.image] : [],
         stock: product.stock,
         variants: [],
       }

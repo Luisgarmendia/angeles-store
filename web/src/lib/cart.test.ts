@@ -16,10 +16,11 @@ const products: Product[] = [
     categoria: "Vestidos",
     descripcion: "",
     imagen: "",
+    imagenes: [],
     stock: null,
     variants: [
-      { id: "v-m", label: "M", stock: 3, precio: null },
-      { id: "v-l", label: "L", stock: 2, precio: 1100 },
+      { id: "v-m", label: "M", stock: 3, precio: null, imagen: null },
+      { id: "v-l", label: "L", stock: 2, precio: 1100, imagen: null },
     ],
   },
   {
@@ -29,6 +30,7 @@ const products: Product[] = [
     categoria: "Carteras",
     descripcion: "",
     imagen: "",
+    imagenes: [],
     stock: 4,
     variants: [],
   },

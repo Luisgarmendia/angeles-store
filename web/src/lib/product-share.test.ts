@@ -9,6 +9,7 @@ const product: Product = {
   categoria: "Cremas",
   descripcion: "Hidratación ligera con textura fresca para usar cada mañana.",
   imagen: "",
+  imagenes: [],
   stock: null,
   variants: [],
 }

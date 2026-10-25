@@ -10,6 +10,7 @@ function product(overrides: Partial<Product> = {}): Product {
     categoria: "Camisas",
     descripcion: "",
     imagen: "",
+    imagenes: [],
     stock: null,
     variants: [],
     ...overrides,
@@ -31,8 +32,8 @@ describe("stock helpers", () => {
     const item = product({
       stock: 99,
       variants: [
-        { id: "v1", label: "M", stock: 2, precio: null },
-        { id: "v2", label: "L", stock: 1, precio: 550 },
+        { id: "v1", label: "M", stock: 2, precio: null, imagen: null },
+        { id: "v2", label: "L", stock: 1, precio: 550, imagen: null },
       ],
     })
 
@@ -46,8 +47,8 @@ describe("stock helpers", () => {
   it("marks a variant catalog as sold out when every variant is empty", () => {
     const item = product({
       variants: [
-        { id: "v1", label: "M", stock: 0, precio: null },
-        { id: "v2", label: "L", stock: 0, precio: null },
+        { id: "v1", label: "M", stock: 0, precio: null, imagen: null },
+        { id: "v2", label: "L", stock: 0, precio: null, imagen: null },
       ],
     })
 

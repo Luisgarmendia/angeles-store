@@ -9,6 +9,7 @@ const dress: Product = {
   categoria: "Vestidos",
   descripcion: "",
   imagen: "",
+  imagenes: [],
   stock: null,
   variants: [],
 }

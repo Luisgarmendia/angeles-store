@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
+import { galleryImages } from "@/lib/gallery"
 import type { Product } from "@/lib/types"
 import {
   ArrowLeftIcon,
@@ -16,7 +17,7 @@ import {
   WalletIcon,
 } from "./Icons"
 import { ProductCard } from "./ProductCard"
-import { ProductImage } from "./ProductImage"
+import { ProductGallery } from "./ProductGallery"
 import { Select } from "./Select"
 import { useCart } from "./store-provider"
 import { useStoreSettings } from "./store-settings-provider"
@@ -43,6 +44,7 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
     product.variants.length > 0 ? (selectedVariant?.stock ?? 0) : product.stock
   const soldOut = available !== null && available <= 0
   const maxQuantity = available === null ? 99 : Math.max(1, Math.min(99, available))
+  const images = galleryImages(product, selectedVariant)
 
   useEffect(() => {
     if (!added) return
@@ -92,13 +94,7 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
       </Link>
 
       <div className="mt-6 grid gap-8 md:grid-cols-2 md:gap-12">
-        <div className="aspect-[4/5] overflow-hidden rounded-[2rem] bg-sand">
-          <ProductImage
-            src={product.imagen}
-            alt={product.nombre}
-            className="h-full w-full object-cover"
-          />
-        </div>
+        <ProductGallery key={selectedVariantId} images={images} alt={product.nombre} />
 
         <div className="flex flex-col">
           <p className="text-[10px] uppercase tracking-[0.24em] text-rose-dark">

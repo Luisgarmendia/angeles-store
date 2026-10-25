@@ -53,6 +53,28 @@ interface VariantInput {
   label: string
   stock: number
   priceCents: number | null
+  image: string | null
+}
+
+const MAX_GALLERY_IMAGES = 8
+
+function parseImages(raw: string): string[] | null {
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed) || parsed.length > MAX_GALLERY_IMAGES) return null
+
+    const urls: string[] = []
+    for (const entry of parsed) {
+      if (typeof entry !== "string") return null
+      const url = entry.trim()
+      if (!url || !isHttpUrl(url) || urls.includes(url)) return null
+      urls.push(url)
+    }
+
+    return urls
+  } catch {
+    return null
+  }
 }
 
 function parseVariantInputs(raw: string): VariantInput[] | null {
@@ -80,7 +102,16 @@ function parseVariantInputs(raw: string): VariantInput[] | null {
         if (priceCents === null) return null
       }
 
-      variants.push({ id, label, stock, priceCents })
+      let image: string | null = null
+      if (record.image !== undefined && record.image !== null) {
+        const rawImage = String(record.image).trim()
+        if (rawImage) {
+          if (!isHttpUrl(rawImage)) return null
+          image = rawImage
+        }
+      }
+
+      variants.push({ id, label, stock, priceCents, image })
     }
 
     return variants
@@ -105,11 +136,12 @@ export async function saveProductAction(
   const name = text(formData, "name")
   const category = text(formData, "category")
   const description = text(formData, "description")
-  const image = text(formData, "image")
   const price = parsePriceToCents(text(formData, "price"))
   const active = formData.get("active") === "on"
+  const images = parseImages(text(formData, "images") || "[]")
   const variants = parseVariantInputs(text(formData, "variants") || "[]")
   const stockRaw = text(formData, "stock")
+  const image = images?.[0] ?? ""
 
   if (name.length < 2 || name.length > 120) {
     return { error: "El nombre debe tener entre 2 y 120 caracteres." }
@@ -123,8 +155,10 @@ export async function saveProductAction(
   if (price === null) {
     return { error: "Escribe un precio mayor a cero, por ejemplo 1,290.00." }
   }
-  if (image && !isHttpUrl(image)) {
-    return { error: "La imagen debe ser una URL http(s) o quedar vacía." }
+  if (images === null) {
+    return {
+      error: `Revisá la galería: hasta ${MAX_GALLERY_IMAGES} fotos con URL http(s), sin repetir.`,
+    }
   }
   if (variants === null) {
     return { error: "Revisá las opciones: etiqueta y stock son obligatorios y no se pueden repetir." }
@@ -155,6 +189,7 @@ export async function saveProductAction(
             category,
             description,
             image,
+            images,
             active,
             stock,
             updatedAt: new Date(),
@@ -178,6 +213,7 @@ export async function saveProductAction(
           category,
           description,
           image,
+          images,
           active,
           stock,
           sortOrder: (last?.sortOrder ?? 0) + 1,
@@ -206,6 +242,7 @@ export async function saveProductAction(
               label: variant.label,
               stock: variant.stock,
               priceCents: variant.priceCents,
+              image: variant.image,
               sortOrder: index,
             })
             .where(
@@ -220,6 +257,7 @@ export async function saveProductAction(
             label: variant.label,
             stock: variant.stock,
             priceCents: variant.priceCents,
+            image: variant.image,
             sortOrder: index,
           })
         }

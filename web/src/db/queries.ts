@@ -39,13 +39,16 @@ export interface AdminOrderDetail extends AdminOrder {
 }
 
 function toProduct(row: typeof products.$inferSelect): Product {
+  const images = row.images?.length ? row.images : row.image ? [row.image] : []
+
   return {
     id: row.id,
     nombre: row.name,
     precio: row.priceCents / 100,
     categoria: row.category,
     descripcion: row.description,
-    imagen: row.image,
+    imagen: images[0] ?? "",
+    imagenes: images,
     stock: row.stock,
     variants: [],
   }
@@ -57,6 +60,7 @@ function toVariant(row: typeof productVariants.$inferSelect): ProductVariant {
     label: row.label,
     stock: row.stock,
     precio: row.priceCents === null ? null : row.priceCents / 100,
+    imagen: row.image,
   }
 }
 
