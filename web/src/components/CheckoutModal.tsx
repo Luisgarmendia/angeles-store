@@ -6,6 +6,7 @@ import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
 import { ALL_PAYMENT_METHODS } from "@/lib/payments"
 import { loadCustomer, saveCustomer } from "@/lib/customer-storage"
+import { normalizeHonduranPhone } from "@/lib/phone"
 import { useModalBehavior } from "@/lib/useModal"
 import { paymentLabel } from "@/lib/whatsapp"
 import type { CartLine, Customer, PaymentMethod } from "@/lib/types"
@@ -20,6 +21,8 @@ interface CheckoutModalProps {
   onClose: () => void
   onSubmit: (customer: Customer) => Promise<{ error?: string } | void>
 }
+
+const PHONE_ERROR = "Escribe un teléfono hondureño válido, por ejemplo 9999-8888."
 
 const EMPTY_CUSTOMER: Customer = {
   nombre: "",
@@ -69,6 +72,11 @@ export function CheckoutModal({
 
     if (!customer.nombre.trim() || !customer.direccion.trim()) {
       setError("Completa tu nombre y tu dirección de entrega para continuar.")
+      return
+    }
+
+    if (!normalizeHonduranPhone(customer.telefono)) {
+      setError(PHONE_ERROR)
       return
     }
 
@@ -165,11 +173,12 @@ export function CheckoutModal({
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Teléfono de contacto">
+            <Field label="Teléfono de contacto" required>
               <input
                 type="tel"
                 value={customer.telefono}
                 onChange={(event) => update("telefono", event.target.value)}
+                inputMode="tel"
                 autoComplete="tel"
                 className={inputClass}
                 placeholder="+504 9999-8888"

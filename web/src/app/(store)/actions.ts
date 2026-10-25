@@ -1,7 +1,10 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
 import { createOrderInDb, OrderError } from "@/lib/orders-server"
+import { normalizeHonduranPhone } from "@/lib/phone"
+import { canCreateOrder, recordOrder } from "@/lib/rate-limit"
 import type { CartLine, Customer } from "@/lib/types"
 
 export interface CreateOrderItemInput {
@@ -22,8 +25,18 @@ export interface CreateOrderResult {
   total?: number
 }
 
+const PHONE_ERROR = "Escribe un teléfono hondureño válido, por ejemplo 9999-8888."
+const ORDER_LIMIT_ERROR =
+  "Recibimos demasiados pedidos desde tu conexión. Esperá una hora e intentá de nuevo."
+
 function clean(value: string | undefined, maxLength: number): string {
   return (value ?? "").trim().slice(0, maxLength)
+}
+
+/** First forwarded hop, then the proxy header; "unknown" when neither is set. */
+function clientIp(requestHeaders: Headers): string {
+  const forwarded = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim()
+  return forwarded || requestHeaders.get("x-real-ip")?.trim() || "unknown"
 }
 
 export async function createOrderAction(input: CreateOrderInput): Promise<CreateOrderResult> {
@@ -41,6 +54,13 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
   if (customer.direccion.length < 5) {
     return { error: "Escribe una dirección de entrega válida." }
   }
+
+  const telefono = normalizeHonduranPhone(customer.telefono)
+  if (!telefono) {
+    return { error: PHONE_ERROR }
+  }
+  customer.telefono = telefono
+
   if (!Array.isArray(input.items) || input.items.length === 0) {
     return { error: "Tu carrito está vacío." }
   }
@@ -48,8 +68,14 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     return { error: "El pedido tiene demasiadas líneas." }
   }
 
+  const orderKey = `order:${clientIp(await headers())}`
+  if (!canCreateOrder(orderKey)) {
+    return { error: ORDER_LIMIT_ERROR }
+  }
+
   try {
     const result = await createOrderInDb({ customer, items: input.items })
+    recordOrder(orderKey)
     revalidatePath("/admin/pedidos")
     return result
   } catch (error) {
