@@ -1,7 +1,9 @@
 "use client"
 
+import { useRef } from "react"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
+import { maxPurchasable } from "@/lib/stock"
 import { useModalBehavior } from "@/lib/useModal"
 import type { CartLine } from "@/lib/types"
 import { ArrowRightIcon, BagIcon, MinusIcon, PlusIcon, TrashIcon, XIcon } from "./Icons"
@@ -26,7 +28,9 @@ export function CartDrawer({
   onRemove,
   onCheckout,
 }: CartDrawerProps) {
-  useModalBehavior(open, onClose)
+  const dialogRef = useRef<HTMLElement>(null)
+
+  useModalBehavior(open, onClose, dialogRef)
   const { store } = useStoreSettings()
 
   if (!open) return null
@@ -43,6 +47,8 @@ export function CartDrawer({
       />
 
       <aside
+        ref={dialogRef}
+        tabIndex={-1}
         className="relative flex h-full w-full max-w-md flex-col bg-cream shadow-2xl"
         role="dialog"
         aria-modal="true"
@@ -84,77 +90,86 @@ export function CartDrawer({
           <>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <ul className="divide-y divide-ink/10">
-                {lines.map((line) => (
-                  <li key={`${line.product.id}:${line.variantId ?? ""}`} className="flex gap-4 py-4">
-                    <img
-                      src={line.product.imagen}
-                      alt={line.product.nombre}
-                      className="h-24 w-20 shrink-0 rounded-xl bg-sand object-cover"
-                    />
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
-                            {line.product.categoria}
-                          </p>
-                          <h3 className="truncate font-display text-lg leading-tight text-ink">
-                            {line.product.nombre}
-                          </h3>
-                          {line.variantLabel && (
-                            <p className="text-[11px] text-muted">{line.variantLabel}</p>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => onRemove(line.product.id, line.variantId)}
-                          className="rounded-full p-1.5 text-muted transition-colors hover:bg-sand hover:text-wine"
-                          aria-label={`Quitar ${line.product.nombre}`}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
+                {lines.map((line) => {
+                  const max = maxPurchasable(line.product, line.variantId)
+                  const atMax = max !== null && line.quantity >= max
 
-                      <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                        <div className="flex items-center gap-1 rounded-full border border-ink/15">
+                  return (
+                    <li
+                      key={`${line.product.id}:${line.variantId ?? ""}`}
+                      className="flex gap-4 py-4"
+                    >
+                      <img
+                        src={line.product.imagen}
+                        alt={line.product.nombre}
+                        className="h-24 w-20 shrink-0 rounded-xl bg-sand object-cover"
+                      />
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                              {line.product.categoria}
+                            </p>
+                            <h3 className="truncate font-display text-lg leading-tight text-ink">
+                              {line.product.nombre}
+                            </h3>
+                            {line.variantLabel && (
+                              <p className="text-[11px] text-muted">{line.variantLabel}</p>
+                            )}
+                          </div>
                           <button
                             type="button"
-                            onClick={() =>
-                              onQuantity(
-                                line.product.id,
-                                line.variantId,
-                                line.quantity - 1,
-                              )
-                            }
-                            className="rounded-full p-1.5 text-ink transition-colors hover:bg-sand"
-                            aria-label={`Restar una unidad de ${line.product.nombre}`}
+                            onClick={() => onRemove(line.product.id, line.variantId)}
+                            className="rounded-full p-1.5 text-muted transition-colors hover:bg-sand hover:text-wine"
+                            aria-label={`Quitar ${line.product.nombre}`}
                           >
-                            <MinusIcon className="h-3.5 w-3.5" />
-                          </button>
-                          <span className="min-w-6 text-center text-sm font-medium">
-                            {line.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onQuantity(
-                                line.product.id,
-                                line.variantId,
-                                line.quantity + 1,
-                              )
-                            }
-                            className="rounded-full p-1.5 text-ink transition-colors hover:bg-sand"
-                            aria-label={`Sumar una unidad de ${line.product.nombre}`}
-                          >
-                            <PlusIcon className="h-3.5 w-3.5" />
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
-                        <p className="text-sm font-medium text-ink">
-                          {formatPrice(line.unitPrice * line.quantity)}
-                        </p>
+
+                        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                          <div className="flex items-center gap-1 rounded-full border border-ink/15">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onQuantity(
+                                  line.product.id,
+                                  line.variantId,
+                                  line.quantity - 1,
+                                )
+                              }
+                              className="rounded-full p-1.5 text-ink transition-colors hover:bg-sand"
+                              aria-label={`Restar una unidad de ${line.product.nombre}`}
+                            >
+                              <MinusIcon className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="min-w-6 text-center text-sm font-medium">
+                              {line.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onQuantity(
+                                  line.product.id,
+                                  line.variantId,
+                                  line.quantity + 1,
+                                )
+                              }
+                              disabled={atMax}
+                              className="rounded-full p-1.5 text-ink transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:text-muted/50 disabled:hover:bg-transparent"
+                              aria-label={`Sumar una unidad de ${line.product.nombre}`}
+                            >
+                              <PlusIcon className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-sm font-medium text-ink">
+                            {formatPrice(line.unitPrice * line.quantity)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   addToCart,
+  capLineQuantity,
   cartCount,
   cartTotal,
   removeFromCart,
@@ -103,6 +104,38 @@ describe("cart", () => {
     expect(setQuantity([{ productId: "p2", variantId: null, quantity: 1 }], "p2", null, 0)).toEqual(
       [],
     )
+  })
+
+  it("leaves the cart untouched when the purchase cap is unlimited", () => {
+    const cart = [{ productId: "p2", variantId: null, quantity: 9 }]
+
+    expect(capLineQuantity(cart, "p2", null, null)).toBe(cart)
+  })
+
+  it("clamps an over-limit line and leaves the other lines alone", () => {
+    const cart = [
+      { productId: "p2", variantId: null, quantity: 5 },
+      { productId: "p1", variantId: "v-m", quantity: 1 },
+    ]
+
+    expect(capLineQuantity(cart, "p2", null, 3)).toEqual([
+      { productId: "p2", variantId: null, quantity: 3 },
+      { productId: "p1", variantId: "v-m", quantity: 1 },
+    ])
+  })
+
+  it("removes the line when the purchase cap is zero", () => {
+    expect(
+      capLineQuantity(
+        [
+          { productId: "p2", variantId: null, quantity: 1 },
+          { productId: "p1", variantId: "v-m", quantity: 1 },
+        ],
+        "p2",
+        null,
+        0,
+      ),
+    ).toEqual([{ productId: "p1", variantId: "v-m", quantity: 1 }])
   })
 
   it("counts units, not lines", () => {

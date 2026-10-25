@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { availableStock, isSoldOut, productStock } from "./stock"
+import { availableStock, isSoldOut, maxPurchasable, productStock } from "./stock"
 import type { Product } from "./types"
 
 function product(overrides: Partial<Product> = {}): Product {
@@ -56,6 +56,39 @@ describe("stock helpers", () => {
     })
 
     expect(isSoldOut(item)).toBe(true)
+  })
+
+  it("caps a purchase at the simple stock, or zero when sold out", () => {
+    expect(maxPurchasable(product({ stock: 3 }))).toBe(3)
+    expect(maxPurchasable(product({ stock: 0 }))).toBe(0)
+  })
+
+  it("caps a variant purchase at its own stock and treats a missing variant as sold out", () => {
+    const item = product({
+      stock: 99,
+      variants: [
+        { id: "v1", label: "M", stock: 2, precio: null, imagen: null },
+        { id: "v2", label: "L", stock: 0, precio: 550, imagen: null },
+      ],
+    })
+
+    expect(maxPurchasable(item, "v1")).toBe(2)
+    expect(maxPurchasable(item, "v2")).toBe(0)
+    expect(maxPurchasable(item, "missing")).toBe(0)
+  })
+
+  it("has no purchase cap when stock is unlimited or made to order", () => {
+    expect(maxPurchasable(product())).toBeNull()
+    expect(
+      maxPurchasable(
+        product({
+          stock: 0,
+          porEncargo: true,
+          variants: [{ id: "v1", label: "M", stock: 0, precio: null, imagen: null }],
+        }),
+        "v1",
+      ),
+    ).toBeNull()
   })
 
   it("ignores stock for made-to-order products", () => {

@@ -1,4 +1,5 @@
 import type { Product } from "./types"
+import { isDiscounted } from "./pricing"
 
 export type CatalogSort = "destacados" | "recientes" | "precio-asc" | "precio-desc"
 
@@ -8,6 +9,8 @@ export interface CatalogFilterInput {
   minPrice: string
   maxPrice: string
   sort: CatalogSort
+  onlyDiscounted: boolean
+  onlyMadeToOrder: boolean
 }
 
 export const DEFAULT_CATALOG_FILTERS: CatalogFilterInput = {
@@ -16,6 +19,8 @@ export const DEFAULT_CATALOG_FILTERS: CatalogFilterInput = {
   minPrice: "",
   maxPrice: "",
   sort: "destacados",
+  onlyDiscounted: false,
+  onlyMadeToOrder: false,
 }
 
 function parseAmount(value: string): number | null {
@@ -32,10 +37,10 @@ function dateValue(value: string): number {
 }
 
 /**
- * Applies the catalog search, category and price range, then sorts the result.
- * The default order is the featured order returned by the database. When the
- * user types a minimum above the maximum, the bounds are swapped so an obvious
- * typo does not produce an empty catalog.
+ * Applies the catalog search, category, price range, offer and made-to-order
+ * filters, then sorts the result. The default order is the featured order
+ * returned by the database. When the user types a minimum above the maximum,
+ * the bounds are swapped so an obvious typo does not produce an empty catalog.
  */
 export function filterAndSortProducts(
   products: Product[],
@@ -60,6 +65,9 @@ export function filterAndSortProducts(
 
     if (low !== null && product.precio < low) return false
     if (high !== null && product.precio > high) return false
+
+    if (input.onlyDiscounted && !isDiscounted(product)) return false
+    if (input.onlyMadeToOrder && !product.porEncargo) return false
 
     return true
   })

@@ -1,14 +1,25 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { updateOrderStatusAction } from "@/app/admin/actions"
+import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/admin/actions"
 import { getOrder } from "@/db/queries"
 import { formatPrice } from "@/lib/format"
-import { ORDER_STATUS_OPTIONS, orderStatusLabel } from "@/lib/orders"
+import {
+  ORDER_STATUS_OPTIONS,
+  PAYMENT_STATUS_OPTIONS,
+  orderStatusLabel,
+  paymentStatusLabel,
+} from "@/lib/orders"
 import { paymentLabel } from "@/lib/payments"
-import type { PaymentMethod } from "@/lib/types"
+import type { OrderPaymentStatus, PaymentMethod } from "@/lib/types"
 import { Select } from "@/components/Select"
 
 export const dynamic = "force-dynamic"
+
+const PAYMENT_STATUS_STYLES: Record<OrderPaymentStatus, string> = {
+  pendiente: "bg-sand text-ink",
+  pagado: "bg-ink text-cream",
+  reembolsado: "bg-wine/10 text-wine",
+}
 
 export default async function OrderDetailPage({
   params,
@@ -47,9 +58,16 @@ export default async function OrderDetailPage({
           <h2 className="font-display text-3xl text-ink">#{order.number}</h2>
           <p className="mt-1 text-sm text-muted">{formatter.format(order.createdAt)}</p>
         </div>
-        <span className="w-fit rounded-full bg-sand px-3 py-1.5 text-xs uppercase tracking-[0.12em] text-ink">
-          {orderStatusLabel(order.status)}
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <span className="w-fit rounded-full bg-sand px-3 py-1.5 text-xs uppercase tracking-[0.12em] text-ink">
+            {orderStatusLabel(order.status)}
+          </span>
+          <span
+            className={`w-fit rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.12em] ${PAYMENT_STATUS_STYLES[order.paymentStatus]}`}
+          >
+            {paymentStatusLabel(order.paymentStatus)}
+          </span>
+        </div>
       </div>
 
       {error === "reopen" && (
@@ -128,6 +146,31 @@ export default async function OrderDetailPage({
           <p className="mt-3 text-xs leading-relaxed text-muted">
             Cancelar un pedido devuelve el stock de sus productos.
           </p>
+
+          <form
+            action={updatePaymentStatusAction}
+            className="mt-5 space-y-2 border-t border-ink/10 pt-4"
+          >
+            <input type="hidden" name="id" value={order.id} />
+            <p className="text-xs uppercase tracking-[0.14em] text-muted">Estado del pago</p>
+            <Select
+              name="paymentStatus"
+              defaultValue={order.paymentStatus}
+              aria-label="Estado del pago"
+            >
+              {PAYMENT_STATUS_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+            <button
+              type="submit"
+              className="w-full rounded-xl border border-ink/20 px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-ink hover:bg-sand"
+            >
+              Guardar pago
+            </button>
+          </form>
         </section>
       </div>
 
@@ -135,16 +178,67 @@ export default async function OrderDetailPage({
         <h3 className="font-display text-xl text-ink">Productos</h3>
         <ul className="mt-3 divide-y divide-ink/10">
           {order.items.map((item) => (
-            <li key={item.id} className="flex items-start justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="text-sm text-ink">
-                  {item.productName}
-                  {item.variantLabel ? ` (${item.variantLabel})` : ""}
-                </p>
+            <li key={item.id} className="flex items-center gap-3 py-3">
+              {item.productExists ? (
+                <Link
+                  href={`/admin/productos/${item.productId}`}
+                  className="block h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-sand"
+                  aria-label={`Editar ${item.productName}`}
+                >
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-full items-center justify-center text-[9px] uppercase tracking-[0.14em] text-muted">
+                      Sin foto
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <div className="flex h-16 w-14 shrink-0 items-center justify-center rounded-xl bg-sand text-[9px] uppercase tracking-[0.14em] text-muted">
+                  Sin foto
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  {item.productExists ? (
+                    <Link
+                      href={`/admin/productos/${item.productId}`}
+                      className="text-sm text-ink transition-colors hover:text-wine"
+                    >
+                      {item.productName}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-ink">{item.productName}</span>
+                  )}
+                  {item.variantLabel && (
+                    <span className="text-xs text-muted">({item.variantLabel})</span>
+                  )}
+                  {!item.productExists && (
+                    <span className="rounded-full bg-wine/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-wine">
+                      Eliminado
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted">
                   {item.quantity} × {formatPrice(item.unitPrice)}
                 </p>
+                {item.productExists && (
+                  <Link
+                    href={`/producto/${item.productId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-[11px] text-muted underline underline-offset-2 transition-colors hover:text-ink"
+                  >
+                    Ver en la tienda
+                  </Link>
+                )}
               </div>
+
               <p className="whitespace-nowrap text-sm font-medium text-ink">
                 {formatPrice(item.lineTotal)}
               </p>

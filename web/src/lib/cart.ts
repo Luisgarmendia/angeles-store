@@ -49,6 +49,26 @@ export function setQuantity(
   )
 }
 
+/**
+ * Keeps a cart line within the purchasable limit. `null` means no cap, so the
+ * cart is returned untouched; a cap of 0 removes the line.
+ */
+export function capLineQuantity(
+  cart: CartItem[],
+  productId: string,
+  variantId: string | null,
+  max: number | null,
+): CartItem[] {
+  if (max === null) return cart
+  if (max <= 0) return removeFromCart(cart, productId, variantId)
+
+  return cart.map((item) =>
+    sameLine(item, productId, variantId) && item.quantity > max
+      ? { ...item, quantity: Math.min(item.quantity, max) }
+      : item,
+  )
+}
+
 export function cartCount(cart: CartItem[]): number {
   return cart.reduce((total, item) => total + item.quantity, 0)
 }

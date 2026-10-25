@@ -110,3 +110,65 @@ describe("filterAndSortProducts", () => {
     expect(descending.map((item) => item.id)).toEqual(["s1", "c2", "c1"])
   })
 })
+
+describe("filterAndSortProducts offer and made-to-order filters", () => {
+  const catalog: Product[] = [
+    product("oferta", { precio: 400, precioAnterior: 500 }),
+    product("encargo", { precio: 600, porEncargo: true }),
+    product("ambos", { precio: 800, precioAnterior: 1000, porEncargo: true }),
+    product("normal", { precio: 500 }),
+  ]
+
+  it("keeps the toggles off by default", () => {
+    expect(DEFAULT_CATALOG_FILTERS.onlyDiscounted).toBe(false)
+    expect(DEFAULT_CATALOG_FILTERS.onlyMadeToOrder).toBe(false)
+  })
+
+  it("keeps only discounted products when onlyDiscounted is on", () => {
+    const result = filterAndSortProducts(catalog, {
+      ...DEFAULT_CATALOG_FILTERS,
+      onlyDiscounted: true,
+    })
+
+    expect(result.map((item) => item.id)).toEqual(["oferta", "ambos"])
+  })
+
+  it("keeps only made-to-order products when onlyMadeToOrder is on", () => {
+    const result = filterAndSortProducts(catalog, {
+      ...DEFAULT_CATALOG_FILTERS,
+      onlyMadeToOrder: true,
+    })
+
+    expect(result.map((item) => item.id)).toEqual(["encargo", "ambos"])
+  })
+
+  it("combines the offer filter with a price range", () => {
+    const result = filterAndSortProducts(catalog, {
+      ...DEFAULT_CATALOG_FILTERS,
+      onlyDiscounted: true,
+      minPrice: "450",
+    })
+
+    expect(result.map((item) => item.id)).toEqual(["ambos"])
+  })
+
+  it("combines the made-to-order filter with a price range", () => {
+    const result = filterAndSortProducts(catalog, {
+      ...DEFAULT_CATALOG_FILTERS,
+      onlyMadeToOrder: true,
+      maxPrice: "650",
+    })
+
+    expect(result.map((item) => item.id)).toEqual(["encargo"])
+  })
+
+  it("requires both conditions when both toggles are on", () => {
+    const result = filterAndSortProducts(catalog, {
+      ...DEFAULT_CATALOG_FILTERS,
+      onlyDiscounted: true,
+      onlyMadeToOrder: true,
+    })
+
+    expect(result.map((item) => item.id)).toEqual(["ambos"])
+  })
+})

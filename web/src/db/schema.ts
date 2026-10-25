@@ -76,6 +76,12 @@ export const orderStatus = pgEnum("order_status", [
   "cancelado",
 ])
 
+export const orderPaymentStatus = pgEnum("order_payment_status", [
+  "pendiente",
+  "pagado",
+  "reembolsado",
+])
+
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   number: serial("number").notNull().unique(),
@@ -86,6 +92,7 @@ export const orders = pgTable("orders", {
   notes: text("notes").notNull().default(""),
   subtotalCents: integer("subtotal_cents").notNull(),
   status: orderStatus("status").notNull().default("pendiente"),
+  paymentStatus: orderPaymentStatus("payment_status").notNull().default("pendiente"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })

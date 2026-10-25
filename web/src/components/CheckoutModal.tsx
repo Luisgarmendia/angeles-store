@@ -1,10 +1,12 @@
 "use client"
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
+import Link from "next/link"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
 import { ALL_PAYMENT_METHODS } from "@/lib/payments"
 import { loadCustomer, saveCustomer } from "@/lib/customer-storage"
+import { normalizeHonduranPhone } from "@/lib/phone"
 import { useModalBehavior } from "@/lib/useModal"
 import { paymentLabel } from "@/lib/whatsapp"
 import type { CartLine, Customer, PaymentMethod } from "@/lib/types"
@@ -19,6 +21,8 @@ interface CheckoutModalProps {
   onClose: () => void
   onSubmit: (customer: Customer) => Promise<{ error?: string } | void>
 }
+
+const PHONE_ERROR = "Escribe un teléfono hondureño válido, por ejemplo 9999-8888."
 
 const EMPTY_CUSTOMER: Customer = {
   nombre: "",
@@ -48,8 +52,9 @@ export function CheckoutModal({
   const [customer, setCustomer] = useState<Customer>(() => initialCustomer(methods))
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
-  useModalBehavior(open, onClose)
+  useModalBehavior(open, onClose, dialogRef)
 
   useEffect(() => {
     if (!open) return
@@ -68,6 +73,11 @@ export function CheckoutModal({
 
     if (!customer.nombre.trim() || !customer.direccion.trim()) {
       setError("Completa tu nombre y tu dirección de entrega para continuar.")
+      return
+    }
+
+    if (!normalizeHonduranPhone(customer.telefono)) {
+      setError(PHONE_ERROR)
       return
     }
 
@@ -98,6 +108,8 @@ export function CheckoutModal({
       />
 
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-cream p-6 shadow-2xl sm:rounded-3xl"
         role="dialog"
         aria-modal="true"
@@ -164,11 +176,12 @@ export function CheckoutModal({
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Teléfono de contacto">
+            <Field label="Teléfono de contacto" required>
               <input
                 type="tel"
                 value={customer.telefono}
                 onChange={(event) => update("telefono", event.target.value)}
+                inputMode="tel"
                 autoComplete="tel"
                 className={inputClass}
                 placeholder="+504 9999-8888"
@@ -216,7 +229,15 @@ export function CheckoutModal({
           </button>
           <p className="text-center text-[11px] leading-relaxed text-muted">
             Se va a abrir WhatsApp con tu pedido listo. Te respondemos para confirmar disponibilidad
-            y entrega. Tus datos quedan guardados solo en este dispositivo para tu próxima compra.
+            y entrega. Guardamos tu pedido en nuestra base de datos para gestionarlo y tu navegador
+            conserva tus datos de contacto para prellenar la próxima compra. Consulta nuestra{" "}
+            <Link
+              href="/privacidad"
+              className="underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              política de privacidad
+            </Link>
+            .
           </p>
         </form>
       </div>
