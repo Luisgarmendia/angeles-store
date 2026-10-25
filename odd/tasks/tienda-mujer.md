@@ -23,6 +23,10 @@ Test runner: `vitest`
 - **S13 — Brand and catalog focus.** The store is named exactly `Angeles Store's` and sells mostly creams and shirts plus general women's products. Brand strings live in `src/config.ts`; the seed catalog is 18 products across Cremas, Camisas, Vestidos, Pantalones, Calzado, Bolsos, and Accesorios.
 - **S14 — Product detail.** Every product opens a hash-addressable detail section at `#producto/{id}` with image, name, category, price, description, quantity selector, add-to-cart, and a back link to the catalog. Below the detail, up to 4 recommended products appear, same category first, never the product being viewed.
 - **S15 — Catalog migration.** `DATA_VERSION` 3 replaces the legacy `p1`–`p12` seed, preserves products created by the owner, and prunes cart lines whose product no longer exists.
+- **S16 — Contact and social settings.** Admin → Ajustes edits the order WhatsApp plus Instagram, Facebook, and TikTok. Each network accepts a full URL, a bare handle, or an `@handle`; the footer shows only the networks that are configured.
+- **S17 — Decimal prices.** Every price in the storefront, cart, checkout, WhatsApp message, and admin panel shows two decimals (`L 1,290.00`). The admin accepts cents and never rounds a price to a whole lempira.
+- **S18 — Returning customer.** A successful checkout saves name, address, phone, payment method, and notes in `localStorage`; the next checkout prefills that data. Nothing is sent anywhere.
+- **S19 — Styled selectors.** The checkout payment method and the admin category filter use a shared styled select with a custom chevron, focus ring, and consistent spacing.
 
 ## Tasks
 
@@ -43,6 +47,10 @@ Test runner: `vitest`
 | T13 | S13 | inline | done | `2ce85cd` · 18 products, 18/18 images 200 |
 | T14 | S14 | inline | done | `b3a3e13` · hash route, detail, recommendations, quantity |
 | T15 | S13, S15 | inline | done | `321e5aa` · migration v3, 36 tests |
+| T16 | S16 | inline | done | `ae825c0` · social settings + footer links |
+| T17 | S17 | inline | done | `ae825c0` · two decimals end to end |
+| T18 | S18 | inline | done | `ae825c0` · customer persistence |
+| T19 | S19 | inline | done | `ae825c0` · shared styled select |
 
 - **T1 — Scaffold.** Initialize git, Vite + React + TypeScript + Tailwind, base config files.
 - **T2 — Domain data.** Central brand/config module, types, and a women's fashion seed catalog.
@@ -59,6 +67,10 @@ Test runner: `vitest`
 - **T13 — Rebrand and recatalog.** Rename the store to Angeles Store's, rebuild the seed catalog around creams and shirts, and resize the brand on header, footer, hero, and document metadata.
 - **T14 — Detail and recommendations.** Hash-addressable product detail with quantity selector, add-to-cart, back navigation, and same-category-first recommendations below.
 - **T15 — Catalog migration.** Bump the stored data version, drop the legacy seed, keep owner-created products, and prune stale cart lines.
+- **T16 — Contact settings.** Edit WhatsApp, Instagram, Facebook, and TikTok from Admin → Ajustes; render configured networks in the footer.
+- **T17 — Decimal prices.** Format every price with two decimals and stop rounding cents when saving a product.
+- **T18 — Saved customer.** Persist checkout data locally on a successful order and prefill it on the next visit.
+- **T19 — Styled selectors.** Replace the raw payment and category selects with one shared component that matches the store's visual language.
 
 ## Log
 
@@ -77,3 +89,6 @@ Test runner: `vitest`
 - **L13 (decision):** Detail pages are hash-addressable at `#producto/{id}` so browser back works and a product can be linked directly. Recommendations put the same category first, exclude the viewed product, and cap at 4. `addToCart` accepts an optional quantity for the detail selector.
 - **L14 (decision):** `DATA_VERSION` 3 treats `p1`–`p12` as replaced seed, preserves owner-created products, and prunes cart lines for products that no longer exist.
 - **L15 (verification):** `npm test` → 7 files, 36 tests passing. `npm run build` → green. All 18 catalog images return HTTP 200 and every new Vite module returns 200. Work units were committed on `main` because the repository has no remote and its history lives there.
+- **L16 (user, verbatim):** "ok mira, hay muchas cosas que mejorar y quiero que las hagamos rapido, en la seccion de ajustes poner las redes sociales, mostrar los precions con los decimales, y si un cliente ya guardo su nombre o infromacion que se guarde en el local stoage y se rellene solo, tamboen los combobox o selector no tienen disenio no se ve bien"
+- **L17 (decision):** `StoreSettings` now carries `instagram`, `facebook`, and `tiktok`. The admin accepts a full URL, a bare handle, or an `@handle` and `socialHref` builds the link at render time; empty networks stay hidden. Prices use two decimals everywhere and the admin stores cents instead of rounding. Checkout data is saved under `amapola.cliente` only after a successful order and reloaded when the form opens. The raw `<select>` elements were replaced by one shared `Select` component.
+- **L18 (verification):** `npm test` → 8 files, 45 tests passing. `npm run build` → green. Vite serves the new `Select` component and the updated modules with HTTP 200.
