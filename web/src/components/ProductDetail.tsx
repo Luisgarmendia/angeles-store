@@ -17,6 +17,7 @@ import {
 } from "./Icons"
 import { ProductCard } from "./ProductCard"
 import { ProductImage } from "./ProductImage"
+import { Select } from "./Select"
 import { useCart } from "./store-provider"
 import { useStoreSettings } from "./store-settings-provider"
 
@@ -30,6 +31,18 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
   const { store } = useStoreSettings()
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
+  const [selectedVariantId, setSelectedVariantId] = useState(() => {
+    const firstAvailable = product.variants.find((variant) => variant.stock > 0)
+    return (firstAvailable ?? product.variants[0])?.id ?? ""
+  })
+
+  const selectedVariant =
+    product.variants.find((variant) => variant.id === selectedVariantId) ?? null
+  const unitPrice = selectedVariant?.precio ?? product.precio
+  const available =
+    product.variants.length > 0 ? (selectedVariant?.stock ?? 0) : product.stock
+  const soldOut = available !== null && available <= 0
+  const maxQuantity = available === null ? 99 : Math.max(1, Math.min(99, available))
 
   useEffect(() => {
     if (!added) return
@@ -37,14 +50,20 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
     return () => window.clearTimeout(timeout)
   }, [added])
 
+  useEffect(() => {
+    setQuantity(1)
+    setAdded(false)
+  }, [selectedVariantId])
+
   function handleAdd() {
-    add(product.id, quantity)
+    if (soldOut) return
+    add(product.id, selectedVariant?.id ?? null, quantity)
     setAdded(true)
   }
 
   async function handleShare() {
     const url = `${window.location.origin}/producto/${product.id}`
-    const text = `${product.nombre} — ${formatPrice(product.precio)} · ${store.name}`
+    const text = `${product.nombre} — ${formatPrice(unitPrice)} · ${store.name}`
 
     if (navigator.share) {
       try {
@@ -88,17 +107,43 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
           <h1 className="mt-3 font-display text-4xl leading-tight text-ink sm:text-5xl">
             {product.nombre}
           </h1>
-          <p className="mt-4 font-display text-3xl text-wine">{formatPrice(product.precio)}</p>
+          <p className="mt-4 font-display text-3xl text-wine">{formatPrice(unitPrice)}</p>
           <p className="mt-4 text-base leading-relaxed text-muted">{product.descripcion}</p>
 
-          <div className="mt-8 flex flex-col gap-4 border-t border-ink/10 pt-6 sm:flex-row sm:items-center">
+          {product.variants.length > 0 && (
+            <div className="mt-5">
+              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+                Opción
+              </span>
+              <Select
+                value={selectedVariantId}
+                onChange={(event) => setSelectedVariantId(event.target.value)}
+                aria-label="Elegir opción del producto"
+              >
+                {product.variants.map((variant) => (
+                  <option key={variant.id} value={variant.id} disabled={variant.stock <= 0}>
+                    {variant.label}
+                    {variant.stock <= 0 ? " (agotado)" : ""}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {available !== null && (
+            <p className={`mt-2 text-xs ${soldOut ? "text-wine" : "text-muted"}`}>
+              {soldOut ? "Agotado por el momento" : `Disponible: ${available}`}
+            </p>
+          )}
+
+          <div className="mt-6 flex flex-col gap-4 border-t border-ink/10 pt-6 sm:flex-row sm:items-center">
             <div className="flex items-center justify-between gap-1 rounded-full border border-ink/15 px-2 py-1 sm:justify-start">
               <button
                 type="button"
                 onClick={() => setQuantity((current) => Math.max(1, current - 1))}
                 className="rounded-full p-2 text-ink transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Restar una unidad"
-                disabled={quantity <= 1}
+                disabled={quantity <= 1 || soldOut}
               >
                 <MinusIcon className="h-4 w-4" />
               </button>
@@ -107,9 +152,12 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
               </span>
               <button
                 type="button"
-                onClick={() => setQuantity((current) => Math.min(99, current + 1))}
-                className="rounded-full p-2 text-ink transition-colors hover:bg-sand"
+                onClick={() =>
+                  setQuantity((current) => Math.min(maxQuantity, current + 1))
+                }
+                className="rounded-full p-2 text-ink transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Sumar una unidad"
+                disabled={soldOut || quantity >= maxQuantity}
               >
                 <PlusIcon className="h-4 w-4" />
               </button>
@@ -118,12 +166,21 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
             <button
               type="button"
               onClick={handleAdd}
+              disabled={soldOut}
               className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium text-cream transition-colors ${
-                added ? "bg-rose-dark" : "bg-ink hover:bg-wine"
+                soldOut
+                  ? "cursor-not-allowed bg-ink/40"
+                  : added
+                    ? "bg-rose-dark"
+                    : "bg-ink hover:bg-wine"
               }`}
             >
-              {added ? <CheckIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-              {added ? "Agregado al carrito" : "Agregar al carrito"}
+              {soldOut ? null : added ? (
+                <CheckIcon className="h-4 w-4" />
+              ) : (
+                <PlusIcon className="h-4 w-4" />
+              )}
+              {soldOut ? "Agotado" : added ? "Agregado al carrito" : "Agregar al carrito"}
             </button>
           </div>
 

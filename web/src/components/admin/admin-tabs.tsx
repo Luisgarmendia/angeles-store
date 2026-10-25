@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 
 const TABS = [
   { href: "/admin", label: "Productos" },
+  { href: "/admin/pedidos", label: "Pedidos" },
   { href: "/admin/ajustes", label: "Ajustes" },
 ]
 
@@ -14,7 +15,10 @@ export function AdminTabs() {
   return (
     <nav className="flex w-full gap-1 rounded-full bg-sand p-1 sm:w-fit" aria-label="Secciones del panel">
       {TABS.map((tab) => {
-        const active = tab.href === "/admin" ? pathname === "/admin" : pathname.startsWith(tab.href)
+        const active =
+          tab.href === "/admin"
+            ? pathname === "/admin" || pathname.startsWith("/admin/productos")
+            : pathname.startsWith(tab.href)
 
         return (
           <Link

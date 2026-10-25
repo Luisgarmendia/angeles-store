@@ -5,6 +5,7 @@ import Link from "next/link"
 import { GridIcon, ListIcon } from "@/components/Icons"
 import { DeleteProductButton } from "./delete-product-button"
 import { formatPrice } from "@/lib/format"
+import { productStock } from "@/lib/stock"
 import type { AdminProduct } from "@/lib/types"
 
 const STORAGE_KEY = "angeles.admin.products.view"
@@ -78,94 +79,133 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
         </div>
       ) : view === "cards" ? (
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <article
-              key={product.id}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white/60 transition-transform duration-300 hover:-translate-y-0.5"
-            >
-              <div className="relative aspect-[4/3] bg-sand">
-                {product.imagen ? (
-                  <img
-                    src={product.imagen}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-[0.16em] text-muted">
-                    Sin foto
+          {products.map((product) => {
+            const stock = productStock(product)
+            const soldOut = stock !== null && stock <= 0
+
+            return (
+              <article
+                key={product.id}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white/60 transition-transform duration-300 hover:-translate-y-0.5"
+              >
+                <div className="relative aspect-[4/3] bg-sand">
+                  {product.imagen ? (
+                    <img
+                      src={product.imagen}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-[0.16em] text-muted">
+                      Sin foto
+                    </div>
+                  )}
+                  {!product.active && (
+                    <span className="absolute left-2 top-2 rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                      Oculto
+                    </span>
+                  )}
+                  {soldOut && (
+                    <span className="absolute right-2 top-2 rounded-full bg-wine/90 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                      Agotado
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-1 flex-col p-3">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                    {product.categoria}
+                  </p>
+                  <h3 className="mt-0.5 font-display text-lg leading-tight text-ink">
+                    {product.nombre}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted">{formatPrice(product.precio)}</p>
+                  <p className="text-xs text-muted">
+                    {stock === null
+                      ? "Stock ilimitado"
+                      : stock <= 0
+                        ? "Sin stock"
+                        : `Stock: ${stock}`}
+                    {product.variants.length > 0
+                      ? ` · ${product.variants.length} ${
+                          product.variants.length === 1 ? "opción" : "opciones"
+                        }`
+                      : ""}
+                  </p>
+
+                  <div className="mt-auto flex items-center gap-2 pt-3">
+                    <Link
+                      href={`/admin/productos/${product.id}`}
+                      className="flex-1 rounded-full border border-ink/15 px-3 py-1.5 text-center text-xs text-ink transition-colors hover:border-ink hover:bg-sand"
+                    >
+                      Editar
+                    </Link>
+                    <DeleteProductButton id={product.id} name={product.nombre} />
                   </div>
-                )}
-                {!product.active && (
-                  <span className="absolute left-2 top-2 rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
-                    Oculto
-                  </span>
-                )}
-              </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {products.map((product) => {
+            const stock = productStock(product)
 
-              <div className="flex flex-1 flex-col p-3">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
-                  {product.categoria}
-                </p>
-                <h3 className="mt-0.5 font-display text-lg leading-tight text-ink">
-                  {product.nombre}
-                </h3>
-                <p className="mt-1 text-sm text-muted">{formatPrice(product.precio)}</p>
+            return (
+              <article
+                key={product.id}
+                className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white/60 p-3 sm:gap-4"
+              >
+                <div className="h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-sand">
+                  {product.imagen ? (
+                    <img src={product.imagen} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-[0.14em] text-muted">
+                      Sin foto
+                    </div>
+                  )}
+                </div>
 
-                <div className="mt-auto flex items-center gap-2 pt-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                    {product.categoria}
+                  </p>
+                  <h3 className="truncate font-display text-lg leading-tight text-ink">
+                    {product.nombre}
+                  </h3>
+                  <p className="text-sm text-muted">
+                    {formatPrice(product.precio)}
+                    {!product.active && <span className="ml-2 text-wine">· Oculto</span>}
+                    <span className="ml-2 text-xs">
+                      {stock === null
+                        ? "· Stock ilimitado"
+                        : stock <= 0
+                          ? "· Agotado"
+                          : `· Stock: ${stock}`}
+                    </span>
+                    {product.variants.length > 0 && (
+                      <span className="ml-1 text-xs">
+                        · {product.variants.length}{" "}
+                        {product.variants.length === 1 ? "opción" : "opciones"}
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2">
                   <Link
                     href={`/admin/productos/${product.id}`}
-                    className="flex-1 rounded-full border border-ink/15 px-3 py-1.5 text-center text-xs text-ink transition-colors hover:border-ink hover:bg-sand"
+                    className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink transition-colors hover:border-ink hover:bg-sand"
                   >
                     Editar
                   </Link>
                   <DeleteProductButton id={product.id} name={product.nombre} />
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-3 space-y-2">
-          {products.map((product) => (
-            <article
-              key={product.id}
-              className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white/60 p-3 sm:gap-4"
-            >
-              <div className="h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-sand">
-                {product.imagen ? (
-                  <img src={product.imagen} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-[0.14em] text-muted">
-                    Sin foto
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
-                  {product.categoria}
-                </p>
-                <h3 className="truncate font-display text-lg leading-tight text-ink">
-                  {product.nombre}
-                </h3>
-                <p className="text-sm text-muted">
-                  {formatPrice(product.precio)}
-                  {!product.active && <span className="ml-2 text-wine">· Oculto</span>}
-                </p>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-2">
-                <Link
-                  href={`/admin/productos/${product.id}`}
-                  className="rounded-full border border-ink/15 px-3 py-1.5 text-xs text-ink transition-colors hover:border-ink hover:bg-sand"
-                >
-                  Editar
-                </Link>
-                <DeleteProductButton id={product.id} name={product.nombre} />
-              </div>
-            </article>
-          ))}
+              </article>
+            )
+          })}
         </div>
       )}
     </div>

@@ -17,7 +17,7 @@ interface CheckoutModalProps {
   total: number
   paymentMethods: PaymentMethod[]
   onClose: () => void
-  onSubmit: (customer: Customer) => void
+  onSubmit: (customer: Customer) => Promise<{ error?: string } | void>
 }
 
 const EMPTY_CUSTOMER: Customer = {
@@ -47,6 +47,7 @@ export function CheckoutModal({
   const methods = paymentMethods.length > 0 ? paymentMethods : ALL_PAYMENT_METHODS
   const [customer, setCustomer] = useState<Customer>(() => initialCustomer(methods))
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useModalBehavior(open, onClose)
 
@@ -62,7 +63,7 @@ export function CheckoutModal({
     setCustomer((current) => ({ ...current, [key]: value }))
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!customer.nombre.trim() || !customer.direccion.trim()) {
@@ -71,8 +72,20 @@ export function CheckoutModal({
     }
 
     setError(null)
-    saveCustomer(customer)
-    onSubmit(customer)
+    setSubmitting(true)
+
+    try {
+      const result = await onSubmit(customer)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      saveCustomer(customer)
+    } catch {
+      setError("No se pudo registrar el pedido. Intentá de nuevo.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -112,9 +125,10 @@ export function CheckoutModal({
               <li key={line.product.id} className="flex justify-between gap-3">
                 <span className="min-w-0 truncate text-muted">
                   {line.quantity}× {line.product.nombre}
+                  {line.variantLabel ? ` (${line.variantLabel})` : ""}
                 </span>
                 <span className="whitespace-nowrap text-ink">
-                  {formatPrice(line.product.precio * line.quantity)}
+                  {formatPrice(line.unitPrice * line.quantity)}
                 </span>
               </li>
             ))}
@@ -194,10 +208,11 @@ export function CheckoutModal({
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-medium text-cream transition-colors hover:bg-wine"
+            disabled={submitting}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-medium text-cream transition-colors hover:bg-wine disabled:cursor-not-allowed disabled:opacity-60"
           >
             <MessageIcon className="h-4 w-4" />
-            Enviar pedido por WhatsApp
+            {submitting ? "Preparando pedido…" : "Enviar pedido por WhatsApp"}
           </button>
           <p className="text-center text-[11px] leading-relaxed text-muted">
             Se va a abrir WhatsApp con tu pedido listo. Te respondemos para confirmar disponibilidad

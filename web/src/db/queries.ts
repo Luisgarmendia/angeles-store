@@ -1,8 +1,42 @@
-import { and, asc, eq, ilike, or } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { getDb } from "."
-import { products, settings } from "./schema"
+import { orderItems, orders, productVariants, products, settings } from "./schema"
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
-import type { AdminProduct, Product, StoreSettings } from "@/lib/types"
+import type {
+  AdminProduct,
+  OrderStatus,
+  Product,
+  ProductVariant,
+  StoreSettings,
+} from "@/lib/types"
+
+export interface AdminOrder {
+  id: string
+  number: number
+  customerName: string
+  customerPhone: string
+  customerAddress: string
+  paymentMethod: string
+  notes: string
+  subtotal: number
+  status: OrderStatus
+  createdAt: Date
+  itemCount: number
+}
+
+export interface AdminOrderItem {
+  id: string
+  productId: string
+  productName: string
+  variantLabel: string | null
+  unitPrice: number
+  quantity: number
+  lineTotal: number
+}
+
+export interface AdminOrderDetail extends AdminOrder {
+  items: AdminOrderItem[]
+}
 
 function toProduct(row: typeof products.$inferSelect): Product {
   return {
@@ -12,7 +46,47 @@ function toProduct(row: typeof products.$inferSelect): Product {
     categoria: row.category,
     descripcion: row.description,
     imagen: row.image,
+    stock: row.stock,
+    variants: [],
   }
+}
+
+function toVariant(row: typeof productVariants.$inferSelect): ProductVariant {
+  return {
+    id: row.id,
+    label: row.label,
+    stock: row.stock,
+    precio: row.priceCents === null ? null : row.priceCents / 100,
+  }
+}
+
+async function withVariants(
+  rows: Array<typeof products.$inferSelect>,
+): Promise<Product[]> {
+  if (rows.length === 0) return []
+
+  const variantRows = await getDb()
+    .select()
+    .from(productVariants)
+    .where(
+      inArray(
+        productVariants.productId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(asc(productVariants.sortOrder))
+
+  const byProduct = new Map<string, ProductVariant[]>()
+  for (const row of variantRows) {
+    const list = byProduct.get(row.productId) ?? []
+    list.push(toVariant(row))
+    byProduct.set(row.productId, list)
+  }
+
+  return rows.map((row) => ({
+    ...toProduct(row),
+    variants: byProduct.get(row.id) ?? [],
+  }))
 }
 
 export async function listProducts({
@@ -43,7 +117,7 @@ export async function listProducts({
     .where(filters.length > 0 ? and(...filters) : undefined)
     .orderBy(asc(products.sortOrder), asc(products.createdAt))
 
-  return rows.map(toProduct)
+  return withVariants(rows)
 }
 
 export async function listAdminProducts(query = ""): Promise<AdminProduct[]> {
@@ -63,10 +137,12 @@ export async function listAdminProducts(query = ""): Promise<AdminProduct[]> {
     )
     .orderBy(asc(products.sortOrder), asc(products.createdAt))
 
-  return rows.map((row) => ({
-    ...toProduct(row),
-    active: row.active,
-    sortOrder: row.sortOrder,
+  const base = await withVariants(rows)
+
+  return base.map((product, index) => ({
+    ...product,
+    active: rows[index].active,
+    sortOrder: rows[index].sortOrder,
   }))
 }
 
@@ -81,7 +157,9 @@ export async function getProduct(
     .where(includeInactive ? eq(products.id, id) : and(eq(products.id, id), eq(products.active, true)))
     .limit(1)
 
-  return rows[0] ? toProduct(rows[0]) : null
+  if (!rows[0]) return null
+  const [product] = await withVariants(rows)
+  return product ?? null
 }
 
 export async function getStoreSettings(): Promise<StoreSettings> {
@@ -99,4 +177,75 @@ export async function listRecommendations(
   const same = others.filter((item) => item.categoria === product.categoria)
   const rest = others.filter((item) => item.categoria !== product.categoria)
   return [...same, ...rest].slice(0, limit)
+}
+
+export async function listOrders(status?: OrderStatus): Promise<AdminOrder[]> {
+  const db = getDb()
+  const rows = await db
+    .select({
+      id: orders.id,
+      number: orders.number,
+      customerName: orders.customerName,
+      customerPhone: orders.customerPhone,
+      customerAddress: orders.customerAddress,
+      paymentMethod: orders.paymentMethod,
+      notes: orders.notes,
+      subtotalCents: orders.subtotalCents,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      itemCount: sql<number>`count(${orderItems.id})::int`,
+    })
+    .from(orders)
+    .leftJoin(orderItems, eq(orderItems.orderId, orders.id))
+    .where(status ? eq(orders.status, status) : undefined)
+    .groupBy(orders.id)
+    .orderBy(desc(orders.createdAt))
+
+  return rows.map((row) => ({
+    ...row,
+    subtotal: row.subtotalCents / 100,
+  }))
+}
+
+export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
+  const db = getDb()
+  const [row] = await db
+    .select({
+      id: orders.id,
+      number: orders.number,
+      customerName: orders.customerName,
+      customerPhone: orders.customerPhone,
+      customerAddress: orders.customerAddress,
+      paymentMethod: orders.paymentMethod,
+      notes: orders.notes,
+      subtotalCents: orders.subtotalCents,
+      status: orders.status,
+      createdAt: orders.createdAt,
+    })
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1)
+
+  if (!row) return null
+
+  const items = await db
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, id))
+    .orderBy(asc(orderItems.id))
+
+  return {
+    ...row,
+    subtotal: row.subtotalCents / 100,
+    itemCount: items.length,
+    items: items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      productName: item.productName,
+      variantLabel: item.variantLabel,
+      unitPrice: item.unitPriceCents / 100,
+      quantity: item.quantity,
+      lineTotal: item.lineTotalCents / 100,
+    })),
+  }
 }

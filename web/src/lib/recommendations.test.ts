@@ -3,7 +3,16 @@ import type { Product } from "./types"
 import { recommendProducts } from "./recommendations"
 
 function product(id: string, categoria: string): Product {
-  return { id, nombre: id, precio: 100, categoria, descripcion: "", imagen: "" }
+  return {
+    id,
+    nombre: id,
+    precio: 100,
+    categoria,
+    descripcion: "",
+    imagen: "",
+    stock: null,
+    variants: [],
+  }
 }
 
 const catalog: Product[] = [

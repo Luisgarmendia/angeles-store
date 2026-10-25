@@ -24,9 +24,9 @@ interface CartContextValue {
   lines: CartLine[]
   total: number
   count: number
-  add: (productId: string, quantity?: number) => void
-  remove: (productId: string) => void
-  setQuantity: (productId: string, quantity: number) => void
+  add: (productId: string, variantId: string | null, quantity?: number) => void
+  remove: (productId: string, variantId: string | null) => void
+  setQuantity: (productId: string, variantId: string | null, quantity: number) => void
   clear: () => void
 }
 
@@ -76,11 +76,12 @@ export function StoreProvider({
       lines,
       total,
       count,
-      add: (productId, quantity = 1) =>
-        setCart((current) => addToCart(current, productId, quantity)),
-      remove: (productId) => setCart((current) => removeFromCart(current, productId)),
-      setQuantity: (productId, quantity) =>
-        setCart((current) => setLineQuantity(current, productId, quantity)),
+      add: (productId, variantId, quantity = 1) =>
+        setCart((current) => addToCart(current, productId, variantId, quantity)),
+      remove: (productId, variantId) =>
+        setCart((current) => removeFromCart(current, productId, variantId)),
+      setQuantity: (productId, variantId, quantity) =>
+        setCart((current) => setLineQuantity(current, productId, variantId, quantity)),
       clear: () => setCart([]),
     }),
     [lines, total, count],

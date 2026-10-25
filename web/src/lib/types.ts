@@ -1,3 +1,10 @@
+export interface ProductVariant {
+  id: string
+  label: string
+  stock: number
+  precio: number | null
+}
+
 export interface Product {
   id: string
   nombre: string
@@ -5,6 +12,8 @@ export interface Product {
   categoria: string
   descripcion: string
   imagen: string
+  stock: number | null
+  variants: ProductVariant[]
 }
 
 export interface AdminProduct extends Product {
@@ -14,6 +23,7 @@ export interface AdminProduct extends Product {
 
 export interface CartItem {
   productId: string
+  variantId?: string | null
   quantity: number
 }
 
@@ -57,5 +67,15 @@ export interface StoreSettings {
 
 export interface CartLine {
   product: Product
+  variantId: string | null
+  variantLabel: string | null
+  unitPrice: number
   quantity: number
 }
+
+export type OrderStatus =
+  | "pendiente"
+  | "confirmado"
+  | "enviado"
+  | "entregado"
+  | "cancelado"

@@ -12,8 +12,8 @@ interface CartDrawerProps {
   lines: CartLine[]
   total: number
   onClose: () => void
-  onQuantity: (productId: string, quantity: number) => void
-  onRemove: (productId: string) => void
+  onQuantity: (productId: string, variantId: string | null, quantity: number) => void
+  onRemove: (productId: string, variantId: string | null) => void
   onCheckout: () => void
 }
 
@@ -85,7 +85,7 @@ export function CartDrawer({
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <ul className="divide-y divide-ink/10">
                 {lines.map((line) => (
-                  <li key={line.product.id} className="flex gap-4 py-4">
+                  <li key={`${line.product.id}:${line.variantId ?? ""}`} className="flex gap-4 py-4">
                     <img
                       src={line.product.imagen}
                       alt={line.product.nombre}
@@ -100,10 +100,13 @@ export function CartDrawer({
                           <h3 className="truncate font-display text-lg leading-tight text-ink">
                             {line.product.nombre}
                           </h3>
+                          {line.variantLabel && (
+                            <p className="text-[11px] text-muted">{line.variantLabel}</p>
+                          )}
                         </div>
                         <button
                           type="button"
-                          onClick={() => onRemove(line.product.id)}
+                          onClick={() => onRemove(line.product.id, line.variantId)}
                           className="rounded-full p-1.5 text-muted transition-colors hover:bg-sand hover:text-wine"
                           aria-label={`Quitar ${line.product.nombre}`}
                         >
@@ -115,7 +118,13 @@ export function CartDrawer({
                         <div className="flex items-center gap-1 rounded-full border border-ink/15">
                           <button
                             type="button"
-                            onClick={() => onQuantity(line.product.id, line.quantity - 1)}
+                            onClick={() =>
+                              onQuantity(
+                                line.product.id,
+                                line.variantId,
+                                line.quantity - 1,
+                              )
+                            }
                             className="rounded-full p-1.5 text-ink transition-colors hover:bg-sand"
                             aria-label={`Restar una unidad de ${line.product.nombre}`}
                           >
@@ -126,7 +135,13 @@ export function CartDrawer({
                           </span>
                           <button
                             type="button"
-                            onClick={() => onQuantity(line.product.id, line.quantity + 1)}
+                            onClick={() =>
+                              onQuantity(
+                                line.product.id,
+                                line.variantId,
+                                line.quantity + 1,
+                              )
+                            }
                             className="rounded-full p-1.5 text-ink transition-colors hover:bg-sand"
                             aria-label={`Sumar una unidad de ${line.product.nombre}`}
                           >
@@ -134,7 +149,7 @@ export function CartDrawer({
                           </button>
                         </div>
                         <p className="text-sm font-medium text-ink">
-                          {formatPrice(line.product.precio * line.quantity)}
+                          {formatPrice(line.unitPrice * line.quantity)}
                         </p>
                       </div>
                     </div>

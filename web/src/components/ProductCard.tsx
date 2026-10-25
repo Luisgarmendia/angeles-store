@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { formatPrice } from "@/lib/format"
+import { isSoldOut } from "@/lib/stock"
 import type { Product } from "@/lib/types"
 import { CheckIcon, PlusIcon } from "./Icons"
 import { ProductImage } from "./ProductImage"
@@ -16,6 +17,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const { add } = useCart()
   const [added, setAdded] = useState(false)
   const detailHref = `/producto/${product.id}`
+  const soldOut = isSoldOut(product)
+  const hasVariants = product.variants.length > 0
 
   useEffect(() => {
     if (!added) return
@@ -24,7 +27,8 @@ export function ProductCard({ product }: ProductCardProps) {
   }, [added])
 
   function handleAdd() {
-    add(product.id)
+    if (soldOut) return
+    add(product.id, null)
     setAdded(true)
   }
 
@@ -41,16 +45,41 @@ export function ProductCard({ product }: ProductCardProps) {
           aria-label={`Ver detalle de ${product.nombre}`}
           className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose"
         />
-        <button
-          type="button"
-          onClick={handleAdd}
-          className={`absolute inset-x-3 bottom-3 z-10 flex items-center justify-center gap-2 rounded-full py-2.5 text-[11px] font-medium uppercase tracking-[0.16em] backdrop-blur transition-colors ${
-            added ? "bg-rose-dark text-cream" : "bg-ink/90 text-cream hover:bg-wine"
-          }`}
-        >
-          {added ? <CheckIcon className="h-3.5 w-3.5" /> : <PlusIcon className="h-3.5 w-3.5" />}
-          {added ? "Agregado" : "Agregar"}
-        </button>
+
+        {soldOut && (
+          <span className="absolute right-2 top-2 z-10 rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+            Agotado
+          </span>
+        )}
+
+        {hasVariants ? (
+          <Link
+            href={detailHref}
+            className="absolute inset-x-3 bottom-3 z-10 flex items-center justify-center gap-2 rounded-full bg-ink/90 py-2.5 text-[11px] font-medium uppercase tracking-[0.16em] text-cream backdrop-blur transition-colors hover:bg-wine"
+          >
+            Elegir opción
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={soldOut}
+            className={`absolute inset-x-3 bottom-3 z-10 flex items-center justify-center gap-2 rounded-full py-2.5 text-[11px] font-medium uppercase tracking-[0.16em] backdrop-blur transition-colors ${
+              soldOut
+                ? "cursor-not-allowed bg-ink/50 text-cream/80"
+                : added
+                  ? "bg-rose-dark text-cream"
+                  : "bg-ink/90 text-cream hover:bg-wine"
+            }`}
+          >
+            {soldOut ? null : added ? (
+              <CheckIcon className="h-3.5 w-3.5" />
+            ) : (
+              <PlusIcon className="h-3.5 w-3.5" />
+            )}
+            {soldOut ? "Agotado" : added ? "Agregado" : "Agregar"}
+          </button>
+        )}
       </div>
 
       <div className="mt-3 flex items-start justify-between gap-3">

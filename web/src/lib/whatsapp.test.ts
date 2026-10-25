@@ -9,6 +9,8 @@ const dress: Product = {
   categoria: "Vestidos",
   descripcion: "",
   imagen: "",
+  stock: null,
+  variants: [],
 }
 
 const customer: Customer = {
@@ -24,11 +26,21 @@ describe("buildOrderMessage", () => {
     const message = buildOrderMessage({
       brandName: "Angeles Store's",
       customer,
-      lines: [{ product: dress, quantity: 2 }],
+      lines: [
+        {
+          product: dress,
+          variantId: null,
+          variantLabel: null,
+          unitPrice: 1290,
+          quantity: 2,
+        },
+      ],
       total: 2580,
+      orderNumber: 42,
     })
 
     expect(message).toContain("ANGELES STORE'S")
+    expect(message).toContain("#42")
     expect(message).toContain("Ana Martínez")
     expect(message).toContain("Col. Palmira")
     expect(message).toContain("Transferencia bancaria")
@@ -37,11 +49,38 @@ describe("buildOrderMessage", () => {
     expect(message).toContain("2,580")
   })
 
+  it("shows the variant label next to the product name", () => {
+    const message = buildOrderMessage({
+      brandName: "Angeles Store's",
+      customer,
+      lines: [
+        {
+          product: dress,
+          variantId: "v1",
+          variantLabel: "Talla M · Negro",
+          unitPrice: 1290,
+          quantity: 1,
+        },
+      ],
+      total: 1290,
+    })
+
+    expect(message).toContain("Vestido midi satinado (Talla M · Negro)")
+  })
+
   it("omits optional fields when empty", () => {
     const message = buildOrderMessage({
       brandName: "Angeles Store's",
       customer: { ...customer, telefono: "   ", notas: "" },
-      lines: [{ product: dress, quantity: 1 }],
+      lines: [
+        {
+          product: dress,
+          variantId: null,
+          variantLabel: null,
+          unitPrice: 1290,
+          quantity: 1,
+        },
+      ],
       total: 1290,
     })
 
@@ -53,7 +92,15 @@ describe("buildOrderMessage", () => {
     const message = buildOrderMessage({
       brandName: "Angeles Store's",
       customer,
-      lines: [{ product: dress, quantity: 1 }],
+      lines: [
+        {
+          product: dress,
+          variantId: null,
+          variantLabel: null,
+          unitPrice: 1290,
+          quantity: 1,
+        },
+      ],
       total: 1290,
     })
 

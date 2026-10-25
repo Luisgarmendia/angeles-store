@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
+import { createOrderAction } from "@/app/(store)/actions"
 import { buildOrderMessage, whatsappUrl } from "@/lib/whatsapp"
 import type { Customer, Product, StoreSettings } from "@/lib/types"
 import { CartDrawer } from "./CartDrawer"
@@ -38,12 +39,27 @@ function StoreChrome({ children }: { children: ReactNode }) {
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
 
-  function handleCheckout(customer: Customer) {
+  async function handleCheckout(customer: Customer) {
+    const result = await createOrderAction({
+      customer,
+      items: lines.map((line) => ({
+        productId: line.product.id,
+        variantId: line.variantId,
+        quantity: line.quantity,
+      })),
+    })
+
+    if (result.error) return { error: result.error }
+    if (!result.lines || result.total === undefined || result.number === undefined) {
+      return { error: "No se pudo registrar el pedido. Intentá de nuevo." }
+    }
+
     const message = buildOrderMessage({
       brandName: settings.store.name,
       customer,
-      lines,
-      total,
+      lines: result.lines,
+      total: result.total,
+      orderNumber: result.number,
     })
 
     window.open(whatsappUrl(settings.whatsapp, message), "_blank", "noopener,noreferrer")
@@ -51,6 +67,7 @@ function StoreChrome({ children }: { children: ReactNode }) {
     setCheckoutOpen(false)
     setCartOpen(false)
     showToast("Pedido listo. Envíalo por WhatsApp para confirmarlo.")
+    return {}
   }
 
   return (
@@ -64,8 +81,10 @@ function StoreChrome({ children }: { children: ReactNode }) {
         lines={lines}
         total={total}
         onClose={() => setCartOpen(false)}
-        onQuantity={(productId, quantity) => setQuantity(productId, quantity)}
-        onRemove={remove}
+        onQuantity={(productId, variantId, quantity) =>
+          setQuantity(productId, variantId, quantity)
+        }
+        onRemove={(productId, variantId) => remove(productId, variantId)}
         onCheckout={() => {
           setCartOpen(false)
           setCheckoutOpen(true)

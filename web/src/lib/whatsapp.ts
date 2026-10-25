@@ -27,15 +27,22 @@ export interface OrderInput {
   customer: Customer
   lines: CartLine[]
   total: number
+  orderNumber?: number
 }
 
 /**
  * Builds the WhatsApp message with WhatsApp markdown and basic-plane symbols
  * so every device renders it.
  */
-export function buildOrderMessage({ brandName, customer, lines, total }: OrderInput): string {
+export function buildOrderMessage({
+  brandName,
+  customer,
+  lines,
+  total,
+  orderNumber,
+}: OrderInput): string {
   const rows: Array<string | null> = [
-    `${ORDER_MARKS.order} *NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
+    `${ORDER_MARKS.order} *NUEVO PEDIDO${orderNumber ? ` #${orderNumber}` : ""} · ${brandName.toUpperCase()}*`,
     "",
     `${ORDER_MARKS.customer} *Cliente:* ${customer.nombre.trim()}`,
     customer.telefono.trim()
@@ -48,9 +55,9 @@ export function buildOrderMessage({ brandName, customer, lines, total }: OrderIn
     `${ORDER_MARKS.detail} *DETALLE DEL PEDIDO*`,
     ...lines.map(
       (line, index) =>
-        `${index + 1}. *${line.product.nombre}* x${line.quantity} — ${formatPrice(
-          line.product.precio * line.quantity,
-        )}`,
+        `${index + 1}. *${line.product.nombre}${
+          line.variantLabel ? ` (${line.variantLabel})` : ""
+        }* x${line.quantity} — ${formatPrice(line.unitPrice * line.quantity)}`,
     ),
     "",
     `${ORDER_MARKS.total} *TOTAL PRODUCTOS:* *${formatPrice(total)}*`,

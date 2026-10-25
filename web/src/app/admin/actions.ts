@@ -3,13 +3,14 @@
 import { randomUUID } from "node:crypto"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { desc, eq } from "drizzle-orm"
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm"
 import { getDb } from "@/db"
-import { products, settings } from "@/db/schema"
+import { orderItems, orders, productVariants, products, settings } from "@/db/schema"
 import { destroySession, requireAdmin } from "@/lib/auth"
 import { PAYMENT_OPTIONS, isPaymentMethod } from "@/lib/payments"
 import { normalizeHonduranPhone } from "@/lib/phone"
-import type { StoreSettings } from "@/lib/types"
+import { isOrderStatus } from "@/lib/orders"
+import type { OrderStatus, StoreSettings } from "@/lib/types"
 
 export interface FormState {
   error?: string
@@ -47,6 +48,47 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value)
 }
 
+interface VariantInput {
+  id?: string
+  label: string
+  stock: number
+  priceCents: number | null
+}
+
+function parseVariantInputs(raw: string): VariantInput[] | null {
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed) || parsed.length > 50) return null
+
+    const labels = new Set<string>()
+    const variants: VariantInput[] = []
+
+    for (const entry of parsed) {
+      if (!entry || typeof entry !== "object") return null
+      const record = entry as Record<string, unknown>
+      const label = typeof record.label === "string" ? record.label.trim() : ""
+      const stock = Number(record.stock)
+      const id = typeof record.id === "string" && record.id.length > 0 ? record.id : undefined
+
+      if (!label || label.length > 80 || labels.has(label)) return null
+      if (!Number.isInteger(stock) || stock < 0 || stock > 1_000_000) return null
+      labels.add(label)
+
+      let priceCents: number | null = null
+      if (record.price !== undefined && record.price !== null && String(record.price).trim() !== "") {
+        priceCents = parsePriceToCents(String(record.price))
+        if (priceCents === null) return null
+      }
+
+      variants.push({ id, label, stock, priceCents })
+    }
+
+    return variants
+  } catch {
+    return null
+  }
+}
+
 export async function logoutAction(): Promise<void> {
   await requireAdmin()
   await destroySession()
@@ -66,6 +108,8 @@ export async function saveProductAction(
   const image = text(formData, "image")
   const price = parsePriceToCents(text(formData, "price"))
   const active = formData.get("active") === "on"
+  const variants = parseVariantInputs(text(formData, "variants") || "[]")
+  const stockRaw = text(formData, "stock")
 
   if (name.length < 2 || name.length > 120) {
     return { error: "El nombre debe tener entre 2 y 120 caracteres." }
@@ -82,42 +126,109 @@ export async function saveProductAction(
   if (image && !isHttpUrl(image)) {
     return { error: "La imagen debe ser una URL http(s) o quedar vacía." }
   }
+  if (variants === null) {
+    return { error: "Revisá las opciones: etiqueta y stock son obligatorios y no se pueden repetir." }
+  }
+
+  let stock: number | null = null
+  if (stockRaw !== "") {
+    const parsed = Number(stockRaw)
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 1_000_000) {
+      return { error: "El stock debe ser un número entero mayor o igual a cero." }
+    }
+    stock = parsed
+  }
+  if (variants.length > 0) stock = null
 
   const db = getDb()
 
-  if (id) {
-    const updated = await db
-      .update(products)
-      .set({
-        name,
-        priceCents: price,
-        category,
-        description,
-        image,
-        active,
-        updatedAt: new Date(),
-      })
-      .where(eq(products.id, id))
-      .returning({ id: products.id })
+  try {
+    await db.transaction(async (tx) => {
+      let productId = id
 
-    if (updated.length === 0) return { error: "Ese producto ya no existe." }
-  } else {
-    const [last] = await db
-      .select({ sortOrder: products.sortOrder })
-      .from(products)
-      .orderBy(desc(products.sortOrder))
-      .limit(1)
+      if (id) {
+        const updated = await tx
+          .update(products)
+          .set({
+            name,
+            priceCents: price,
+            category,
+            description,
+            image,
+            active,
+            stock,
+            updatedAt: new Date(),
+          })
+          .where(eq(products.id, id))
+          .returning({ id: products.id })
 
-    await db.insert(products).values({
-      id: randomUUID(),
-      name,
-      priceCents: price,
-      category,
-      description,
-      image,
-      active,
-      sortOrder: (last?.sortOrder ?? 0) + 1,
+        if (updated.length === 0) throw new Error("Ese producto ya no existe.")
+      } else {
+        productId = randomUUID()
+        const [last] = await tx
+          .select({ sortOrder: products.sortOrder })
+          .from(products)
+          .orderBy(desc(products.sortOrder))
+          .limit(1)
+
+        await tx.insert(products).values({
+          id: productId,
+          name,
+          priceCents: price,
+          category,
+          description,
+          image,
+          active,
+          stock,
+          sortOrder: (last?.sortOrder ?? 0) + 1,
+        })
+      }
+
+      const existingVariants = await tx
+        .select()
+        .from(productVariants)
+        .where(eq(productVariants.productId, productId))
+      const submittedIds = new Set(variants.flatMap((variant) => (variant.id ? [variant.id] : [])))
+
+      for (const existing of existingVariants) {
+        if (!submittedIds.has(existing.id)) {
+          await tx.delete(productVariants).where(eq(productVariants.id, existing.id))
+        }
+      }
+
+      for (const [index, variant] of variants.entries()) {
+        if (variant.id) {
+          const belongs = existingVariants.some((item) => item.id === variant.id)
+          if (!belongs) throw new Error("Una opción no pertenece a este producto.")
+          await tx
+            .update(productVariants)
+            .set({
+              label: variant.label,
+              stock: variant.stock,
+              priceCents: variant.priceCents,
+              sortOrder: index,
+            })
+            .where(
+              and(
+                eq(productVariants.id, variant.id),
+                eq(productVariants.productId, productId),
+              ),
+            )
+        } else {
+          await tx.insert(productVariants).values({
+            productId,
+            label: variant.label,
+            stock: variant.stock,
+            priceCents: variant.priceCents,
+            sortOrder: index,
+          })
+        }
+      }
     })
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "No se pudo guardar el producto.",
+    }
   }
 
   revalidatePath("/", "layout")
@@ -138,8 +249,7 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
 export async function saveSettingsAction(
   _previous: FormState,
   formData: FormData,
-): Promise<FormState> {
-  await requireAdmin()
+): Promise<FormState> {  await requireAdmin()
 
   const storeName = text(formData, "storeName")
   if (storeName.length < 2 || storeName.length > 80) {
@@ -214,4 +324,50 @@ export async function saveSettingsAction(
 
   revalidatePath("/", "layout")
   redirect("/admin/ajustes?ok=1")
+}
+
+export async function updateOrderStatusAction(formData: FormData): Promise<void> {
+  await requireAdmin()
+
+  const id = text(formData, "id")
+  const statusValue = text(formData, "status")
+
+  if (!id || !isOrderStatus(statusValue)) redirect("/admin/pedidos")
+
+  const status: OrderStatus = statusValue
+  const db = getDb()
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1)
+
+  if (!order) redirect("/admin/pedidos")
+  if (order.status === "cancelado" && status !== "cancelado") {
+    redirect(`/admin/pedidos/${id}?error=reopen`)
+  }
+
+  await db.transaction(async (tx) => {
+    if (status === "cancelado" && order.status !== "cancelado") {
+      const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, id))
+
+      for (const item of items) {
+        if (item.variantId) {
+          await tx
+            .update(productVariants)
+            .set({ stock: sql`${productVariants.stock} + ${item.quantity}` })
+            .where(eq(productVariants.id, item.variantId))
+        } else {
+          await tx
+            .update(products)
+            .set({ stock: sql`${products.stock} + ${item.quantity}` })
+            .where(and(eq(products.id, item.productId), isNotNull(products.stock)))
+        }
+      }
+    }
+
+    await tx
+      .update(orders)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+  })
+
+  revalidatePath("/admin/pedidos")
+  redirect(`/admin/pedidos/${id}`)
 }
