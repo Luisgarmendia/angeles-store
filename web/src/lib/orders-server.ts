@@ -13,6 +13,7 @@ export interface OrderItemInput {
 }
 
 export interface CreatedOrder {
+  id: string
   number: number
   lines: CartLine[]
   total: number
@@ -160,6 +161,7 @@ export async function createOrderInDb(input: {
     )
 
     return {
+      id: order.id,
       number: order.number,
       total: subtotalCents / 100,
       lines: draftLines.map<CartLine>((line) => ({

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { updateOrderStatusAction, updatePaymentStatusAction } from "@/app/admin/actions"
 import { getOrder } from "@/db/queries"
+import { AdminStatusToast } from "@/components/admin/admin-status-toast"
 import { formatPrice } from "@/lib/format"
 import {
   ORDER_STATUS_OPTIONS,
@@ -26,10 +27,10 @@ export default async function OrderDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; ok?: string }>
 }) {
   const { id } = await params
-  const { error } = await searchParams
+  const { error, ok } = await searchParams
   const order = await getOrder(id)
 
   if (!order) notFound()
@@ -75,6 +76,8 @@ export default async function OrderDetailPage({
           Un pedido cancelado no se puede reabrir. Si necesitás corregirlo, creá uno nuevo.
         </p>
       )}
+
+      <AdminStatusToast ok={ok} />
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <section className="rounded-2xl border border-ink/10 bg-white/60 p-5">

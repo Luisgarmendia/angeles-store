@@ -423,7 +423,7 @@ export async function updateOrderStatusAction(formData: FormData): Promise<void>
   })
 
   revalidatePath("/admin/pedidos")
-  redirect(`/admin/pedidos/${id}`)
+  redirect(`/admin/pedidos/${id}?ok=status`)
 }
 
 export async function updatePaymentStatusAction(formData: FormData): Promise<void> {
@@ -445,5 +445,5 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<voi
 
   revalidatePath("/admin")
   revalidatePath("/admin/pedidos")
-  redirect(`/admin/pedidos/${id}`)
+  redirect(`/admin/pedidos/${id}?ok=payment`)
 }

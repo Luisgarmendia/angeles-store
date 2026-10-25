@@ -11,7 +11,7 @@ Test runner: `vitest` (`cd web && npm test`)
 - **S1 — Trust and legal.** The checkout no longer claims that order data stays only on the device. The store has privacy, terms, shipping/returns, and FAQ pages linked from the footer. The sitemap includes them. The store emits `Organization` and `WebSite` JSON-LD. Admin pages are `noindex`.
 - **S2 — Checkout integrity.** The checkout requires a valid Honduran phone, the server normalizes it, the cart cannot exceed available stock, and public order creation is rate-limited per client.
 - **S3 — Storefront UX.** The header has a mobile menu. The catalog can filter only offers and only made-to-order products. Cart and checkout dialogs trap focus and restore it on close.
-- **S4 — Admin operations.** Orders have a payment status. The admin landing page shows pending orders, pending payments, low stock, and total sales. Orders can be searched by number, customer, phone, or address. Product gallery photos can be reordered. Low-stock products are flagged. The order detail shows each item's image, a link to the admin product editor, and a public "Ver en la tienda" link.
+- **S4 — Admin operations.** Orders have a payment status. The admin landing page shows pending orders, pending payments, low stock, and total sales. Orders can be searched by number, customer, phone, or address. Product gallery photos can be reordered. Low-stock products are flagged. The order detail shows each item's image, a link to the admin product editor, and a public "Ver en la tienda" link. Order and payment status changes show a toast notification.
 - **S5 — Quality.** Unit tests cover the new cart, pricing, catalog, phone, and rate-limit behavior. TypeScript, the Next build, migrations, and storefront/admin smoke tests pass.
 
 ## Tasks
@@ -21,7 +21,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | T1 | S1 | inline | done | legal pages, footer links, checkout privacy copy, sitemap/robots, JSON-LD, admin noindex |
 | T2 | S2 | inline | done | phone validation, cart cap, order rate limit |
 | T3 | S3 | inline | done | mobile menu, offers/made-to-order filters, focus trap |
-| T4 | S4 | inline | done | payment status, admin summary, order search, image reorder, low stock, order item images/links |
+| T4 | S4 | inline | done | payment status, admin summary, order search, image reorder, low stock, order item images/links, status toast |
 | T5 | S5 | inline | done | independent verifier pass; 15 test files / 85 tests, typecheck, build, migration, smoke |
 
 - **T1 — Trust and SEO.** Fix the checkout privacy copy; add `/privacidad`, `/terminos`, `/envios-y-devoluciones`, and `/preguntas-frecuentes`; link them in the footer; add `sitemap.xml`, `robots.txt`, store JSON-LD, and admin `noindex`.
@@ -51,3 +51,9 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L17 (user, verbatim):** "en la parte del admin no veo muy claro mira, en la gestion de pedidos solo me sale el nombre del articulo, quieor que salga la imagen o una mejor forma y que al seleccionar valla al articulo, y creo que eso es lo importante"
 - **L18 (implementation):** The admin order detail now joins each order item with the current product to show its cover image. The image and name link to `/admin/productos/<id>` for editing, and a secondary "Ver en la tienda" link opens `/producto/<id>` in a new tab. Deleted products keep the snapshot name, show a "Sin foto" placeholder, and are labeled "Eliminado" with no link.
 - **L19 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. Authenticated smoke on order #2 returned 200 with 2 product images, 2 admin product links, and 2 "Ver en la tienda" links for its two items.
+- **L20 (user, verbatim):** "cuando cambio de estado los pedidos no me salta niguna confirmacion"
+- **L21 (implementation):** Order and payment status updates now redirect with `?ok=status` or `?ok=payment`, and the order detail shows an animated confirmation banner with a check icon ("Estado del pedido actualizado." / "Estado del pago actualizado."). The existing `?error=reopen` alert is unchanged.
+- **L22 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. Authenticated smoke submitted both forms with their current values: the final URLs contained `?ok=status` and `?ok=payment`, and both confirmation banners rendered.
+- **L23 (user, verbatim):** "mmmm no sale mejor un tast que un mensaje asi?"
+- **L24 (implementation):** Replaced the persistent order-detail banners with the storefront toast system. The admin root layout now wraps pages in `ToastProvider`; `AdminStatusToast` reads `?ok=status`/`?ok=payment`, shows the matching toast, and calls `router.replace` to remove the query param so a refresh does not repeat it. The toast auto-dismisses after 4.5 seconds.
+- **L25 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. Authenticated smoke: the status form still redirects to `?ok=status`, the old banner is absent from the page, and the toast component/message is present in the client bundle. The toast itself is client-rendered; no DOM-level test runner is installed.

@@ -8,6 +8,7 @@ import { CartDrawer } from "./CartDrawer"
 import { CheckoutModal } from "./CheckoutModal"
 import { Footer } from "./Footer"
 import { Header } from "./Header"
+import { OrderConfirmationModal, type OrderConfirmation } from "./OrderConfirmationModal"
 import { StoreProvider, useCart } from "./store-provider"
 import { StoreSettingsProvider, useStoreSettings } from "./store-settings-provider"
 import { ToastProvider, useToast } from "./toast-provider"
@@ -38,6 +39,7 @@ function StoreChrome({ children }: { children: ReactNode }) {
   const { showToast } = useToast()
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(null)
 
   async function handleCheckout(customer: Customer) {
     const popup = window.open("about:blank", "_blank")
@@ -55,7 +57,12 @@ function StoreChrome({ children }: { children: ReactNode }) {
       popup?.close()
       return { error: result.error }
     }
-    if (!result.lines || result.total === undefined || result.number === undefined) {
+    if (
+      result.id === undefined ||
+      !result.lines ||
+      result.total === undefined ||
+      result.number === undefined
+    ) {
       popup?.close()
       return { error: "No se pudo registrar el pedido. Intentá de nuevo." }
     }
@@ -69,10 +76,19 @@ function StoreChrome({ children }: { children: ReactNode }) {
     })
     const url = whatsappUrl(settings.whatsapp, message)
 
+    setConfirmation({
+      id: result.id,
+      number: result.number,
+      lines: result.lines,
+      total: result.total,
+      customer,
+      whatsappUrl: url,
+      createdAt: new Date(),
+    })
     clear()
     setCheckoutOpen(false)
     setCartOpen(false)
-    showToast("Pedido listo. Envíalo por WhatsApp para confirmarlo.")
+    showToast("Pedido confirmado. Guardá tu comprobante.")
 
     try {
       if (popup && !popup.closed) {
@@ -115,6 +131,11 @@ function StoreChrome({ children }: { children: ReactNode }) {
         paymentMethods={settings.payments}
         onClose={() => setCheckoutOpen(false)}
         onSubmit={handleCheckout}
+      />
+
+      <OrderConfirmationModal
+        confirmation={confirmation}
+        onClose={() => setConfirmation(null)}
       />
     </>
   )
