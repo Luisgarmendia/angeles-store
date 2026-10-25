@@ -1,174 +1,77 @@
 import { describe, expect, it } from "vitest"
-import { DEFAULT_CATALOG_FILTERS, filterAndSortProducts } from "./catalog"
-import type { Product } from "./types"
+import { DEFAULT_CATALOG_FILTERS } from "./catalog"
+import {
+  decodeCatalogCursor,
+  encodeCatalogCursor,
+  normalizeCatalogFilters,
+  priceToCents,
+} from "./catalog-query"
 
-function product(id: string, overrides: Partial<Product> = {}): Product {
-  return {
-    id,
-    nombre: id,
-    precio: 100,
-    categoria: "Cremas",
-    descripcion: "",
-    imagen: "",
-    imagenes: [],
-    stock: null,
-    porEncargo: false,
-    precioAnterior: null,
-    creadoEn: "2026-01-01T00:00:00.000Z",
-    variants: [],
-    ...overrides,
-  }
-}
-
-describe("filterAndSortProducts", () => {
-  const catalog: Product[] = [
-    product("c1", {
-      nombre: "Crema de día",
-      precio: 480,
-      creadoEn: "2026-01-01T00:00:00.000Z",
-    }),
-    product("s1", {
-      nombre: "Camisa blanca",
-      categoria: "Camisas",
-      precio: 590,
-      creadoEn: "2026-03-01T00:00:00.000Z",
-    }),
-    product("c2", {
-      nombre: "Crema de noche",
-      precio: 520,
-      creadoEn: "2026-02-01T00:00:00.000Z",
-    }),
-  ]
-
-  it("keeps the featured order by default", () => {
-    expect(filterAndSortProducts(catalog, DEFAULT_CATALOG_FILTERS).map((item) => item.id)).toEqual([
-      "c1",
-      "s1",
-      "c2",
-    ])
+describe("normalizeCatalogFilters", () => {
+  it("returns the defaults for empty input", () => {
+    expect(normalizeCatalogFilters()).toEqual(DEFAULT_CATALOG_FILTERS)
   })
 
-  it("filters by an inclusive price range", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      minPrice: "480",
-      maxPrice: "520",
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["c1", "c2"])
-  })
-
-  it("swaps inverted price bounds", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      minPrice: "520",
-      maxPrice: "480",
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["c1", "c2"])
-  })
-
-  it("ignores an invalid price input", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      minPrice: "abc",
-    })
-
-    expect(result).toHaveLength(3)
-  })
-
-  it("combines search and category", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      search: "noche",
-      category: "Cremas",
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["c2"])
-  })
-
-  it("sorts by insertion date, newest first", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      sort: "recientes",
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["s1", "c2", "c1"])
-  })
-
-  it("sorts by price in both directions", () => {
-    const ascending = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
+  it("trims and clamps untrusted strings", () => {
+    const filters = normalizeCatalogFilters({
+      search: `  ${"a".repeat(120)}  `,
+      category: "  Cremas  ",
+      minPrice: " 100 ",
+      maxPrice: " 200 ",
       sort: "precio-asc",
-    })
-    const descending = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      sort: "precio-desc",
+      onlyDiscounted: true,
+      onlyMadeToOrder: false,
     })
 
-    expect(ascending.map((item) => item.id)).toEqual(["c1", "c2", "s1"])
-    expect(descending.map((item) => item.id)).toEqual(["s1", "c2", "c1"])
+    expect(filters.search).toHaveLength(80)
+    expect(filters.category).toBe("Cremas")
+    expect(filters.minPrice).toBe("100")
+    expect(filters.maxPrice).toBe("200")
+    expect(filters.sort).toBe("precio-asc")
+    expect(filters.onlyDiscounted).toBe(true)
+    expect(filters.onlyMadeToOrder).toBe(false)
+  })
+
+  it("falls back to the default sort and category", () => {
+    const filters = normalizeCatalogFilters({
+      sort: "nope" as never,
+      category: "   ",
+    })
+
+    expect(filters.sort).toBe("destacados")
+    expect(filters.category).toBe("Todos")
   })
 })
 
-describe("filterAndSortProducts offer and made-to-order filters", () => {
-  const catalog: Product[] = [
-    product("oferta", { precio: 400, precioAnterior: 500 }),
-    product("encargo", { precio: 600, porEncargo: true }),
-    product("ambos", { precio: 800, precioAnterior: 1000, porEncargo: true }),
-    product("normal", { precio: 500 }),
-  ]
+describe("priceToCents", () => {
+  it("converts lempiras to cents and accepts commas", () => {
+    expect(priceToCents("480")).toBe(48000)
+    expect(priceToCents("480,5")).toBe(48050)
+    expect(priceToCents("  ")).toBeNull()
+    expect(priceToCents("-1")).toBeNull()
+    expect(priceToCents("abc")).toBeNull()
+  })
+})
 
-  it("keeps the toggles off by default", () => {
-    expect(DEFAULT_CATALOG_FILTERS.onlyDiscounted).toBe(false)
-    expect(DEFAULT_CATALOG_FILTERS.onlyMadeToOrder).toBe(false)
+describe("catalog cursors", () => {
+  it("round-trips a featured cursor with microsecond precision", () => {
+    const cursor = { s: 3, c: "2026-10-25 21:15:28.123456+00", i: "c1" }
+
+    expect(decodeCatalogCursor(encodeCatalogCursor(cursor))).toEqual(cursor)
   })
 
-  it("keeps only discounted products when onlyDiscounted is on", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      onlyDiscounted: true,
-    })
+  it("round-trips a price cursor", () => {
+    const cursor = { p: 48000, i: "c2" }
 
-    expect(result.map((item) => item.id)).toEqual(["oferta", "ambos"])
+    expect(decodeCatalogCursor(encodeCatalogCursor(cursor))).toEqual(cursor)
   })
 
-  it("keeps only made-to-order products when onlyMadeToOrder is on", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      onlyMadeToOrder: true,
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["encargo", "ambos"])
-  })
-
-  it("combines the offer filter with a price range", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      onlyDiscounted: true,
-      minPrice: "450",
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["ambos"])
-  })
-
-  it("combines the made-to-order filter with a price range", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      onlyMadeToOrder: true,
-      maxPrice: "650",
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["encargo"])
-  })
-
-  it("requires both conditions when both toggles are on", () => {
-    const result = filterAndSortProducts(catalog, {
-      ...DEFAULT_CATALOG_FILTERS,
-      onlyDiscounted: true,
-      onlyMadeToOrder: true,
-    })
-
-    expect(result.map((item) => item.id)).toEqual(["ambos"])
+  it("rejects malformed cursors", () => {
+    expect(decodeCatalogCursor(null)).toBeNull()
+    expect(decodeCatalogCursor("")).toBeNull()
+    expect(decodeCatalogCursor("not-base64")).toBeNull()
+    expect(
+      decodeCatalogCursor(Buffer.from(JSON.stringify({ s: 1 })).toString("base64url")),
+    ).toBeNull()
   })
 })

@@ -154,6 +154,12 @@
   animation: modal-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Long catalogs: skip rendering cards that are far off-screen. */
+.catalog-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
 @media (max-width: 640px) {
   .petal:nth-child(n + 13) {
     display: none;

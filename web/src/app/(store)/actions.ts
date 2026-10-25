@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
+import { getProductsByIds } from "@/db/queries"
 import { createOrderInDb, OrderError } from "@/lib/orders-server"
 import { normalizeHonduranPhone } from "@/lib/phone"
 import { canCreateOrder, recordOrder } from "@/lib/rate-limit"
-import type { CartLine, Customer } from "@/lib/types"
+import type { CartLine, Customer, Product } from "@/lib/types"
 
 export interface CreateOrderItemInput {
   productId: string
@@ -32,6 +33,12 @@ const ORDER_LIMIT_ERROR =
 
 function clean(value: string | undefined, maxLength: number): string {
   return (value ?? "").trim().slice(0, maxLength)
+}
+
+/** Hydrates the local cart with only the products it references. */
+export async function getProductsByIdsAction(ids: string[]): Promise<Product[]> {
+  if (!Array.isArray(ids)) return []
+  return getProductsByIds(ids)
 }
 
 /** First forwarded hop, then the proxy header; "unknown" when neither is set. */

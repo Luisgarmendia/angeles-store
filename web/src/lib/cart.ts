@@ -73,6 +73,46 @@ export function cartCount(cart: CartItem[]): number {
   return cart.reduce((total, item) => total + item.quantity, 0)
 }
 
+/**
+ * Validates the cart persisted in localStorage before trusting it. Malformed
+ * entries are dropped, quantities are floored into 1..99, and duplicate lines
+ * are collapsed into the first one.
+ */
+export function sanitizeCart(value: unknown): CartItem[] {
+  if (!Array.isArray(value)) return []
+
+  const seen = new Set<string>()
+  const items: CartItem[] = []
+
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") continue
+
+    const record = raw as Record<string, unknown>
+    const productId = record.productId
+    const variantId = record.variantId
+    const quantity = record.quantity
+
+    if (typeof productId !== "string" || productId.length === 0 || productId.length > 80) {
+      continue
+    }
+    if (variantId !== null && variantId !== undefined && typeof variantId !== "string") {
+      continue
+    }
+    if (typeof quantity !== "number" || !Number.isFinite(quantity)) continue
+
+    const amount = Math.floor(quantity)
+    if (amount <= 0 || amount > 99) continue
+
+    const key = lineKey(productId, variantId ?? null)
+    if (seen.has(key)) continue
+
+    seen.add(key)
+    items.push({ productId, variantId: variantId ?? null, quantity: amount })
+  }
+
+  return items
+}
+
 export function cartLines(cart: CartItem[], products: Product[]): CartLine[] {
   return cart.flatMap((item) => {
     const product = products.find((candidate) => candidate.id === item.productId)

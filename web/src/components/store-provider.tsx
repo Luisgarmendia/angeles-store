@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react"
+import { getProductsByIdsAction } from "@/app/(store)/actions"
 import {
   addToCart,
   capLineQuantity,
@@ -15,6 +16,7 @@ import {
   cartLines,
   cartTotal,
   removeFromCart,
+  sanitizeCart,
   setQuantity as setLineQuantity,
 } from "@/lib/cart"
 import { maxPurchasable } from "@/lib/stock"
@@ -35,7 +37,9 @@ interface CartContextValue {
   lines: CartLine[]
   total: number
   count: number
-  add: (productId: string, variantId: string | null, quantity?: number) => void
+  /** False until the local cart finished hydrating its products. */
+  ready: boolean
+  add: (product: Product, variantId: string | null, quantity?: number) => void
   remove: (productId: string, variantId: string | null) => void
   setQuantity: (productId: string, variantId: string | null, quantity: number) => void
   clear: () => void
@@ -49,24 +53,44 @@ export function useCart(): CartContextValue {
   return context
 }
 
-export function StoreProvider({
-  products,
-  children,
-}: {
-  products: Product[]
-  children: ReactNode
-}) {
+export function StoreProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
+  const [productsById, setProductsById] = useState<Map<string, Product>>(() => new Map())
   const [hydrated, setHydrated] = useState(false)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    let items: CartItem[] = []
     try {
       const raw = window.localStorage.getItem(CART_KEY)
-      if (raw) setCart(JSON.parse(raw) as CartItem[])
+      if (raw) items = sanitizeCart(JSON.parse(raw))
     } catch {
-      // Ignore a corrupted cart; the store still works.
+      items = []
     }
+
+    // Hydration must happen after mount: localStorage does not exist during SSR.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCart(items)
     setHydrated(true)
+
+    const ids = [...new Set(items.map((item) => item.productId))]
+    if (ids.length === 0) {
+      setReady(true)
+      return
+    }
+
+    getProductsByIdsAction(ids)
+      .then((products) => {
+        setProductsById((current) => {
+          const next = new Map(current)
+          for (const product of products) next.set(product.id, product)
+          return next
+        })
+      })
+      .catch(() => {
+        // The cart still renders whatever was already loaded.
+      })
+      .finally(() => setReady(true))
   }, [])
 
   useEffect(() => {
@@ -78,28 +102,33 @@ export function StoreProvider({
     }
   }, [cart, hydrated])
 
-  const lines = useMemo(() => cartLines(cart, products), [cart, products])
-  const total = useMemo(() => cartTotal(cart, products), [cart, products])
+  const productList = useMemo(() => Array.from(productsById.values()), [productsById])
+  const lines = useMemo(() => cartLines(cart, productList), [cart, productList])
+  const total = useMemo(() => cartTotal(cart, productList), [cart, productList])
   const count = useMemo(() => cartCount(cart), [cart])
-  const productsById = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  )
 
   const value = useMemo<CartContextValue>(
     () => ({
       lines,
       total,
       count,
-      add: (productId, variantId, quantity = 1) =>
+      ready,
+      add: (product, variantId, quantity = 1) => {
+        setProductsById((current) => {
+          if (current.get(product.id) === product) return current
+          const next = new Map(current)
+          next.set(product.id, product)
+          return next
+        })
         setCart((current) =>
           capLineQuantity(
-            addToCart(current, productId, variantId, quantity),
-            productId,
+            addToCart(current, product.id, variantId, quantity),
+            product.id,
             variantId,
-            purchasableLimit(productsById, productId, variantId),
+            maxPurchasable(product, variantId),
           ),
-        ),
+        )
+      },
       remove: (productId, variantId) =>
         setCart((current) => removeFromCart(current, productId, variantId)),
       setQuantity: (productId, variantId, quantity) =>
@@ -113,7 +142,7 @@ export function StoreProvider({
         ),
       clear: () => setCart([]),
     }),
-    [lines, total, count, productsById],
+    [lines, total, count, ready, productsById],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

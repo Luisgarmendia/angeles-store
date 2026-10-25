@@ -1,4 +1,22 @@
-import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  ne,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm"
 import { getDb } from "."
 import {
   adminNotifications,
@@ -11,6 +29,17 @@ import {
   settings,
 } from "./schema"
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
+import type { CatalogFilterInput, CatalogSort, CategoryCount } from "@/lib/catalog"
+import {
+  CATALOG_MAX_PAGE_SIZE,
+  CATALOG_PAGE_SIZE,
+  decodeCatalogCursor,
+  encodeCatalogCursor,
+  normalizeCatalogFilters,
+  priceToCents,
+  type CatalogCursor,
+  type CatalogPage,
+} from "@/lib/catalog-query"
 import type { AdminRole } from "@/lib/roles"
 import type {
   AdminProduct,
@@ -139,35 +168,215 @@ async function withVariants(
   }))
 }
 
-export async function listProducts({
-  query = "",
-  includeInactive = false,
-}: {
-  query?: string
-  includeInactive?: boolean
-} = {}): Promise<Product[]> {
-  const db = getDb()
-  const filters = []
+function catalogConditions(filters: CatalogFilterInput): SQL[] {
+  const conditions: SQL[] = [eq(products.active, true)]
 
-  if (!includeInactive) filters.push(eq(products.active, true))
-  if (query.trim()) {
-    const term = `%${query.trim()}%`
-    filters.push(
-      or(
-        ilike(products.name, term),
-        ilike(products.category, term),
-        ilike(products.description, term),
-      ),
+  if (filters.category !== "Todos") {
+    conditions.push(eq(products.category, filters.category))
+  }
+
+  const term = filters.search.trim()
+  if (term) {
+    const pattern = `%${term}%`
+    conditions.push(
+      or(ilike(products.name, pattern), ilike(products.description, pattern))!,
     )
   }
 
+  const min = priceToCents(filters.minPrice)
+  const max = priceToCents(filters.maxPrice)
+  const swap = min !== null && max !== null && min > max
+  const low = swap ? max : min
+  const high = swap ? min : max
+
+  if (low !== null) conditions.push(gte(products.priceCents, low))
+  if (high !== null) conditions.push(lte(products.priceCents, high))
+
+  if (filters.onlyDiscounted) {
+    conditions.push(
+      and(
+        gt(products.priceCents, 0),
+        gt(products.compareAtPriceCents, products.priceCents),
+      )!,
+    )
+  }
+
+  if (filters.onlyMadeToOrder) {
+    conditions.push(eq(products.madeToOrder, true))
+  }
+
+  return conditions
+}
+
+function catalogOrder(sort: CatalogSort): SQL[] {
+  switch (sort) {
+    case "recientes":
+      return [desc(products.createdAt), desc(products.id)]
+    case "precio-asc":
+      return [asc(products.priceCents), asc(products.id)]
+    case "precio-desc":
+      return [desc(products.priceCents), desc(products.id)]
+    default:
+      return [asc(products.sortOrder), asc(products.createdAt), asc(products.id)]
+  }
+}
+
+function catalogCursorCondition(sort: CatalogSort, cursor: CatalogCursor): SQL {
+  switch (sort) {
+    case "recientes": {
+      if (!cursor.c) return sql`true`
+      return or(
+        sql`${products.createdAt} < ${cursor.c}::timestamptz`,
+        and(
+          sql`${products.createdAt} = ${cursor.c}::timestamptz`,
+          lt(products.id, cursor.i),
+        ),
+      )!
+    }
+    case "precio-asc": {
+      if (cursor.p === undefined) return sql`true`
+      return or(
+        gt(products.priceCents, cursor.p),
+        and(eq(products.priceCents, cursor.p), gt(products.id, cursor.i)),
+      )!
+    }
+    case "precio-desc": {
+      if (cursor.p === undefined) return sql`true`
+      return or(
+        lt(products.priceCents, cursor.p),
+        and(eq(products.priceCents, cursor.p), lt(products.id, cursor.i)),
+      )!
+    }
+    default: {
+      if (cursor.s === undefined || !cursor.c) return sql`true`
+      return or(
+        gt(products.sortOrder, cursor.s),
+        and(
+          eq(products.sortOrder, cursor.s),
+          sql`${products.createdAt} > ${cursor.c}::timestamptz`,
+        ),
+        and(
+          eq(products.sortOrder, cursor.s),
+          sql`${products.createdAt} = ${cursor.c}::timestamptz`,
+          gt(products.id, cursor.i),
+        ),
+      )!
+    }
+  }
+}
+
+function cursorFromRow(
+  sort: CatalogSort,
+  row: { id: string; sortOrder: number; priceCents: number; createdAtCursor: string },
+): CatalogCursor {
+  switch (sort) {
+    case "recientes":
+      return { c: row.createdAtCursor, i: row.id }
+    case "precio-asc":
+    case "precio-desc":
+      return { p: row.priceCents, i: row.id }
+    default:
+      return { s: row.sortOrder, c: row.createdAtCursor, i: row.id }
+  }
+}
+
+/**
+ * Returns one keyset page of the active catalog. The cursor stores the exact
+ * sort keys plus the id, so later pages never repeat or skip a product when
+ * rows change between requests.
+ */
+export async function listCatalogPage({
+  filters,
+  cursor = null,
+  limit = CATALOG_PAGE_SIZE,
+  includeTotal = true,
+}: {
+  filters?: Partial<CatalogFilterInput> | null
+  cursor?: string | null
+  limit?: number
+  includeTotal?: boolean
+} = {}): Promise<CatalogPage> {
+  const db = getDb()
+  const normalized = normalizeCatalogFilters(filters)
+  const size = Math.min(
+    Math.max(Math.trunc(limit) || CATALOG_PAGE_SIZE, 1),
+    CATALOG_MAX_PAGE_SIZE,
+  )
+  const conditions = catalogConditions(normalized)
+  const decoded = decodeCatalogCursor(cursor)
+  const pageConditions = decoded
+    ? [...conditions, catalogCursorCondition(normalized.sort, decoded)]
+    : conditions
+  const where = and(...pageConditions)
+
   const rows = await db
+    .select({
+      ...getTableColumns(products),
+      createdAtCursor: sql<string>`${products.createdAt}::text`,
+    })
+    .from(products)
+    .where(where)
+    .orderBy(...catalogOrder(normalized.sort))
+    .limit(size + 1)
+
+  const hasMore = rows.length > size
+  const pageRows = hasMore ? rows.slice(0, size) : rows
+  const items = await withVariants(pageRows)
+
+  let total = 0
+  if (includeTotal) {
+    const [countRow] = await db
+      .select({ value: count() })
+      .from(products)
+      .where(and(...conditions))
+    total = Number(countRow?.value ?? 0)
+  }
+
+  const last = pageRows[pageRows.length - 1]
+  const nextCursor =
+    hasMore && last ? encodeCatalogCursor(cursorFromRow(normalized.sort, last)) : null
+
+  return { products: items, nextCursor, total }
+}
+
+/** Active categories with their product count, independent of the loaded page. */
+export async function listCategories(): Promise<CategoryCount[]> {
+  const rows = await getDb()
+    .select({ name: products.category, value: count() })
+    .from(products)
+    .where(eq(products.active, true))
+    .groupBy(products.category)
+    .orderBy(asc(products.category))
+
+  return rows.map((row) => ({ name: row.name, count: Number(row.value) }))
+}
+
+/** Hydrates only the products referenced by the local cart. */
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  const clean = [...new Set(ids)]
+    .filter((id) => typeof id === "string" && id.length > 0 && id.length <= 80)
+    .slice(0, 100)
+
+  if (clean.length === 0) return []
+
+  const rows = await getDb()
     .select()
     .from(products)
-    .where(filters.length > 0 ? and(...filters) : undefined)
-    .orderBy(asc(products.sortOrder), asc(products.createdAt))
+    .where(and(inArray(products.id, clean), eq(products.active, true)))
 
   return withVariants(rows)
+}
+
+/** Lightweight entries for the sitemap; no descriptions or variants. */
+export async function listProductSitemapEntries(): Promise<
+  Array<{ id: string; updatedAt: string }>
+> {
+  const rows = await getDb()
+    .select({ id: products.id, updatedAt: products.updatedAt })
+    .from(products)
+    .where(eq(products.active, true))
+
+  return rows.map((row) => ({ id: row.id, updatedAt: row.updatedAt.toISOString() }))
 }
 
 export async function listAdminProducts(query = ""): Promise<AdminProduct[]> {
@@ -222,11 +431,36 @@ export async function listRecommendations(
   product: Product,
   limit = 4,
 ): Promise<Product[]> {
-  const all = await listProducts()
-  const others = all.filter((item) => item.id !== product.id)
-  const same = others.filter((item) => item.categoria === product.categoria)
-  const rest = others.filter((item) => item.categoria !== product.categoria)
-  return [...same, ...rest].slice(0, limit)
+  const db = getDb()
+  const size = Math.min(Math.max(Math.trunc(limit) || 4, 1), 12)
+
+  const sameRows = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.active, true), eq(products.category, product.categoria)))
+    .orderBy(asc(products.sortOrder), asc(products.createdAt))
+    .limit(size + 1)
+
+  const same = (await withVariants(sameRows))
+    .filter((item) => item.id !== product.id)
+    .slice(0, size)
+
+  if (same.length >= size) return same
+
+  const restRows = await db
+    .select()
+    .from(products)
+    .where(
+      and(
+        eq(products.active, true),
+        ne(products.category, product.categoria),
+        ne(products.id, product.id),
+      ),
+    )
+    .orderBy(asc(products.sortOrder), asc(products.createdAt))
+    .limit(size - same.length)
+
+  return [...same, ...(await withVariants(restRows))]
 }
 
 export async function listOrders(

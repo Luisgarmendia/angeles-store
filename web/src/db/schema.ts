@@ -12,22 +12,36 @@ import {
 } from "drizzle-orm/pg-core"
 import type { StoreSettings } from "../lib/types"
 
-export const products = pgTable("products", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  priceCents: integer("price_cents").notNull(),
-  category: text("category").notNull(),
-  description: text("description").notNull(),
-  image: text("image").notNull().default(""),
-  images: jsonb("images").$type<string[]>().notNull().default([]),
-  active: boolean("active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-  stock: integer("stock"),
-  madeToOrder: boolean("made_to_order").notNull().default(false),
-  compareAtPriceCents: integer("compare_at_price_cents"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-})
+export const products = pgTable(
+  "products",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    category: text("category").notNull(),
+    description: text("description").notNull(),
+    image: text("image").notNull().default(""),
+    images: jsonb("images").$type<string[]>().notNull().default([]),
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    stock: integer("stock"),
+    madeToOrder: boolean("made_to_order").notNull().default(false),
+    compareAtPriceCents: integer("compare_at_price_cents"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("products_active_sort_idx").on(
+      table.active,
+      table.sortOrder,
+      table.createdAt,
+      table.id,
+    ),
+    index("products_active_created_idx").on(table.active, table.createdAt, table.id),
+    index("products_active_price_idx").on(table.active, table.priceCents, table.id),
+    index("products_active_category_idx").on(table.active, table.category),
+  ],
+)
 
 export const productVariants = pgTable(
   "product_variants",
