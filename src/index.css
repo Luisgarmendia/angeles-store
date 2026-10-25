@@ -3,6 +3,7 @@
 @theme {
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
+  --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
   --color-cream: #faf7f2;
   --color-sand: #f1eae0;
@@ -22,11 +23,22 @@
   body {
     background-color: var(--color-cream);
     color: var(--color-ink);
-    font-family: var(--font-sans);
+    font-family: var(--font-sans), var(--font-emoji), sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   ::selection {
     background-color: color-mix(in srgb, var(--color-rose) 35%, transparent);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

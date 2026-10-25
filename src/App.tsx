@@ -10,6 +10,7 @@ import { Header } from "./components/Header"
 import { Hero } from "./components/Hero"
 import { ProductGrid } from "./components/ProductGrid"
 import { SearchIcon } from "./components/Icons"
+import { Toast, type ToastData } from "./components/Toast"
 import {
   addToCart as addToCartLine,
   cartCount,
@@ -22,6 +23,7 @@ import {
   loadCart,
   loadProducts,
   loadSettings,
+  migrateStorage,
   saveCart,
   saveProducts,
   saveSettings,
@@ -32,6 +34,10 @@ import type { CartItem, Customer, Product, StoreSettings } from "./types"
 const SEED_PRODUCTS = seedProducts as Product[]
 const DEFAULT_SETTINGS: StoreSettings = { whatsapp: config.contact.whatsapp }
 
+migrateStorage(SEED_PRODUCTS, DEFAULT_SETTINGS)
+
+type ToastState = ToastData & { id: number }
+
 export default function App() {
   const [products, setProducts] = useState<Product[]>(() => loadProducts(SEED_PRODUCTS))
   const [settings, setSettings] = useState<StoreSettings>(() => loadSettings(DEFAULT_SETTINGS))
@@ -41,7 +47,7 @@ export default function App() {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("Todos")
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<ToastState | null>(null)
 
   useEffect(() => saveProducts(products), [products])
   useEffect(() => saveCart(cart), [cart])
@@ -49,7 +55,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return
-    const timeout = window.setTimeout(() => setToast(null), 4000)
+    const timeout = window.setTimeout(() => setToast(null), 4500)
     return () => window.clearTimeout(timeout)
   }, [toast])
 
@@ -74,9 +80,22 @@ export default function App() {
   const total = useMemo(() => cartTotal(cart, products), [cart, products])
   const itemCount = useMemo(() => cartCount(cart), [cart])
 
+  function showToast(message: string, action?: { label: string; onClick: () => void }) {
+    setToast({
+      id: Date.now(),
+      message,
+      actionLabel: action?.label,
+      onAction: action?.onClick,
+    })
+  }
+
   function handleAdd(productId: string) {
+    const product = products.find((candidate) => candidate.id === productId)
     setCart((current) => addToCartLine(current, productId))
-    setCartOpen(true)
+    showToast(product ? `${product.nombre} se agregó a tu carrito.` : "Producto agregado.", {
+      label: "Ver carrito",
+      onClick: () => setCartOpen(true),
+    })
   }
 
   function handleCheckout(customer: Customer) {
@@ -91,7 +110,7 @@ export default function App() {
     setCart([])
     setCheckoutOpen(false)
     setCartOpen(false)
-    setToast("Pedido preparado. Terminá de enviarlo en WhatsApp.")
+    showToast("Pedido listo. Envíalo por WhatsApp para confirmarlo.")
   }
 
   function handleSaveProduct(product: Product) {
@@ -101,35 +120,40 @@ export default function App() {
         ? current.map((candidate) => (candidate.id === product.id ? product : candidate))
         : [product, ...current]
     })
-    setToast("Producto guardado.")
+    showToast("Producto guardado.")
   }
 
   function handleDeleteProduct(productId: string) {
     setProducts((current) => current.filter((product) => product.id !== productId))
     setCart((current) => removeFromCart(current, productId))
-    setToast("Producto eliminado.")
+    showToast("Producto eliminado.")
   }
 
   function handleImport(imported: Product[]) {
     setProducts(imported)
     setCategory("Todos")
-    setToast(`${imported.length} productos importados.`)
+    showToast(`${imported.length} productos importados.`)
   }
+
+  const toastNode = toast ? <Toast toast={toast} onClose={() => setToast(null)} /> : null
 
   if (view === "admin") {
     return (
-      <AdminPanel
-        products={products}
-        settings={settings}
-        onClose={() => setView("store")}
-        onSaveProduct={handleSaveProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onSaveSettings={(next) => {
-          setSettings(next)
-          setToast("Número de WhatsApp actualizado.")
-        }}
-        onImport={handleImport}
-      />
+      <>
+        <AdminPanel
+          products={products}
+          settings={settings}
+          onClose={() => setView("store")}
+          onSaveProduct={handleSaveProduct}
+          onDeleteProduct={handleDeleteProduct}
+          onSaveSettings={(next) => {
+            setSettings(next)
+            showToast("Número de WhatsApp actualizado.")
+          }}
+          onImport={handleImport}
+        />
+        {toastNode}
+      </>
     )
   }
 
@@ -151,8 +175,8 @@ export default function App() {
                 <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Nueva temporada</p>
                 <h2 className="font-display text-4xl text-ink">La colección</h2>
               </div>
-              <p className="max-w-sm text-sm text-muted">
-                Prendas y accesorios elegidos uno por uno. Si te enamorás de algo, sumalo al carrito.
+              <p className="max-w-sm text-sm leading-relaxed text-muted">
+                Prendas y accesorios elegidos uno por uno. Si algo te encanta, agrégalo al carrito.
               </p>
             </div>
 
@@ -162,7 +186,7 @@ export default function App() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar vestidos, carteras, accesorios…"
+                placeholder="Busca vestidos, bolsos, aretes…"
                 className="w-full rounded-full border border-ink/15 bg-white/60 py-3 pl-11 pr-4 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-rose focus:ring-2 focus:ring-rose/20"
                 aria-label="Buscar productos"
               />
@@ -175,10 +199,18 @@ export default function App() {
             />
 
             <p className="text-xs uppercase tracking-[0.18em] text-muted">
-              {filteredProducts.length} {filteredProducts.length === 1 ? "producto" : "productos"}
+              {filteredProducts.length}{" "}
+              {filteredProducts.length === 1 ? "producto" : "productos"}
             </p>
 
-            <ProductGrid products={filteredProducts} onAdd={handleAdd} />
+            <ProductGrid
+              products={filteredProducts}
+              onAdd={handleAdd}
+              onClearFilters={() => {
+                setSearch("")
+                setCategory("Todos")
+              }}
+            />
           </div>
         </section>
       </main>
@@ -202,19 +234,13 @@ export default function App() {
 
       <CheckoutModal
         open={checkoutOpen}
+        lines={lines}
         total={total}
         onClose={() => setCheckoutOpen(false)}
         onSubmit={handleCheckout}
       />
 
-      {toast && (
-        <div
-          className="fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl bg-ink px-5 py-3 text-center text-sm text-cream shadow-xl"
-          role="status"
-        >
-          {toast}
-        </div>
-      )}
+      {toastNode}
     </div>
   )
 }

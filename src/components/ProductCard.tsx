@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { config } from "../config"
 import { formatPrice } from "../lib/format"
 import type { Product } from "../types"
-import { PlusIcon } from "./Icons"
+import { CheckIcon, PlusIcon } from "./Icons"
 
 interface ProductCardProps {
   product: Product
@@ -35,17 +35,32 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export function ProductCard({ product, onAdd }: ProductCardProps) {
+  const [added, setAdded] = useState(false)
+
+  useEffect(() => {
+    if (!added) return
+    const timeout = window.setTimeout(() => setAdded(false), 1500)
+    return () => window.clearTimeout(timeout)
+  }, [added])
+
+  function handleAdd() {
+    onAdd(product.id)
+    setAdded(true)
+  }
+
   return (
-    <article className="group flex flex-col">
+    <article className="group flex flex-col transition-transform duration-300 hover:-translate-y-1">
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-sand">
         <ProductImage src={product.imagen} alt={product.nombre} />
         <button
           type="button"
-          onClick={() => onAdd(product.id)}
-          className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-2 rounded-full bg-ink/90 py-2.5 text-[11px] font-medium uppercase tracking-[0.16em] text-cream backdrop-blur transition-colors hover:bg-wine"
+          onClick={handleAdd}
+          className={`absolute inset-x-3 bottom-3 flex items-center justify-center gap-2 rounded-full py-2.5 text-[11px] font-medium uppercase tracking-[0.16em] backdrop-blur transition-colors ${
+            added ? "bg-rose-dark text-cream" : "bg-ink/90 text-cream hover:bg-wine"
+          }`}
         >
-          <PlusIcon className="h-3.5 w-3.5" />
-          Agregar
+          {added ? <CheckIcon className="h-3.5 w-3.5" /> : <PlusIcon className="h-3.5 w-3.5" />}
+          {added ? "Agregado" : "Agregar"}
         </button>
       </div>
 

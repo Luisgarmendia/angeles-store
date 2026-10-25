@@ -137,3 +137,31 @@ export function MenuIcon({ className }: IconProps) {
     </Icon>
   )
 }
+
+export function TruckIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z" />
+      <circle cx="7" cy="18" r="1.6" />
+      <circle cx="17.5" cy="18" r="1.6" />
+    </Icon>
+  )
+}
+
+export function WalletIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <rect x="3" y="6" width="18" height="13" rx="3" />
+      <path d="M3 10h18" />
+      <circle cx="16.5" cy="14.5" r="1" />
+    </Icon>
+  )
+}
+
+export function HeartIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 20s-7-4.3-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8C19 15.7 12 20 12 20Z" />
+    </Icon>
+  )
+}

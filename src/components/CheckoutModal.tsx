@@ -1,29 +1,43 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import { config } from "../config"
 import { formatPrice } from "../lib/format"
+import { useModalBehavior } from "../lib/useModal"
 import { paymentLabel } from "../lib/whatsapp"
-import type { Customer, PaymentMethod } from "../types"
+import type { CartLine, Customer, PaymentMethod } from "../types"
 import { MessageIcon, XIcon } from "./Icons"
 
 interface CheckoutModalProps {
   open: boolean
+  lines: CartLine[]
   total: number
   onClose: () => void
   onSubmit: (customer: Customer) => void
 }
 
-const PAYMENT_METHODS: PaymentMethod[] = ["efectivo", "transferencia", "tarjeta"]
+const PAYMENT_METHODS: PaymentMethod[] = [
+  "contraentrega",
+  "transferencia",
+  "tarjeta",
+  "efectivo",
+]
 
 const EMPTY_CUSTOMER: Customer = {
   nombre: "",
   direccion: "",
   telefono: "",
-  pago: "efectivo",
+  pago: "contraentrega",
   notas: "",
 }
 
-export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalProps) {
+export function CheckoutModal({ open, lines, total, onClose, onSubmit }: CheckoutModalProps) {
   const [customer, setCustomer] = useState<Customer>(EMPTY_CUSTOMER)
   const [error, setError] = useState<string | null>(null)
+
+  useModalBehavior(open, onClose)
+
+  useEffect(() => {
+    if (!open) setError(null)
+  }, [open])
 
   if (!open) return null
 
@@ -35,7 +49,7 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
     event.preventDefault()
 
     if (!customer.nombre.trim() || !customer.direccion.trim()) {
-      setError("Completá tu nombre y tu dirección de entrega.")
+      setError("Completa tu nombre y tu dirección de entrega para continuar.")
       return
     }
 
@@ -74,7 +88,28 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div className="mt-5 rounded-2xl border border-ink/10 bg-white/60 p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Tu pedido</p>
+          <ul className="mt-2 max-h-36 space-y-1.5 overflow-y-auto pr-1 text-sm">
+            {lines.map((line) => (
+              <li key={line.product.id} className="flex justify-between gap-3">
+                <span className="min-w-0 truncate text-muted">
+                  {line.quantity}× {line.product.nombre}
+                </span>
+                <span className="whitespace-nowrap text-ink">
+                  {formatPrice(line.product.precio * line.quantity)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex items-center justify-between border-t border-ink/10 pt-2 text-sm font-medium">
+            <span>Total</span>
+            <span className="font-display text-xl text-ink">{formatPrice(total)}</span>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted">{config.shipping.note}</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <Field label="Nombre completo" required>
             <input
               type="text"
@@ -82,7 +117,7 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
               onChange={(event) => update("nombre", event.target.value)}
               autoComplete="name"
               className={inputClass}
-              placeholder="Ana Gómez"
+              placeholder="Ana Martínez"
             />
           </Field>
 
@@ -93,7 +128,7 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
               onChange={(event) => update("direccion", event.target.value)}
               autoComplete="street-address"
               className={inputClass}
-              placeholder="Av. Siempre Viva 742, piso 3 B"
+              placeholder="Col. Palmira, Ave. República de Panamá, Tegucigalpa"
             />
           </Field>
 
@@ -105,7 +140,7 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
                 onChange={(event) => update("telefono", event.target.value)}
                 autoComplete="tel"
                 className={inputClass}
-                placeholder="11 5555 4444"
+                placeholder="+504 9999-8888"
               />
             </Field>
 
@@ -130,7 +165,7 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
               onChange={(event) => update("notas", event.target.value)}
               rows={3}
               className={`${inputClass} resize-none`}
-              placeholder="Horario de entrega, referencias, talle preferido…"
+              placeholder="Horario de entrega, referencias, talla preferida…"
             />
           </Field>
 
@@ -140,11 +175,6 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
             </p>
           )}
 
-          <div className="flex items-center justify-between border-t border-ink/10 pt-4">
-            <span className="text-sm text-muted">Total</span>
-            <span className="font-display text-2xl text-ink">{formatPrice(total)}</span>
-          </div>
-
           <button
             type="submit"
             className="flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-medium text-cream transition-colors hover:bg-wine"
@@ -152,8 +182,9 @@ export function CheckoutModal({ open, total, onClose, onSubmit }: CheckoutModalP
             <MessageIcon className="h-4 w-4" />
             Enviar pedido por WhatsApp
           </button>
-          <p className="text-center text-[11px] text-muted">
-            Se va a abrir WhatsApp con el resumen del pedido ya escrito.
+          <p className="text-center text-[11px] leading-relaxed text-muted">
+            Se va a abrir WhatsApp con tu pedido listo. Te respondemos para confirmar disponibilidad
+            y entrega.
           </p>
         </form>
       </div>
@@ -171,7 +202,7 @@ function Field({
 }: {
   label: string
   required?: boolean
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <label className="block">

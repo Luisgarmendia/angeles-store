@@ -10,6 +10,10 @@ interface HeaderProps {
 export function Header({ cartCount, onCartOpen, onAdminOpen }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-ink/10 bg-cream/90 backdrop-blur">
+      <p className="bg-ink px-4 py-2 text-center text-[10px] uppercase tracking-[0.2em] text-cream/90">
+        Envíos a todo Honduras · Pedidos por WhatsApp
+      </p>
+
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <a href="#catalogo" className="font-display text-2xl tracking-[0.22em] text-ink">
           {config.brand.name.toUpperCase()}
@@ -18,6 +22,9 @@ export function Header({ cartCount, onCartOpen, onAdminOpen }: HeaderProps) {
         <nav className="hidden items-center gap-8 text-sm text-muted sm:flex">
           <a href="#catalogo" className="transition-colors hover:text-ink">
             Catálogo
+          </a>
+          <a href="#como-comprar" className="transition-colors hover:text-ink">
+            Cómo comprar
           </a>
           <a href="#contacto" className="transition-colors hover:text-ink">
             Contacto

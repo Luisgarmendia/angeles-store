@@ -1,5 +1,6 @@
 import { config } from "../config"
 import { formatPrice } from "../lib/format"
+import { useModalBehavior } from "../lib/useModal"
 import type { CartLine } from "../types"
 import { ArrowRightIcon, BagIcon, MinusIcon, PlusIcon, TrashIcon, XIcon } from "./Icons"
 
@@ -22,6 +23,8 @@ export function CartDrawer({
   onRemove,
   onCheckout,
 }: CartDrawerProps) {
+  useModalBehavior(open, onClose)
+
   if (!open) return null
 
   const itemCount = lines.reduce((count, line) => count + line.quantity, 0)
@@ -62,15 +65,15 @@ export function CartDrawer({
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
             <BagIcon className="h-10 w-10 text-rose" />
             <p className="font-display text-2xl text-ink">Tu carrito está vacío</p>
-            <p className="text-sm text-muted">
-              Sumá tus prendas favoritas y coordinamos el pedido por WhatsApp.
+            <p className="text-sm leading-relaxed text-muted">
+              Agrega tus favoritos y coordinamos la entrega por WhatsApp.
             </p>
             <button
               type="button"
               onClick={onClose}
               className="mt-2 rounded-full border border-ink px-6 py-2.5 text-sm transition-colors hover:bg-ink hover:text-cream"
             >
-              Ver catálogo
+              Explorar el catálogo
             </button>
           </div>
         ) : (
@@ -141,15 +144,13 @@ export function CartDrawer({
                 <span>Total del pedido</span>
                 <span className="font-display text-3xl text-ink">{formatPrice(total)}</span>
               </div>
-              <p className="mt-1 text-xs text-muted">
-                El envío se coordina por WhatsApp según tu zona.
-              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">{config.shipping.note}</p>
               <button
                 type="button"
                 onClick={onCheckout}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-medium text-cream transition-colors hover:bg-wine"
               >
-                Finalizar pedido
+                Continuar con el pedido
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
               <p className="mt-3 text-center text-[11px] text-muted">
