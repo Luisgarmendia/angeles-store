@@ -11,7 +11,7 @@ Test runner: `vitest` (`cd web && npm test`)
 - **S1 — Trust and legal.** The checkout no longer claims that order data stays only on the device. The store has privacy, terms, shipping/returns, and FAQ pages linked from the footer. The sitemap includes them. The store emits `Organization` and `WebSite` JSON-LD. Admin pages are `noindex`.
 - **S2 — Checkout integrity.** The checkout requires a valid Honduran phone, the server normalizes it, the cart cannot exceed available stock, and public order creation is rate-limited per client.
 - **S3 — Storefront UX.** The header has a mobile menu. The catalog can filter only offers and only made-to-order products. Cart and checkout dialogs trap focus and restore it on close.
-- **S4 — Admin operations.** Orders have a payment status. The admin landing page shows pending orders, pending payments, low stock, and total sales. Orders can be searched by number, customer, phone, or address. Product gallery photos can be reordered. Low-stock products are flagged.
+- **S4 — Admin operations.** Orders have a payment status. The admin landing page shows pending orders, pending payments, low stock, and total sales. Orders can be searched by number, customer, phone, or address. Product gallery photos can be reordered. Low-stock products are flagged. The order detail shows each item's image, a link to the admin product editor, and a public "Ver en la tienda" link.
 - **S5 — Quality.** Unit tests cover the new cart, pricing, catalog, phone, and rate-limit behavior. TypeScript, the Next build, migrations, and storefront/admin smoke tests pass.
 
 ## Tasks
@@ -21,7 +21,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | T1 | S1 | inline | done | legal pages, footer links, checkout privacy copy, sitemap/robots, JSON-LD, admin noindex |
 | T2 | S2 | inline | done | phone validation, cart cap, order rate limit |
 | T3 | S3 | inline | done | mobile menu, offers/made-to-order filters, focus trap |
-| T4 | S4 | inline | done | payment status, admin summary, order search, image reorder, low stock |
+| T4 | S4 | inline | done | payment status, admin summary, order search, image reorder, low stock, order item images/links |
 | T5 | S5 | inline | done | independent verifier pass; 15 test files / 85 tests, typecheck, build, migration, smoke |
 
 - **T1 — Trust and SEO.** Fix the checkout privacy copy; add `/privacidad`, `/terminos`, `/envios-y-devoluciones`, and `/preguntas-frecuentes`; link them in the footer; add `sitemap.xml`, `robots.txt`, store JSON-LD, and admin `noindex`.
@@ -48,3 +48,6 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L14 (T4 limitations):** The low-stock summary counts only simple products (variant products keep `products.stock = null`), while the product card badge uses `productStock()` and can include variant totals. Phone search is a literal `ILIKE` on normalized digits, so a formatted query like `9999-8888` does not match `99998888`. The payment-update happy path was not submitted against a real order to avoid mutating existing rows; validation and redirect paths were exercised live.
 - **L15 (T5 verification):** The independent verifier returned **pass** for S1–S5 with no blockers. It reproduced a RED baseline (18 failing tests at `72122d8`), then confirmed 15 files / 85 tests, clean typecheck, green build, migration `0004` applied, all storefront/admin smoke routes 200, `noindex` on admin, 24 sitemap URLs, valid Organization/WebSite JSON-LD, phone rejection/normalization, 10/hour order limiting, and the admin summary matching SQL. The verifier also provided an action-level regression test for the checkout, which is now committed.
 - **L16 (advisories):** `normalizeHonduranPhone` only checks length/country code, so `00000000` and `12345678` pass. The low-stock summary (simple products) and the badge (variant totals) can disagree. Formatted order/phone search strings do not match normalized values. A cart persisted before this change is re-capped only on the next add/quantity change. These are documented follow-ups, not blockers.
+- **L17 (user, verbatim):** "en la parte del admin no veo muy claro mira, en la gestion de pedidos solo me sale el nombre del articulo, quieor que salga la imagen o una mejor forma y que al seleccionar valla al articulo, y creo que eso es lo importante"
+- **L18 (implementation):** The admin order detail now joins each order item with the current product to show its cover image. The image and name link to `/admin/productos/<id>` for editing, and a secondary "Ver en la tienda" link opens `/producto/<id>` in a new tab. Deleted products keep the snapshot name, show a "Sin foto" placeholder, and are labeled "Eliminado" with no link.
+- **L19 (verification):** `npm run typecheck` clean, `npm test` → 15 files / 85 tests, `npm run build` green. Authenticated smoke on order #2 returned 200 with 2 product images, 2 admin product links, and 2 "Ver en la tienda" links for its two items.
