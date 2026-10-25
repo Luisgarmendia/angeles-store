@@ -1,13 +1,15 @@
 import type { CartItem, CartLine, Product } from "../types"
 
-export function addToCart(cart: CartItem[], productId: string): CartItem[] {
+/** Adds units of a product, merging into the existing line when present. */
+export function addToCart(cart: CartItem[], productId: string, quantity = 1): CartItem[] {
+  const amount = Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : 1
   const existing = cart.find((item) => item.productId === productId)
   if (existing) {
     return cart.map((item) =>
-      item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item,
+      item.productId === productId ? { ...item, quantity: item.quantity + amount } : item,
     )
   }
-  return [...cart, { productId, quantity: 1 }]
+  return [...cart, { productId, quantity: amount }]
 }
 
 export function removeFromCart(cart: CartItem[], productId: string): CartItem[] {

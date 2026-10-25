@@ -8,6 +8,7 @@ import { CheckoutModal } from "./components/CheckoutModal"
 import { Footer } from "./components/Footer"
 import { Header } from "./components/Header"
 import { Hero } from "./components/Hero"
+import { ProductDetail } from "./components/ProductDetail"
 import { ProductGrid } from "./components/ProductGrid"
 import { SearchIcon } from "./components/Icons"
 import { Toast, type ToastData } from "./components/Toast"
@@ -19,6 +20,8 @@ import {
   removeFromCart,
   setQuantity,
 } from "./lib/cart"
+import { recommendProducts } from "./lib/recommendations"
+import { productIdFromHash } from "./lib/route"
 import {
   loadCart,
   loadProducts,
@@ -43,6 +46,9 @@ export default function App() {
   const [settings, setSettings] = useState<StoreSettings>(() => loadSettings(DEFAULT_SETTINGS))
   const [cart, setCart] = useState<CartItem[]>(() => loadCart())
   const [view, setView] = useState<"store" | "admin">("store")
+  const [productRoute, setProductRoute] = useState<string | null>(() =>
+    productIdFromHash(window.location.hash),
+  )
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -52,6 +58,23 @@ export default function App() {
   useEffect(() => saveProducts(products), [products])
   useEffect(() => saveCart(cart), [cart])
   useEffect(() => saveSettings(settings), [settings])
+
+  useEffect(() => {
+    const syncRoute = () => setProductRoute(productIdFromHash(window.location.hash))
+    window.addEventListener("hashchange", syncRoute)
+    return () => window.removeEventListener("hashchange", syncRoute)
+  }, [])
+
+  useEffect(() => {
+    if (productRoute) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+      return
+    }
+    const hash = window.location.hash
+    if (!hash) return
+    const target = document.getElementById(decodeURIComponent(hash.slice(1)))
+    target?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [productRoute])
 
   useEffect(() => {
     if (!toast) return
@@ -76,6 +99,16 @@ export default function App() {
     })
   }, [products, search, category])
 
+  const selectedProduct = useMemo(
+    () => (productRoute ? (products.find((product) => product.id === productRoute) ?? null) : null),
+    [products, productRoute],
+  )
+
+  const recommended = useMemo(
+    () => (selectedProduct ? recommendProducts(products, selectedProduct.id, 4) : []),
+    [products, selectedProduct],
+  )
+
   const lines = useMemo(() => cartLines(cart, products), [cart, products])
   const total = useMemo(() => cartTotal(cart, products), [cart, products])
   const itemCount = useMemo(() => cartCount(cart), [cart])
@@ -89,10 +122,11 @@ export default function App() {
     })
   }
 
-  function handleAdd(productId: string) {
+  function handleAdd(productId: string, quantity = 1) {
     const product = products.find((candidate) => candidate.id === productId)
-    setCart((current) => addToCartLine(current, productId))
-    showToast(product ? `${product.nombre} se agregó a tu carrito.` : "Producto agregado.", {
+    setCart((current) => addToCartLine(current, productId, quantity))
+    const name = product ? (quantity > 1 ? `${product.nombre} × ${quantity}` : product.nombre) : null
+    showToast(name ? `${name} se agregó a tu carrito.` : "Producto agregado.", {
       label: "Ver carrito",
       onClick: () => setCartOpen(true),
     })
@@ -166,53 +200,67 @@ export default function App() {
       />
 
       <main>
-        <Hero />
+        {selectedProduct ? (
+          <ProductDetail
+            key={selectedProduct.id}
+            product={selectedProduct}
+            recommended={recommended}
+            onAdd={handleAdd}
+          />
+        ) : (
+          <>
+            <Hero />
 
-        <section id="catalogo" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
-          <div className="flex flex-col gap-5 border-t border-ink/10 pt-10">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Nueva temporada</p>
-                <h2 className="font-display text-4xl text-ink">La colección</h2>
+            <section id="catalogo" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
+              <div className="flex flex-col gap-5 border-t border-ink/10 pt-10">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-muted">
+                      Cremas y camisas
+                    </p>
+                    <h2 className="font-display text-4xl text-ink">La colección</h2>
+                  </div>
+                  <p className="max-w-sm text-sm leading-relaxed text-muted">
+                    Cremas, camisas y piezas elegidas una por una. Entra al detalle y agrégalas a tu
+                    carrito.
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Busca cremas, camisas, vestidos…"
+                    className="w-full rounded-full border border-ink/15 bg-white/60 py-3 pl-11 pr-4 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-rose focus:ring-2 focus:ring-rose/20"
+                    aria-label="Buscar productos"
+                  />
+                </div>
+
+                <CategoryFilter
+                  categories={categories}
+                  active={category}
+                  onChange={setCategory}
+                />
+
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                  {filteredProducts.length}{" "}
+                  {filteredProducts.length === 1 ? "producto" : "productos"}
+                </p>
+
+                <ProductGrid
+                  products={filteredProducts}
+                  onAdd={handleAdd}
+                  onClearFilters={() => {
+                    setSearch("")
+                    setCategory("Todos")
+                  }}
+                />
               </div>
-              <p className="max-w-sm text-sm leading-relaxed text-muted">
-                Prendas y accesorios elegidos uno por uno. Si algo te encanta, agrégalo al carrito.
-              </p>
-            </div>
-
-            <div className="relative">
-              <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Busca vestidos, bolsos, aretes…"
-                className="w-full rounded-full border border-ink/15 bg-white/60 py-3 pl-11 pr-4 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-rose focus:ring-2 focus:ring-rose/20"
-                aria-label="Buscar productos"
-              />
-            </div>
-
-            <CategoryFilter
-              categories={categories}
-              active={category}
-              onChange={setCategory}
-            />
-
-            <p className="text-xs uppercase tracking-[0.18em] text-muted">
-              {filteredProducts.length}{" "}
-              {filteredProducts.length === 1 ? "producto" : "productos"}
-            </p>
-
-            <ProductGrid
-              products={filteredProducts}
-              onAdd={handleAdd}
-              onClearFilters={() => {
-                setSearch("")
-                setCategory("Todos")
-              }}
-            />
-          </div>
-        </section>
+            </section>
+          </>
+        )}
       </main>
 
       <Footer whatsapp={settings.whatsapp} />

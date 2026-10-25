@@ -32,6 +32,18 @@ describe("cart", () => {
     ])
   })
 
+  it("adds several units at once from the product detail", () => {
+    expect(addToCart([], "p1", 3)).toEqual([{ productId: "p1", quantity: 3 }])
+    expect(addToCart([{ productId: "p1", quantity: 2 }], "p1", 2)).toEqual([
+      { productId: "p1", quantity: 4 },
+    ])
+  })
+
+  it("never adds a non-positive or invalid quantity", () => {
+    expect(addToCart([], "p1", 0)).toEqual([{ productId: "p1", quantity: 1 }])
+    expect(addToCart([], "p1", Number.NaN)).toEqual([{ productId: "p1", quantity: 1 }])
+  })
+
   it("removes a product", () => {
     expect(removeFromCart([{ productId: "p1", quantity: 1 }], "p1")).toEqual([])
   })

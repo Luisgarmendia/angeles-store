@@ -80,6 +80,14 @@ export function ArrowRightIcon({ className }: IconProps) {
   )
 }
 
+export function ArrowLeftIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M20 12H4M10 6l-6 6 6 6" />
+    </Icon>
+  )
+}
+
 export function SettingsIcon({ className }: IconProps) {
   return (
     <Icon className={className}>
