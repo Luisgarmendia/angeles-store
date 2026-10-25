@@ -9,7 +9,7 @@ Test runner: `vitest` (`cd web && npm test`)
 ## Specs
 
 - **S1 — Made-to-order products.** Products carry a `porEncargo` flag, editable in the admin. Storefront cards and the product detail show a "Por encargo" badge/notice. Made-to-order products are always orderable: stock is not tracked or decremented for them.
-- **S2 — Catalog filters.** The catalog offers a price range (minimum and maximum, in lempiras) and sorting by insertion date (newest first) or price (lowest/highest), with the existing featured order as default. Search and category filters keep working. Clearing filters resets every control.
+- **S2 — Catalog filters.** The catalog offers a discreet "Filtros" button that opens a panel with the price range (minimum and maximum, in lempiras) and sorting by insertion date (newest first) or price (lowest/highest), with the existing featured order as default. The button shows the number of active panel filters, the panel has a reset action, and the result count stays visible. Search and category filters remain visible. Clearing filters resets every control.
 - **S3 — Discounts.** The admin can set an optional "precio anterior" greater than the current price. The storefront shows the current price as the selling price, the previous price crossed out, and a promo badge with the discount percentage. Cart totals and orders keep using the current price.
 - **S4 — Card badges.** Product cards show clear, non-overlapping badges for discounts/promotions, sold out, and made-to-order. The existing add-to-cart and variant behavior is preserved.
 - **S5 — Quality.** Pure helpers for pricing and catalog filtering have unit tests. TypeScript typecheck and the Next build pass. The database migration is applied locally and the storefront renders the new controls and badges.
@@ -21,7 +21,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | T1 | S1, S3 | inline | done | `web/drizzle/0003_simple_edwin_jarvis.sql`, `schema.ts`, `types.ts`, `queries.ts` |
 | T2 | S1, S3 | inline | done | `product-form.tsx`, `actions.ts`, `admin-products-view.tsx` |
 | T3 | S2, S3, S5 | inline | done | `pricing.ts`, `catalog.ts` + 12 unit tests |
-| T4 | S2 | inline | done | `catalog.tsx` price range, sorting, reset |
+| T4 | S2 | inline | done | `catalog.tsx` "Filtros" button + collapsible panel, price range, sorting, reset |
 | T5 | S1, S3, S4 | inline | done | `ProductCard.tsx`, `ProductDetail.tsx`, `Icons.tsx` |
 | T6 | S1 | inline | done | `stock.ts`, `orders-server.ts` |
 | T7 | S5 | inline | done | 12 test files / 62 tests, typecheck, build, smoke |
@@ -48,3 +48,6 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L8 (verification):** `npm test` → 12 files, 62 tests passing. `npm run typecheck` → clean. `npm run build` → green. The migration applied to the local `angeles_store` database. The rendered storefront contains the price inputs, sort selector, reset control, promo badge, crossed-out price, and made-to-order badge. The admin product form rendered both new fields, and submitting it persisted `made_to_order = true` and `compare_at_price_cents = 59000` for `c1` (then reverted the flag to false).
 - **L9 (local data note):** For a visual demo, the local catalog has `c1` with a previous price of 590.00 and `s3` marked as made-to-order. Both can be reverted from the admin if the store should not show those examples.
 - **L10 (known baseline):** `npm run lint` reports pre-existing errors in generated `.next` files and existing `setState`-in-effect patterns; the changed source files introduce no new lint errors beyond the existing `<img>` warnings.
+- **L11 (user, verbatim):** "quiero que la parte de los filtros sea mas discretea que pongas un boton de filtros y que ahi aparescan"
+- **L12 (implementation):** The catalog now shows a compact "Filtros" button with a chevron and an active-filter count. The price range and sort controls live in a collapsible panel that opens below the button; the panel has "Limpiar filtros" and "Listo" actions. Search and category chips stay visible, and the result count remains outside the panel.
+- **L13 (verification):** `npm test` → 12 files, 62 tests passing. `npm run typecheck` → clean. `npm run build` → green. The rendered homepage contains the collapsed `Filtros` button (`aria-expanded="false"`, `aria-controls="catalog-filters"`), and the price/sort controls are absent from the initial HTML, confirming they are behind the button.
