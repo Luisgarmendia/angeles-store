@@ -75,8 +75,8 @@ allow `PUT`/`POST`, the application origin, and expose `ETag`.
 1. Create a **PostgreSQL** service in Dokploy. Do not publish its port publicly.
 2. Create an application from this repository with base directory `web/` and build type
    **Nixpacks**.
-3. `web/nixpacks.toml` pins Node 22, runs `npm ci`, builds the app, applies migrations on
-   start, and serves it with `next start`.
+3. `web/nixpacks.toml` pins Node 22, installs dependencies, builds the app, applies
+   migrations on start, and serves it with `next start`.
 4. Set the environment variables from the table above. Use the internal Postgres hostname in
    `DATABASE_URL` and the public domain in `SITE_URL`.
 5. Expose container port `3000` and use `/api/health` as the health check.
