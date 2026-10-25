@@ -19,7 +19,7 @@ Test runner: `vitest`
 - **S9 — Honduras regionalization.** Locale `es-HN`, currency HNL formatted as `L 1,290`, Honduran WhatsApp numbers normalized to `+504` plus 8 digits, Honduran address placeholders, vocabulary (`aretes`, `bolsos`, `falda`, `clóset`), and lempira-scale prices.
 - **S10 — Friendly tone.** Store copy uses neutral Honduran tuteo (never voseo), warm microcopy, a trust strip, actionable empty states, and clear success feedback.
 - **S11 — Admin practicality.** Tabs for products and settings, catalog search and category filter, actionable stats (including products without a photo), side-drawer editor with category chips and image preview, delete confirmation, and feedback visible inside the panel.
-- **S12 — Emoji rendering.** WhatsApp uses a small, consistent emoji set with clean spacing; the document declares `es-HN` and the UI declares an explicit color-emoji font fallback.
+- **S12 — Message rendering.** The WhatsApp order message uses plain text and WhatsApp markdown with no emoji, so no device renders missing-glyph boxes. The UI keeps an explicit color-emoji font fallback for any future need.
 - **S13 — Brand and catalog focus.** The store is named exactly `Angeles Store's` and sells mostly creams and shirts plus general women's products. Brand strings live in `src/config.ts`; the seed catalog is 18 products across Cremas, Camisas, Vestidos, Pantalones, Calzado, Bolsos, and Accesorios.
 - **S14 — Product detail.** Every product opens a hash-addressable detail section at `#producto/{id}` with image, name, category, price, description, quantity selector, add-to-cart, and a back link to the catalog. Below the detail, up to 4 recommended products appear, same category first, never the product being viewed.
 - **S15 — Catalog migration.** `DATA_VERSION` 3 replaces the legacy `p1`–`p12` seed, preserves products created by the owner, and prunes cart lines whose product no longer exists.
@@ -27,6 +27,9 @@ Test runner: `vitest`
 - **S17 — Decimal prices.** Every price in the storefront, cart, checkout, WhatsApp message, and admin panel shows two decimals (`L 1,290.00`). The admin accepts cents and never rounds a price to a whole lempira.
 - **S18 — Returning customer.** A successful checkout saves name, address, phone, payment method, and notes in `localStorage`; the next checkout prefills that data. Nothing is sent anywhere.
 - **S19 — Styled selectors.** The checkout payment method and the admin category filter use a shared styled select with a custom chevron, focus ring, and consistent spacing.
+- **S20 — Admin access gate.** Opening the admin panel requires a 4–8 digit PIN created by the owner on first use. The PIN is stored as a salted hash in `localStorage`, unlocks the panel for the tab session, can be changed from Ajustes with the current PIN, and can be locked manually. This is local deterrence for a zero-backend app, not server-side authorization.
+- **S21 — Shipping cost notice.** The cart drawer, checkout, product detail, and WhatsApp order message state that shipping may carry an extra cost and is coordinated by WhatsApp.
+- **S22 — Plain-text order message.** The WhatsApp message uses only plain text and markdown, with no emoji characters, so every device reads it correctly.
 
 ## Tasks
 
@@ -51,6 +54,9 @@ Test runner: `vitest`
 | T17 | S17 | inline | done | `ae825c0` · two decimals end to end |
 | T18 | S18 | inline | done | `ae825c0` · customer persistence |
 | T19 | S19 | inline | done | `ae825c0` · shared styled select |
+| T20 | S20 | inline | done | `549fdb8` · PIN gate, lock and key change, 3 tests |
+| T21 | S21 | inline | done | `1dafb48` · shipping notice in cart, checkout and message |
+| T22 | S12, S22 | inline | done | `1dafb48` · emoji-free message + test |
 
 - **T1 — Scaffold.** Initialize git, Vite + React + TypeScript + Tailwind, base config files.
 - **T2 — Domain data.** Central brand/config module, types, and a women's fashion seed catalog.
@@ -71,6 +77,9 @@ Test runner: `vitest`
 - **T17 — Decimal prices.** Format every price with two decimals and stop rounding cents when saving a product.
 - **T18 — Saved customer.** Persist checkout data locally on a successful order and prefill it on the next visit.
 - **T19 — Styled selectors.** Replace the raw payment and category selects with one shared component that matches the store's visual language.
+- **T20 — Protect admin.** PIN setup and unlock screen, session unlock, manual lock, and key change from Ajustes.
+- **T21 — Shipping notice.** State in the cart, checkout, detail, and WhatsApp message that shipping may cost extra.
+- **T22 — Plain-text WhatsApp.** Remove emoji characters from the order message and pin the behavior with a test.
 
 ## Log
 
@@ -92,3 +101,8 @@ Test runner: `vitest`
 - **L16 (user, verbatim):** "ok mira, hay muchas cosas que mejorar y quiero que las hagamos rapido, en la seccion de ajustes poner las redes sociales, mostrar los precions con los decimales, y si un cliente ya guardo su nombre o infromacion que se guarde en el local stoage y se rellene solo, tamboen los combobox o selector no tienen disenio no se ve bien"
 - **L17 (decision):** `StoreSettings` now carries `instagram`, `facebook`, and `tiktok`. The admin accepts a full URL, a bare handle, or an `@handle` and `socialHref` builds the link at render time; empty networks stay hidden. Prices use two decimals everywhere and the admin stores cents instead of rounding. Checkout data is saved under `amapola.cliente` only after a successful order and reloaded when the form opens. The raw `<select>` elements were replaced by one shared `Select` component.
 - **L18 (verification):** `npm test` → 8 files, 45 tests passing. `npm run build` → green. Vite serves the new `Select` component and the updated modules with HTTP 200.
+- **L19 (user, verbatim):** "perfecto ahora mira tenemos que buscar una forma de asegurar el panel de admin, y otra cosa que hay que agregar el proceso del carrito que diga nada mas que el envio puede llevar un costo extra, y mira los emogies no funcionan salen cuadros que no existen"
+- **L20 (decision):** The admin panel is gated by a 4–8 digit PIN created on first use. Only a salted hash is stored in `localStorage`; the unlock lives in `sessionStorage` for the tab session, and Ajustes can change the key with the current one. This deters casual access on the same device but is not server-side security, because the app has no backend. There is no PIN recovery: clearing browser storage is the only reset.
+- **L21 (decision):** Shipping copy is centralized in `config.shipping.note`: the cart, checkout, detail, and WhatsApp message state that shipping may cost extra and is coordinated by WhatsApp. The message labels the amount as `TOTAL PRODUCTOS`.
+- **L22 (decision):** Emojis were removed from the WhatsApp message because some devices rendered them as empty boxes; the message now uses plain text and WhatsApp markdown only. A test rejects emoji ranges so they do not return.
+- **L23 (verification):** `npm test` → 9 files, 51 tests passing. `npm run build` → green. No emoji characters remain in `src` or `index.html`.
