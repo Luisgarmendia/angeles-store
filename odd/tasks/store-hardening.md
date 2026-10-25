@@ -18,7 +18,7 @@ Test runner: `vitest` (`cd web && npm test`)
 
 | ID | Specs | Route | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| T1 | S1 | inline | pending | legal pages, footer, checkout copy, sitemap/robots, JSON-LD, admin noindex |
+| T1 | S1 | inline | done | legal pages, footer links, checkout privacy copy, sitemap/robots, JSON-LD, admin noindex |
 | T2 | S2 | inline | pending | phone validation, cart cap, order rate limit |
 | T3 | S3 | inline | pending | mobile menu, offers/made-to-order filters, focus trap |
 | T4 | S4 | inline | pending | payment status, admin summary, order search, image reorder, low stock |
@@ -38,3 +38,5 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L4 (decision):** Legal pages use the live store settings for the name, address, and WhatsApp, and describe the actual flow (WhatsApp confirmation, database-backed orders, localStorage prefill). The owner should review the final legal copy.
 - **L5 (decision):** Payment status is an additive enum (`pendiente`, `pagado`, `reembolsado`) on `orders`; existing rows default to `pendiente`.
 - **L6 (decision):** The order rate limit is in-memory and per instance (10 successful orders per hour per forwarded IP). It is a mitigation, not a distributed guarantee; a shared store can be added later if needed.
+- **L7 (T1 verification):** Added `/privacidad`, `/terminos`, `/envios-y-devoluciones`, and `/preguntas-frecuentes` with live store contact details; the footer links all four; the checkout now says the order is stored in the database and the browser prefills contact data; added dynamic `sitemap.xml` with products and legal routes, `robots.txt` disallowing `/admin` and `/api`, `Organization`/`WebSite` JSON-LD, and admin `noindex`. `npm test` → 12 files, 62 tests; `npm run typecheck` clean; `npm run build` green. Smoke: all eight routes return 200, the homepage contains `Organization`, the footer contains the legal links, the sitemap contains product URLs, robots contains `Disallow: /admin`, and `/admin/login` contains `noindex, nofollow`.
+- **L8 (open review):** The legal copy is a first draft for the owner to review. It uses only live store settings and WhatsApp coordination; no email, street address, or delivery-time promise was invented.
