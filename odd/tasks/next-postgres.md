@@ -40,7 +40,7 @@ Test runner: `vitest`
 | T11 | S11 | inline | done | `7417568` · store name, address and description in settings |
 | T12 | S12 | inline | done | `2c669d6` · Open Graph, Twitter and Product JSON-LD |
 | T13 | S13 | inline | done | `c514c9f` · empty catalog, strong admin, production domains |
-| T14 | S14 | inline | done | `35ec3f3` · Nixpacks + Docker builds verified |
+| T14 | S14 | inline | done | `35ec3f3`, `7c62b3b` · Nixpacks + Docker builds verified |
 
 - **T1 — Scaffold.** Create the Next app in `web/` and reuse Tailwind, fonts, and component patterns.
 - **T2 — Database.** Add Drizzle, schema, migration, seed, and queries.
@@ -82,3 +82,4 @@ Test runner: `vitest`
 - **L21 (user, verbatim):** "ok y si quiero que sea nixpack"
 - **L22 (decision):** The app supports both Nixpacks and Docker. `web/nixpacks.toml` pins Node 22, runs `npm ci`, builds with the standard Next output, applies migrations on start, and serves with `next start`. `next.config.ts` only enables `output: "standalone"` when `BUILD_TARGET=docker`, which the Dockerfile sets. The production seed is still a one-time manual command.
 - **L23 (verification):** `npm test` → 8 files, 37 tests passing. The standard build (`npm run build` without `BUILD_TARGET`) produced no standalone folder, and `next start` on port 3001 returned 200 for the store, product, health check, and login, with `/admin` redirecting to login. `BUILD_TARGET=docker npm run build` produced `.next/standalone/server.js`.
+- **L24 (fix):** The first Dokploy Nixpacks build failed at `npm ci` because `vitest@5` requires `@types/node@^22 || >=24` and the project pinned `^20`. Upgraded `@types/node` to `^22.20.5` and changed the Nixpacks install phase to `npm ci --include=dev`. A clean install, the 37 tests, and the Next build pass locally; commit `7c62b3b` was pushed to `main`.
