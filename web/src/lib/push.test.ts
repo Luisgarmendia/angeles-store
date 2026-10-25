@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("server-only", () => ({}))
 vi.mock("@/db/queries", () => ({
   listPushTokens: vi.fn(async () => []),
+  listPushTokensForUser: vi.fn(async () => []),
   deletePushTokens: vi.fn(async () => undefined),
   updateOrderPushResult: vi.fn(async () => undefined),
 }))

@@ -3,10 +3,12 @@ importScripts("https://www.gstatic.com/firebasejs/13.1.0/firebase-messaging-comp
 importScripts("/firebase-config")
 
 self.addEventListener("install", () => {
+  console.info("[sw] install")
   self.skipWaiting()
 })
 
 self.addEventListener("activate", (event) => {
+  console.info("[sw] activate")
   event.waitUntil(self.clients.claim())
 })
 
@@ -16,6 +18,8 @@ if (self.FIREBASE_CONFIG) {
 
   messaging.onBackgroundMessage((payload) => {
     const data = payload.data || {}
+    console.info("[sw] background message", payload)
+    console.info("[sw] showing notification", data)
 
     self.registration.showNotification(data.title || "Nuevo pedido", {
       body: data.body || "",
@@ -30,6 +34,7 @@ self.addEventListener("notificationclick", (event) => {
 
   const data = event.notification.data || {}
   const target = new URL(data.url || "/admin/pedidos", self.location.origin)
+  console.info("[sw] notification click", data, target.href)
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {

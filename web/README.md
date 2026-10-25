@@ -111,6 +111,21 @@ accepted it, how many failed, or why it was skipped. Server logs also include
 means the push was accepted for the token, not that the person actually saw it (the device may
 have notifications muted).
 
+### Debugging push
+
+- Page console: look for `[push] permission`, `[push] service worker registered`,
+  `[push] token …`, and `[push] token saved` when enabling notifications.
+- Service worker console: open DevTools → **Application → Service Workers** →
+  `/firebase-messaging-sw.js` → **Inspect**. Look for `[sw] install`, `[sw] activate`,
+  `[sw] background message`, `[sw] showing notification`, and `[sw] notification click`.
+- Use **Probar notificación** in the dashboard card. It sends a test push only to the current
+  admin's devices and opens `/` when clicked, so it isolates delivery from the order flow.
+- If the click does nothing, confirm the service worker is active and test with a **new**
+  notification; notifications already in the OS center keep the old handler. On a phone,
+  `SITE_URL` must be a reachable LAN/tunnel/public URL; `localhost` only works on the same
+  machine.
+- Server logs show `[push] order #N: success=… failure=… invalid=…` or the skipped reason.
+
 Web push requires HTTPS in production; `http://localhost` is allowed for development. The
 browser also needs notification permission, so each admin enables notifications per device. On a
 shared browser the token belongs to the latest admin who enabled it.

@@ -5,6 +5,7 @@ import type { FirebaseOptions } from "firebase/app"
 import type { Messaging } from "firebase/messaging"
 import {
   registerPushTokenAction,
+  sendTestPushAction,
   unregisterPushTokenAction,
 } from "@/app/admin/push-actions"
 import { BellIcon } from "@/components/Icons"
@@ -66,6 +67,8 @@ export function PushNotifications() {
     PUBLIC_CONFIG ? "default" : "unconfigured",
   )
   const [message, setMessage] = useState<string | null>(null)
+  const [testing, setTesting] = useState(false)
+  const [testMessage, setTestMessage] = useState<string | null>(null)
   const tokenRef = useRef<string | null>(null)
   const messagingRef = useRef<Messaging | null>(null)
   const startedRef = useRef(false)
@@ -85,6 +88,8 @@ export function PushNotifications() {
       const permission = requestPermission
         ? await Notification.requestPermission()
         : Notification.permission
+
+      console.info("[push] permission", permission)
 
       if (permission === "denied") {
         setStatus("denied")
@@ -111,6 +116,7 @@ export function PushNotifications() {
         "/firebase-messaging-sw.js",
         { updateViaCache: "none" },
       )
+      console.info("[push] service worker registered", registration.scope)
       await registration.update()
       await navigator.serviceWorker.ready
       const token = await getToken(messaging, {
@@ -124,6 +130,8 @@ export function PushNotifications() {
         return
       }
 
+      console.info("[push] token", `${token.slice(0, 12)}…`)
+
       const result = await registerPushTokenAction(token)
       if (result.error) {
         setStatus("error")
@@ -131,6 +139,7 @@ export function PushNotifications() {
         return
       }
 
+      console.info("[push] token saved")
       tokenRef.current = token
       setStatus("granted")
       setMessage("Notificaciones activadas en este dispositivo.")
@@ -179,6 +188,24 @@ export function PushNotifications() {
       tokenRef.current = null
       setStatus("default")
       setMessage(null)
+    }
+  }, [])
+
+  const testPush = useCallback(async () => {
+    setTesting(true)
+    setTestMessage(null)
+
+    try {
+      const result = await sendTestPushAction()
+      if (result.error) {
+        setTestMessage(result.error)
+      } else {
+        setTestMessage(`Prueba enviada a ${result.successCount} dispositivo(s).`)
+      }
+    } catch {
+      setTestMessage("No se pudo enviar la notificación de prueba.")
+    } finally {
+      setTesting(false)
     }
   }, [])
 
@@ -265,34 +292,51 @@ export function PushNotifications() {
             >
               {feedback}
             </p>
+            {testMessage && (
+              <p className="mt-1 text-xs text-muted" role="status">
+                {testMessage}
+              </p>
+            )}
           </div>
         </div>
 
         {canToggle && (
-          <button
-            type="button"
-            onClick={() => {
-              if (status === "granted") {
-                void disablePush()
-              } else {
-                void enablePush(true)
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {status === "granted" && (
+              <button
+                type="button"
+                onClick={() => void testPush()}
+                disabled={testing}
+                className="rounded-full border border-ink/20 px-4 py-2 text-sm text-ink transition-colors hover:border-ink hover:bg-sand disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {testing ? "Enviando…" : "Probar notificación"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (status === "granted") {
+                  void disablePush()
+                } else {
+                  void enablePush(true)
+                }
+              }}
+              disabled={busy}
+              className={
+                status === "granted"
+                  ? "rounded-full border border-ink/20 px-5 py-2 text-sm text-muted transition-colors hover:border-wine hover:text-wine disabled:cursor-not-allowed disabled:opacity-60"
+                  : "rounded-full bg-ink px-5 py-2 text-sm font-medium text-cream transition-colors hover:bg-wine disabled:cursor-not-allowed disabled:opacity-60"
               }
-            }}
-            disabled={busy}
-            className={
-              status === "granted"
-                ? "shrink-0 rounded-full border border-ink/20 px-5 py-2 text-sm text-muted transition-colors hover:border-wine hover:text-wine disabled:cursor-not-allowed disabled:opacity-60"
-                : "shrink-0 rounded-full bg-ink px-5 py-2 text-sm font-medium text-cream transition-colors hover:bg-wine disabled:cursor-not-allowed disabled:opacity-60"
-            }
-          >
-            {busy
-              ? "Guardando…"
-              : status === "granted"
-                ? "Desactivar"
-                : status === "error"
-                  ? "Intentar de nuevo"
-                  : "Activar notificaciones"}
-          </button>
+            >
+              {busy
+                ? "Guardando…"
+                : status === "granted"
+                  ? "Desactivar"
+                  : status === "error"
+                    ? "Intentar de nuevo"
+                    : "Activar notificaciones"}
+            </button>
+          </div>
         )}
       </div>
     </section>

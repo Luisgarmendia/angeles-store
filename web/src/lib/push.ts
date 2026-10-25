@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { ServiceAccount } from "firebase-admin/app"
-import { deletePushTokens, listPushTokens, updateOrderPushResult } from "@/db/queries"
+import { deletePushTokens, listPushTokens, listPushTokensForUser, updateOrderPushResult } from "@/db/queries"
 import { formatPrice } from "@/lib/format"
 
 export interface OrderNotificationInput {
@@ -103,11 +103,6 @@ export async function sendOrderPushNotification(input: OrderNotificationInput): 
       return { successCount: 0, failureCount: 0, invalidCount: 0, error }
     }
 
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
-    if (!raw) {
-      return { successCount: 0, failureCount: 0, invalidCount: 0, error: "Firebase no configurado" }
-    }
-
     const tokens = await listPushTokens()
     if (tokens.length === 0) {
       const error = "Sin dispositivos suscritos"
@@ -121,62 +116,29 @@ export async function sendOrderPushNotification(input: OrderNotificationInput): 
       return { successCount: 0, failureCount: 0, invalidCount: 0, error }
     }
 
-    const [{ cert, getApps, initializeApp }, { getMessaging }] = await Promise.all([
-      import("firebase-admin/app"),
-      import("firebase-admin/messaging"),
-    ])
-
-    const app =
-      getApps()[0] ??
-      initializeApp({
-        credential: cert(parseServiceAccount(raw) as ServiceAccount),
-      })
-
     const notification = buildOrderNotification(input)
-    const siteUrl = (process.env.SITE_URL?.trim() || "http://localhost:3000").replace(/\/+$/, "")
-
-    const response = await getMessaging(app).sendEachForMulticast({
-      tokens,
-      data: {
-        title: notification.title,
-        body: notification.body,
-        url: notification.data.url,
-      },
-      webpush: {
-        fcmOptions: { link: `${siteUrl}${notification.data.url}` },
-      },
+    const result = await sendToTokens(tokens, {
+      title: notification.title,
+      body: notification.body,
+      url: notification.data.url,
     })
-
-    const invalidTokens: string[] = []
-    response.responses.forEach((result, index) => {
-      if (result.success) return
-      const code = result.error?.code
-      if (code && INVALID_TOKEN_ERROR_CODES.has(code)) invalidTokens.push(tokens[index])
-    })
-
-    if (invalidTokens.length > 0) await deletePushTokens(invalidTokens)
 
     const error =
-      response.failureCount > 0
+      result.failureCount > 0
         ? "Algunos dispositivos no recibieron la notificación."
         : null
 
     await recordPushResult(input.orderId, {
       sentAt: new Date(),
-      successCount: response.successCount,
-      failureCount: response.failureCount,
+      successCount: result.successCount,
+      failureCount: result.failureCount,
       error,
     })
     console.info(
-      `[push] order #${input.orderNumber}: success=${response.successCount} failure=${response.failureCount} invalid=${invalidTokens.length}`,
+      `[push] order #${input.orderNumber}: success=${result.successCount} failure=${result.failureCount} invalid=${result.invalidCount}`,
     )
 
-    return {
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-      invalidCount: invalidTokens.length,
-      ...(error ? { error } : {}),
-    }
+    return { ...result, ...(error ? { error } : {}) }
   } catch (error) {
     console.error("Order push notification failed", error)
     const message = "No se pudo enviar la notificación."
@@ -187,5 +149,99 @@ export async function sendOrderPushNotification(input: OrderNotificationInput): 
       error: message,
     })
     return { successCount: 0, failureCount: 0, invalidCount: 0, error: message }
+  }
+}
+
+interface PushPayload {
+  title: string
+  body: string
+  url: string
+}
+
+async function sendToTokens(
+  tokens: string[],
+  payload: PushPayload,
+): Promise<Omit<PushResult, "error">> {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+  if (!raw) throw new Error("Firebase no configurado")
+
+  const [{ cert, getApps, initializeApp }, { getMessaging }] = await Promise.all([
+    import("firebase-admin/app"),
+    import("firebase-admin/messaging"),
+  ])
+
+  const app =
+    getApps()[0] ??
+    initializeApp({
+      credential: cert(parseServiceAccount(raw) as ServiceAccount),
+    })
+
+  const siteUrl = (process.env.SITE_URL?.trim() || "http://localhost:3000").replace(/\/+$/, "")
+
+  const response = await getMessaging(app).sendEachForMulticast({
+    tokens,
+    data: {
+      title: payload.title,
+      body: payload.body,
+      url: payload.url,
+    },
+    webpush: {
+      fcmOptions: { link: `${siteUrl}${payload.url}` },
+    },
+  })
+
+  const invalidTokens: string[] = []
+  response.responses.forEach((result, index) => {
+    if (result.success) return
+    const code = result.error?.code
+    if (code && INVALID_TOKEN_ERROR_CODES.has(code)) invalidTokens.push(tokens[index])
+  })
+
+  if (invalidTokens.length > 0) await deletePushTokens(invalidTokens)
+
+  return {
+    successCount: response.successCount,
+    failureCount: response.failureCount,
+    invalidCount: invalidTokens.length,
+  }
+}
+
+export async function sendTestPushNotification(userId: string): Promise<PushResult> {
+  try {
+    if (!isPushConfigured()) {
+      console.info("[push] test skipped: Firebase no configurado")
+      return { successCount: 0, failureCount: 0, invalidCount: 0, error: "Firebase no configurado" }
+    }
+
+    const tokens = await listPushTokensForUser(userId)
+    if (tokens.length === 0) {
+      console.info("[push] test skipped: Sin dispositivos suscritos")
+      return { successCount: 0, failureCount: 0, invalidCount: 0, error: "Sin dispositivos suscritos" }
+    }
+
+    const result = await sendToTokens(tokens, {
+      title: "Notificación de prueba",
+      body: "Si ves esto, las notificaciones funcionan. Tocá para abrir la tienda.",
+      url: "/",
+    })
+
+    console.info(
+      `[push] test: success=${result.successCount} failure=${result.failureCount} invalid=${result.invalidCount}`,
+    )
+
+    return {
+      ...result,
+      ...(result.failureCount > 0
+        ? { error: "Algunos dispositivos no recibieron la notificación." }
+        : {}),
+    }
+  } catch (error) {
+    console.error("Test push failed", error)
+    return {
+      successCount: 0,
+      failureCount: 0,
+      invalidCount: 0,
+      error: "No se pudo enviar la notificación de prueba.",
+    }
   }
 }

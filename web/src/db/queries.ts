@@ -385,6 +385,15 @@ export async function listPushTokens(): Promise<string[]> {
   return rows.map((row) => row.token)
 }
 
+export async function listPushTokensForUser(userId: string): Promise<string[]> {
+  const rows = await getDb()
+    .select({ token: adminPushTokens.token })
+    .from(adminPushTokens)
+    .where(eq(adminPushTokens.userId, userId))
+
+  return rows.map((row) => row.token)
+}
+
 export async function registerPushToken(userId: string, token: string): Promise<void> {
   await getDb()
     .insert(adminPushTokens)

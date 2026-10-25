@@ -2,7 +2,7 @@
 
 import { deletePushToken, registerPushToken } from "@/db/queries"
 import { requireAdmin } from "@/lib/auth"
-import { isValidPushToken } from "@/lib/push"
+import { isValidPushToken, sendTestPushNotification, type PushResult } from "@/lib/push"
 
 export interface PushTokenActionResult {
   ok?: boolean
@@ -40,4 +40,9 @@ export async function unregisterPushTokenAction(
     console.error("Push token removal failed", error)
     return { error: SAVE_ERROR }
   }
+}
+
+export async function sendTestPushAction(): Promise<PushResult> {
+  const session = await requireAdmin()
+  return sendTestPushNotification(session.id)
 }
