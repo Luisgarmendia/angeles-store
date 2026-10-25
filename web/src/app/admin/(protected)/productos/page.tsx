@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { AdminProductsView } from "@/components/admin/admin-products-view"
 import { listAdminProducts } from "@/db/queries"
 
@@ -14,17 +13,9 @@ export default async function AdminProductsPage({
 
   return (
     <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Catálogo</p>
-          <h2 className="font-display text-3xl text-ink">Productos</h2>
-        </div>
-        <Link
-          href="/admin/productos/nuevo"
-          className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-wine"
-        >
-          Nuevo producto
-        </Link>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Catálogo</p>
+        <h2 className="font-display text-3xl text-ink">Productos</h2>
       </div>
 
       <form method="get" className="mt-5 flex gap-2">
