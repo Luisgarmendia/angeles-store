@@ -6,17 +6,21 @@
 export const config = {
   brand: {
     name: "Amapola",
-    tagline: "Moda femenina",
+    tagline: "Moda femenina en Honduras",
     description:
-      "Indumentaria, calzado y accesorios pensados para que te sientas vos. Seleccioná tus prendas y coordiná el pedido por WhatsApp.",
+      "Ropa, calzado y accesorios para mujer, seleccionados con cariño en Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
   },
   contact: {
-    whatsapp: "5491100000000",
-    instagram: "https://instagram.com/amapola",
+    whatsapp: "50499998888",
+    instagram: "https://instagram.com/amapola.hn",
   },
   currency: {
-    locale: "es-AR",
-    code: "ARS",
+    locale: "es-HN",
+    code: "HNL",
+  },
+  shipping: {
+    country: "Honduras",
+    note: "Enviamos a todo Honduras. Coordinamos la entrega por WhatsApp según tu ciudad.",
   },
 } as const
 

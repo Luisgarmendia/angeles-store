@@ -5,16 +5,16 @@ import { buildOrderMessage, paymentLabel, whatsappUrl } from "./whatsapp"
 const dress: Product = {
   id: "p1",
   nombre: "Vestido midi satinado",
-  precio: 48900,
+  precio: 1290,
   categoria: "Vestidos",
   descripcion: "",
   imagen: "",
 }
 
 const customer: Customer = {
-  nombre: "Ana Gómez",
-  direccion: "Av. Siempre Viva 742",
-  telefono: "11 5555 4444",
+  nombre: "Ana Martínez",
+  direccion: "Col. Palmira, Ave. República de Panamá, Tegucigalpa",
+  telefono: "9999-8888",
   pago: "transferencia",
   notas: "Entregar por la tarde",
 }
@@ -25,16 +25,16 @@ describe("buildOrderMessage", () => {
       brandName: "Amapola",
       customer,
       lines: [{ product: dress, quantity: 2 }],
-      total: 97800,
+      total: 2580,
     })
 
     expect(message).toContain("AMAPOLA")
-    expect(message).toContain("Ana Gómez")
-    expect(message).toContain("Av. Siempre Viva 742")
-    expect(message).toContain("Transferencia")
+    expect(message).toContain("Ana Martínez")
+    expect(message).toContain("Col. Palmira")
+    expect(message).toContain("Transferencia bancaria")
     expect(message).toContain("Vestido midi satinado")
     expect(message).toContain("x2")
-    expect(message).toContain("97.800")
+    expect(message).toContain("2,580")
   })
 
   it("omits optional fields when empty", () => {
@@ -42,7 +42,7 @@ describe("buildOrderMessage", () => {
       brandName: "Amapola",
       customer: { ...customer, telefono: "   ", notas: "" },
       lines: [{ product: dress, quantity: 1 }],
-      total: 48900,
+      total: 1290,
     })
 
     expect(message).not.toContain("Teléfono")
@@ -52,16 +52,17 @@ describe("buildOrderMessage", () => {
 
 describe("whatsappUrl", () => {
   it("strips non-digits and encodes the message", () => {
-    expect(whatsappUrl("+54 9 11 5555-4444", "Hola & chau")).toBe(
-      "https://wa.me/5491155554444?text=Hola%20%26%20chau",
+    expect(whatsappUrl("+504 9999-8888", "Hola & chau")).toBe(
+      "https://wa.me/50499998888?text=Hola%20%26%20chau",
     )
   })
 })
 
 describe("paymentLabel", () => {
   it("maps every payment method", () => {
-    expect(paymentLabel("efectivo")).toBe("Efectivo")
-    expect(paymentLabel("transferencia")).toBe("Transferencia")
+    expect(paymentLabel("contraentrega")).toBe("Pago contra entrega")
+    expect(paymentLabel("transferencia")).toBe("Transferencia bancaria")
     expect(paymentLabel("tarjeta")).toBe("Tarjeta")
+    expect(paymentLabel("efectivo")).toBe("Efectivo")
   })
 })

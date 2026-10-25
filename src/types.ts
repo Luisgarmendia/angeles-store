@@ -12,7 +12,7 @@ export interface CartItem {
   quantity: number
 }
 
-export type PaymentMethod = "efectivo" | "transferencia" | "tarjeta"
+export type PaymentMethod = "contraentrega" | "transferencia" | "tarjeta" | "efectivo"
 
 export interface Customer {
   nombre: string
