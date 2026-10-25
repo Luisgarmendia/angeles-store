@@ -93,6 +93,14 @@ only for push; the store and admin still run on Next.js and PostgreSQL. Push is 
 the variables are missing the app keeps working and the dashboard card shows
 "Firebase no está configurado."
 
+### Notification center
+
+The admin header also has a bell with an unread count that works without Firebase. It polls every
+15 seconds and shows the latest 20 notifications for the signed-in admin, with read/unread dots,
+short dates, a **Marcar todas** button, and a toast when a new order arrives while the page is
+open. Each notification opens the admin order detail at `/admin/pedidos/<id>`. OS push remains
+for notifications when the admin is away from the page.
+
 1. In the [Firebase console](https://console.firebase.google.com/), create a project and add a
    **Web app**.
 2. Open **Project settings → General → Your apps → SDK setup and configuration → Config**, copy

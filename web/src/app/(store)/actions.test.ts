@@ -6,10 +6,17 @@ const state = vi.hoisted(() => ({
   failNext: false,
 }))
 
+const notifications = vi.hoisted(() => ({
+  notifyNewOrder: vi.fn(async () => undefined),
+}))
+
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-forwarded-for": state.ip }),
 }))
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
+vi.mock("@/lib/notifications", () => ({
+  notifyNewOrder: notifications.notifyNewOrder,
+}))
 vi.mock("@/lib/orders-server", () => {
   class OrderError extends Error {}
   return {
@@ -23,8 +30,8 @@ vi.mock("@/lib/orders-server", () => {
       return {
         id: `order-${state.calls.length}`,
         number: state.calls.length,
-        lines: [],
-        total: 0,
+        lines: [{ quantity: 2 }],
+        total: 250,
       }
     }),
   }
@@ -48,6 +55,7 @@ beforeEach(() => {
   state.calls.length = 0
   state.failNext = false
   state.ip = `203.0.113.${ip++}`
+  notifications.notifyNewOrder.mockClear()
 })
 
 describe("createOrderAction checkout integrity (S2)", () => {
@@ -55,6 +63,20 @@ describe("createOrderAction checkout integrity (S2)", () => {
     const result = await createOrderAction(input("123"))
     expect(result.error).toBe("Escribe un teléfono hondureño válido, por ejemplo 9999-8888.")
     expect(state.calls).toHaveLength(0)
+  })
+
+  it("notifies admins through the notification pipeline after a successful order", async () => {
+    const result = await createOrderAction(input("9999-8888"))
+    expect(result.error).toBeUndefined()
+
+    await vi.waitFor(() => expect(notifications.notifyNewOrder).toHaveBeenCalledTimes(1))
+    expect(notifications.notifyNewOrder).toHaveBeenCalledWith({
+      orderId: "order-1",
+      orderNumber: 1,
+      customerName: "Ana Pérez",
+      itemCount: 2,
+      total: 250,
+    })
   })
 
   it("normalizes the phone on the server before inserting", async () => {

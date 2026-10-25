@@ -4,6 +4,8 @@ import { getStoreSettings } from "@/db/queries"
 import { roleLabel } from "@/lib/roles"
 import { logoutAction } from "../actions"
 import { AdminTabs } from "@/components/admin/admin-tabs"
+import { NotificationBell } from "@/components/admin/notification-bell"
+import { ForegroundPushListener } from "@/components/admin/foreground-push-listener"
 
 export const dynamic = "force-dynamic"
 
@@ -24,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <NotificationBell />
               <Link
                 href="/"
                 className="rounded-full border border-ink px-4 py-2 text-sm transition-colors hover:bg-ink hover:text-cream"
@@ -51,6 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <ForegroundPushListener />
     </div>
   )
 }
