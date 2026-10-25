@@ -47,7 +47,7 @@ describe("buildOrderNotification", () => {
     expect(notification.title).toBe("Nuevo pedido #42")
     expect(notification.body).toBe(`María López · 3 producto(s) · ${formatPrice(1250.5)}`)
     expect(notification.data).toEqual({
-      url: "/admin/pedidos/0f6a1c3e-8b5d-4c2a-9e7f-1a2b3c4d5e6f",
+      url: "/pedido/0f6a1c3e-8b5d-4c2a-9e7f-1a2b3c4d5e6f",
     })
   })
 })

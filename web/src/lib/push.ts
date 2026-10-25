@@ -62,7 +62,7 @@ export function buildOrderNotification({
   return {
     title: `Nuevo pedido #${orderNumber}`,
     body: `${customerName} · ${itemCount} producto(s) · ${formatPrice(total)}`,
-    data: { url: `/admin/pedidos/${orderId}` },
+    data: { url: `/pedido/${orderId}` },
   }
 }
 
