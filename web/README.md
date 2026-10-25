@@ -61,8 +61,8 @@ created from `/admin/usuarios` default to `staff`. The last owner cannot be demo
 deleted, and an owner cannot delete their own account.
 
 `ADMIN_ROLE` controls the role used by `npm run db:admin` when it creates a new user. It
-accepts `owner` or `staff` and defaults to `staff`; when the email already exists, only the
-password changes.
+accepts `owner` or `staff` and defaults to `staff`. When the email already exists, the
+password changes; if `ADMIN_ROLE` is explicitly set, the existing user's role is updated too.
 
 ## Environment
 

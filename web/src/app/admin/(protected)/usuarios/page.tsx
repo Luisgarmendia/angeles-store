@@ -1,5 +1,6 @@
 import { AdminUserForm } from "@/components/admin/admin-user-form"
 import { DeleteUserButton } from "@/components/admin/delete-user-button"
+import { Select } from "@/components/Select"
 import { listAdminUsers } from "@/db/queries"
 import { requireOwner } from "@/lib/auth"
 import { ADMIN_ROLE_OPTIONS, roleLabel } from "@/lib/roles"
@@ -122,17 +123,19 @@ export default async function AdminUsersPage({
                       <span className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-muted">
                         Rol
                       </span>
-                      <select
+                      <Select
+                        variant="pill"
                         name="role"
                         defaultValue={user.role}
-                        className="rounded-xl border border-ink/15 bg-white px-3 py-1.5 text-sm text-ink outline-none transition-colors focus:border-rose focus:ring-2 focus:ring-rose/20"
+                        aria-label={`Rol de ${user.email}`}
+                        className="min-w-32"
                       >
                         {ADMIN_ROLE_OPTIONS.map((option) => (
                           <option key={option.id} value={option.id}>
                             {option.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </label>
                     <button
                       type="submit"

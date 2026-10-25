@@ -6,6 +6,7 @@ import {
   type UserFormState,
 } from "@/app/admin/usuarios/actions"
 import { ADMIN_ROLE_OPTIONS } from "@/lib/roles"
+import { Select } from "@/components/Select"
 
 const initialState: UserFormState = {}
 
@@ -52,13 +53,13 @@ export function AdminUserForm() {
 
       <label className="block">
         <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">Rol</span>
-        <select name="role" defaultValue="staff" className={inputClass}>
+        <Select name="role" defaultValue="staff" aria-label="Rol del nuevo usuario">
           {ADMIN_ROLE_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {state.error && (

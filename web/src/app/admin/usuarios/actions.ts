@@ -24,11 +24,14 @@ function text(formData: FormData, key: string): string {
 }
 
 function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false
+  if ((error as { code?: unknown }).code === "23505") return true
+
+  const cause = (error as { cause?: unknown }).cause
   return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === "23505"
+    typeof cause === "object" &&
+    cause !== null &&
+    (cause as { code?: unknown }).code === "23505"
   )
 }
 
