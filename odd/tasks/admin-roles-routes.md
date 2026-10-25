@@ -10,7 +10,7 @@ Test runner: `vitest` (`cd web && npm test`)
 
 - **S1 — Roles.** `admin_users.role` is an enum (`owner`, `staff`), not null, default `staff`. The migration promotes existing admin rows to `owner`. The seed creates the first admin as `owner`. New users created from the UI default to `staff` unless the owner chooses `owner`.
 - **S2 — Server-side guards.** The session includes the role. `requireAdmin` keeps returning the session; `requireOwner` redirects unauthenticated users to login and non-owners to `/admin?error=forbidden`. Store settings and user management are owner-only at the page and server-action layers. Products and orders remain available to both roles.
-- **S3 — Routes and tabs.** `/admin` is a dashboard (summary + recent orders + quick links). `/admin/productos` is the product list. `/admin/pedidos` stays. `/admin/tienda` is the store settings page (replaces `/admin/ajustes`, which redirects). `/admin/usuarios` is the owner-only team page. Tabs are Resumen, Productos, Pedidos, Tienda (owner), Usuarios (owner); staff never sees the owner-only tabs.
+- **S3 — Routes and tabs.** `/admin` is a dashboard (summary + recent orders + quick links). `/admin/productos` is the product list and starts with a ghost create card (and a ghost list row) instead of a header button. `/admin/pedidos` stays. `/admin/tienda` is the store settings page (replaces `/admin/ajustes`, which redirects). `/admin/usuarios` is the owner-only team page. Tabs are Resumen, Productos, Pedidos, Tienda (owner), Usuarios (owner); staff never sees the owner-only tabs.
 - **S4 — User management.** Owners can list users, create a user (email, password 12+, role), change a role, reset a password, and delete a user. The last owner cannot be demoted or deleted; an owner cannot delete their own account. Passwords use bcrypt 12; emails are normalized lowercase. Deleting a user cascades their sessions.
 - **S5 — Quality.** Role helper tests, typecheck, build, migration, and an owner/staff smoke test pass.
 
@@ -20,7 +20,7 @@ Test runner: `vitest` (`cd web && npm test`)
 | --- | --- | --- | --- | --- |
 | T1 | S1 | inline | done | role enum/column, migration `0005_nasty_roughhouse`, seed/script |
 | T2 | S2 | inline | done | session role + requireOwner + action guards |
-| T3 | S3 | inline | done | dashboard, products route, tienda route, tabs |
+| T3 | S3 | inline | done | dashboard, products route, ghost create card, tienda route, tabs |
 | T4 | S4 | inline | done | user list/create/role/password/delete |
 | T5 | S5 | inline | done | tests, typecheck, build, migration, owner/staff smoke |
 
@@ -46,3 +46,6 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L12 (user, verbatim):** "los botones de cambiar rol y contrasenia no se ven bien"
 - **L13 (implementation):** The per-user role form now uses the shared field `Select` plus a primary dark "Cambiar rol" button at the same height. "Cambiar contraseña" is a secondary pill with a lock icon; the password form uses a matching input and a primary "Guardar contraseña" button. The delete button was enlarged to match. On mobile the controls are full width; on desktop they sit in a row.
 - **L14 (verification):** `npm test` → 18 files / 94 tests; `npm run typecheck` clean; `npm run build` green. The authenticated users page renders the primary "Cambiar rol" buttons, the lock-icon password summary, the password save buttons, and the delete button.
+- **L15 (user, verbatim):** "dale vamos bien, mira vamos hacer algo muy importante al crear los productos el boton no es tan intuitivo, mejor hagamos una tarjeta fantasma para crearlos y que sea una al inicio de todo los productos"
+- **L16 (implementation):** Removed the "Nuevo producto" header button from `/admin/productos` and added a dashed ghost card as the first item of the card grid, plus a matching ghost row at the top of the list view. Both link to `/admin/productos/nuevo` and show a plus icon, "Nuevo producto", and "Agregar al catálogo". The empty-state block was removed so the ghost card is always available.
+- **L17 (verification):** `npm run typecheck` clean, `npm test` → 19 files / 103 tests, `npm run build` green. Authenticated `/admin/productos` shows exactly one create link, the dashed ghost card before the first product, the plus icon and "Agregar al catálogo"; the old header button is gone.
