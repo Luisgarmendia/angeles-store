@@ -10,7 +10,7 @@ export function Hero() {
             {config.brand.tagline}
           </p>
           <h1 className="mt-4 font-display text-5xl leading-[1.03] text-ink sm:text-6xl">
-            Piezas que te hacen <span className="italic text-wine">sentirte tú</span>.
+            Cuida tu piel, renueva tu <span className="italic text-wine">look</span>.
           </h1>
           <p className="mt-5 max-w-md text-base leading-relaxed text-muted">
             {config.brand.description}
@@ -21,7 +21,7 @@ export function Hero() {
               href="#catalogo"
               className="inline-flex items-center gap-3 rounded-full bg-ink px-7 py-3 text-sm font-medium text-cream transition-colors hover:bg-wine"
             >
-              Ver la colección
+              Ver cremas y camisas
               <ArrowRightIcon className="h-4 w-4" />
             </a>
             <a
@@ -52,7 +52,7 @@ export function Hero() {
           <div className="absolute -inset-6 rounded-full bg-rose/15 blur-3xl" aria-hidden="true" />
           <img
             src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80"
-            alt="Selección de prendas femeninas de la nueva colección"
+            alt="Selección de cremas, camisas y prendas para mujer"
             className="relative aspect-[4/5] w-full rounded-[2rem] object-cover shadow-xl shadow-ink/10"
           />
         </div>

@@ -22,13 +22,13 @@ const customer: Customer = {
 describe("buildOrderMessage", () => {
   it("includes customer data, line items and total", () => {
     const message = buildOrderMessage({
-      brandName: "Amapola",
+      brandName: "Angeles Store's",
       customer,
       lines: [{ product: dress, quantity: 2 }],
       total: 2580,
     })
 
-    expect(message).toContain("AMAPOLA")
+    expect(message).toContain("ANGELES STORE'S")
     expect(message).toContain("Ana Martínez")
     expect(message).toContain("Col. Palmira")
     expect(message).toContain("Transferencia bancaria")
@@ -39,7 +39,7 @@ describe("buildOrderMessage", () => {
 
   it("omits optional fields when empty", () => {
     const message = buildOrderMessage({
-      brandName: "Amapola",
+      brandName: "Angeles Store's",
       customer: { ...customer, telefono: "   ", notas: "" },
       lines: [{ product: dress, quantity: 1 }],
       total: 1290,

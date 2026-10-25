@@ -13,7 +13,7 @@ export function Footer({ whatsapp }: FooterProps) {
     <footer id="contacto" className="mt-16 border-t border-ink/10 bg-sand/60">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
         <div>
-          <p className="font-display text-2xl tracking-[0.22em] text-ink">
+          <p className="font-display text-xl tracking-[0.16em] text-ink">
             {config.brand.name.toUpperCase()}
           </p>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
@@ -55,7 +55,7 @@ export function Footer({ whatsapp }: FooterProps) {
       </div>
 
       <div className="border-t border-ink/10 px-4 py-5 text-center text-xs text-muted">
-        © {new Date().getFullYear()} {config.brand.name}. Moda femenina hecha con cariño en
+        © {new Date().getFullYear()} {config.brand.name}. Cremas, camisas y moda femenina desde
         Honduras.
       </div>
     </footer>

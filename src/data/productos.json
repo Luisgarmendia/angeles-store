@@ -1,6 +1,94 @@
 [
   {
-    "id": "p1",
+    "id": "c1",
+    "nombre": "Crema facial de día",
+    "precio": 480,
+    "categoria": "Cremas",
+    "descripcion": "Hidratación ligera con textura fresca para usar cada mañana. Deja la piel suave y lista para el maquillaje.",
+    "imagen": "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "c2",
+    "nombre": "Crema facial de noche",
+    "precio": 520,
+    "categoria": "Cremas",
+    "descripcion": "Fórmula nutritiva que trabaja mientras duermes. Despierta con la piel descansada y flexible.",
+    "imagen": "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "c3",
+    "nombre": "Crema corporal de karité",
+    "precio": 390,
+    "categoria": "Cremas",
+    "descripcion": "Manteca de karité y vitamina E para nutrir codos, rodillas y piernas. Se absorbe rápido y deja un aroma suave.",
+    "imagen": "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "c4",
+    "nombre": "Sérum de vitamina C",
+    "precio": 450,
+    "categoria": "Cremas",
+    "descripcion": "Unas gotas por la mañana para iluminar y unificar el tono. Textura ligera que no deja sensación grasosa.",
+    "imagen": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "c5",
+    "nombre": "Crema de manos",
+    "precio": 190,
+    "categoria": "Cremas",
+    "descripcion": "Tamaño de bolso para llevar contigo. Repara manos secas sin dejar residuo pegajoso.",
+    "imagen": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "c6",
+    "nombre": "Protector solar facial SPF 50",
+    "precio": 420,
+    "categoria": "Cremas",
+    "descripcion": "Protección diaria de amplio espectro con acabado natural. Ideal para el sol de Honduras.",
+    "imagen": "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "s1",
+    "nombre": "Camisa blanca clásica",
+    "precio": 590,
+    "categoria": "Camisas",
+    "descripcion": "Camisa de algodón con cuello estructurado y botones nacarados. Combina con jeans o pantalón de vestir.",
+    "imagen": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "s2",
+    "nombre": "Camisa de lino manga corta",
+    "precio": 540,
+    "categoria": "Camisas",
+    "descripcion": "Lino fresco con caída relajada. Perfecta para días calurosos y salidas casuales.",
+    "imagen": "https://images.unsplash.com/photo-1605763240000-7e93b172d754?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "s3",
+    "nombre": "Blusa satinada manga larga",
+    "precio": 560,
+    "categoria": "Camisas",
+    "descripcion": "Satén con puños suaves y caída elegante. Una pieza versátil para la oficina o una cena.",
+    "imagen": "https://images.unsplash.com/photo-1551163943-3f6a855d1153?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "s4",
+    "nombre": "Camisa oversize de rayas",
+    "precio": 620,
+    "categoria": "Camisas",
+    "descripcion": "Corte amplio y estampado de rayas finas. Se lleva suelta o anudada en la cintura.",
+    "imagen": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "s5",
+    "nombre": "Camisa de denim",
+    "precio": 650,
+    "categoria": "Camisas",
+    "descripcion": "Denim suave de lavado medio con bolsillos frontales. El clásico que nunca pasa de moda.",
+    "imagen": "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "v1",
     "nombre": "Vestido midi satinado",
     "precio": 1290,
     "categoria": "Vestidos",
@@ -8,7 +96,7 @@
     "imagen": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80"
   },
   {
-    "id": "p2",
+    "id": "v2",
     "nombre": "Vestido floral de verano",
     "precio": 890,
     "categoria": "Vestidos",
@@ -16,23 +104,7 @@
     "imagen": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80"
   },
   {
-    "id": "p3",
-    "nombre": "Blusa satinada manga larga",
-    "precio": 590,
-    "categoria": "Tops",
-    "descripcion": "Blusa de satén con cuello camisero y puños suaves. Combina con jeans, pantalón de vestir o falda.",
-    "imagen": "https://images.unsplash.com/photo-1551163943-3f6a855d1153?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    "id": "p4",
-    "nombre": "Top tejido acanalado",
-    "precio": 350,
-    "categoria": "Tops",
-    "descripcion": "Top de punto acanalado con corte ajustado y escote redondo. Un básico que no puede faltar en tu clóset.",
-    "imagen": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    "id": "p5",
+    "id": "pa1",
     "nombre": "Pantalón sastre wide leg",
     "precio": 790,
     "categoria": "Pantalones",
@@ -40,7 +112,7 @@
     "imagen": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80"
   },
   {
-    "id": "p6",
+    "id": "pa2",
     "nombre": "Jeans mom fit",
     "precio": 690,
     "categoria": "Pantalones",
@@ -48,7 +120,7 @@
     "imagen": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=80"
   },
   {
-    "id": "p7",
+    "id": "z1",
     "nombre": "Sandalias de tacón cuadrado",
     "precio": 890,
     "categoria": "Calzado",
@@ -56,15 +128,7 @@
     "imagen": "https://images.unsplash.com/photo-1562273138-f46be4ebdf33?auto=format&fit=crop&w=800&q=80"
   },
   {
-    "id": "p8",
-    "nombre": "Botines de cuero",
-    "precio": 1490,
-    "categoria": "Calzado",
-    "descripcion": "Botines de cuero con tacón bajo y cierre lateral. Un imprescindible para los días frescos.",
-    "imagen": "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    "id": "p9",
+    "id": "b1",
     "nombre": "Bolso bandolera",
     "precio": 950,
     "categoria": "Bolsos",
@@ -72,27 +136,11 @@
     "imagen": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80"
   },
   {
-    "id": "p10",
+    "id": "a1",
     "nombre": "Aretes dorados",
     "precio": 290,
     "categoria": "Accesorios",
     "descripcion": "Aretes circulares bañados en oro con cierre a presión. Livianos y luminosos.",
     "imagen": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    "id": "p11",
-    "nombre": "Pañuelo de seda",
-    "precio": 250,
-    "categoria": "Accesorios",
-    "descripcion": "Pañuelo de seda con estampado exclusivo. Se lleva al cuello, en el pelo o en el bolso.",
-    "imagen": "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    "id": "p12",
-    "nombre": "Sérum facial vitamina C",
-    "precio": 450,
-    "categoria": "Belleza",
-    "descripcion": "Sérum antioxidante con vitamina C y ácido hialurónico. Ilumina y hidrata la piel.",
-    "imagen": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80"
   }
 ]

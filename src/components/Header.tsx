@@ -15,11 +15,14 @@ export function Header({ cartCount, onCartOpen, onAdminOpen }: HeaderProps) {
       </p>
 
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#catalogo" className="font-display text-2xl tracking-[0.22em] text-ink">
+        <a
+          href="#catalogo"
+          className="font-display text-lg leading-none tracking-[0.12em] text-ink sm:text-xl sm:tracking-[0.16em] lg:text-2xl lg:tracking-[0.2em]"
+        >
           {config.brand.name.toUpperCase()}
         </a>
 
-        <nav className="hidden items-center gap-8 text-sm text-muted sm:flex">
+        <nav className="hidden items-center gap-6 text-sm text-muted md:flex lg:gap-8">
           <a href="#catalogo" className="transition-colors hover:text-ink">
             Catálogo
           </a>

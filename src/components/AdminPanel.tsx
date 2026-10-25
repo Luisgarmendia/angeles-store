@@ -103,7 +103,7 @@ export function AdminPanel({
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = "productos-amapola.json"
+    link.download = "productos-angeles-stores.json"
     link.click()
     URL.revokeObjectURL(url)
   }

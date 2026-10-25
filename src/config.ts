@@ -5,14 +5,14 @@
  */
 export const config = {
   brand: {
-    name: "Amapola",
-    tagline: "Moda femenina en Honduras",
+    name: "Angeles Store's",
+    tagline: "Cremas, camisas y mucho más para mujer",
     description:
-      "Ropa, calzado y accesorios para mujer, seleccionados con cariño en Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
+      "Cremas, camisas y piezas seleccionadas para mujer, con cariño desde Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
   },
   contact: {
     whatsapp: "50499998888",
-    instagram: "https://instagram.com/amapola.hn",
+    instagram: "https://instagram.com/angelesstores",
   },
   currency: {
     locale: "es-HN",
