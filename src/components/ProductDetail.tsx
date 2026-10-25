@@ -46,11 +46,11 @@ export function ProductDetail({ product, recommended, onAdd }: ProductDetailProp
       </a>
 
       <div className="mt-6 grid gap-8 md:grid-cols-2 md:gap-12">
-        <div className="overflow-hidden rounded-[2rem] bg-sand">
+        <div className="aspect-[4/5] overflow-hidden rounded-[2rem] bg-sand">
           <ProductImage
             src={product.imagen}
             alt={product.nombre}
-            className="aspect-[4/5] h-full w-full object-cover"
+            className="h-full w-full object-cover"
           />
         </div>
 
