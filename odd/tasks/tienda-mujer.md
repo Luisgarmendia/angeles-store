@@ -30,6 +30,9 @@ Test runner: `vitest`
 - **S20 — Admin access gate.** Opening the admin panel requires a 4–8 digit PIN created by the owner on first use. The PIN is stored as a salted hash in `localStorage`, unlocks the panel for the tab session, can be changed from Ajustes with the current PIN, and can be locked manually. This is local deterrence for a zero-backend app, not server-side authorization.
 - **S21 — Shipping cost notice.** The cart drawer, checkout, product detail, and WhatsApp order message state that shipping may carry an extra cost and is coordinated by WhatsApp.
 - **S22 — Basic-plane symbols.** Every symbol in the order message is a BMP character with no surrogate pairs, enforced by a test that also rejects `�`.
+- **S23 — Configurable hero.** Admin → Ajustes edits the hero tagline, headline, italic accent, description, both button labels, three benefit lines, image URL or uploaded photo, and image alt text. Defaults live in `src/config.ts`; saved values live in the settings JSON in `localStorage`.
+- **S24 — Configurable payment methods.** The defined list is contraentrega, transferencia, tarjeta, and efectivo. The owner enables a subset in Ajustes; checkout only offers the enabled methods, always keeps at least one, and repairs a saved customer whose method was disabled.
+- **S25 — Local image upload.** Product and hero images can be uploaded from the device and stored as Base64 data URLs with a 1.5 MB limit. Cloudflare R2 upload is deferred to phase 2; the hero field already accepts an R2 URL.
 
 ## Tasks
 
@@ -57,6 +60,9 @@ Test runner: `vitest`
 | T20 | S20 | inline | done | `549fdb8` · PIN gate, lock and key change, 3 tests |
 | T21 | S21 | inline | done | `1dafb48` · shipping notice in cart, checkout and message |
 | T22 | S12, S22 | inline | done | `1dafb48`, `715c0e0`, `6112dcc` · basic-plane symbols + test |
+| T23 | S23 | inline | done | `de4be0f` · hero settings + image upload |
+| T24 | S24 | inline | done | `de4be0f` · payment subset + tests |
+| T25 | S23, S25 | inline | done | `de4be0f` · shared image helper |
 
 - **T1 — Scaffold.** Initialize git, Vite + React + TypeScript + Tailwind, base config files.
 - **T2 — Domain data.** Central brand/config module, types, and a women's fashion seed catalog.
@@ -80,6 +86,9 @@ Test runner: `vitest`
 - **T20 — Protect admin.** PIN setup and unlock screen, session unlock, manual lock, and key change from Ajustes.
 - **T21 — Shipping notice.** State in the cart, checkout, detail, and WhatsApp message that shipping may cost extra.
 - **T22 — Safe message marks.** Keep the message personality with basic-plane symbols and pin the character range with a test.
+- **T23 — Editable hero.** Move the hero copy and photo into settings, with an Ajustes form and a URL/upload field.
+- **T24 — Payment selection.** Enable a subset of the defined payment list and make checkout honor it.
+- **T25 — Image helper.** Share the type/size validation and Base64 reading between product and hero uploads.
 
 ## Log
 
@@ -112,3 +121,6 @@ Test runner: `vitest`
 - **L27 (evidence):** The user reported `�` replacing every emoji in the WhatsApp message. The app was checked end to end: the source bytes, the Vite-served module, and `encodeURIComponent` all produce correct UTF-8 (`%F0%9F%93%A6` for 📦), so the replacement happens in the viewing device/font, not in the app.
 - **L28 (decision):** The order message now uses decorative BMP symbols instead of four-byte emoji: ★ ♥ ☎ ⌂ ✔ ✎ ◇ ◆ ➜ ✿. They keep personality, use at most three UTF-8 bytes, and render on devices that replace emoji with `�`. A test asserts every character is below `U+10000` and that the message contains no `�`.
 - **L29 (verification):** `npm test` → 9 files, 51 tests passing. `npm run build` → green.
+- **L30 (user, verbatim):** "quiero que este seccion CREMAS, CAMISAS Y MUCHO MÁS PARA MUJER Cuida tu piel, renueva tu look. Cremas, camisas y piezas seleccionadas para mujer, con cariño desde Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp. Ver cremas y camisas Cómo comprar Envíos a todo Honduras Pago contra entrega Atención personalizada Selección de cremas, camisas y prendas para mujer sea configurable igual que el nombre del empresa, y que me de la posibilidad de subir una foto, escojer los medios de pago que sean de una lista definida. guardada en un json y quisiera subir las imagenes a un R2 en cloudflare pero eso posterior en una 2da fase"
+- **L31 (decision):** Hero copy and image are editable from Ajustes. Defaults live in `config.hero`; saved overrides live in the settings JSON in `localStorage`. The image accepts a URL or a local upload stored as a Base64 data URL (1.5 MB limit). Payment methods are defined in `src/lib/payments.ts`; the owner enables a subset, checkout offers only those, and a saved customer whose method was disabled falls back to the first enabled one. `mergeSettings` deep-merges older saved settings so existing stores keep their data. Cloudflare R2 is deferred to phase 2; the URL field already accepts an R2 link.
+- **L32 (verification):** `npm test` → 10 files, 58 tests passing. `npm run build` → green. `HeroSettings`, `PaymentsSettings`, `payments` and `image` modules return HTTP 200 in Vite.
