@@ -21,14 +21,14 @@ Test runner: `vitest`
 
 | ID | Specs | Route | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| T1 | S1, S8 | inline | done | `npm run build` passes |
-| T2 | S1, S7 | inline | done | 12 women's fashion products, brand config centralized |
-| T3 | S3, S5, S7 | inline | done | 10 unit tests pass |
-| T4 | S2, S8 | inline | done | catalog with search, filters, image fallback |
-| T5 | S3 | inline | done | cart drawer with quantity controls and persistence |
-| T6 | S4, S5 | inline | done | validated form, `wa.me` handoff |
-| T7 | S6, S7 | inline | done | CRUD, phone, JSON import/export, Base64 upload |
-| T8 | S1, S8 | inline | done | responsive pass, dev server smoke test, build green |
+| T1 | S1, S8 | inline | done | `62f2572` · `npm run build` passes |
+| T2 | S1, S7 | inline | done | `966911e` · 12 women's fashion products |
+| T3 | S3, S5, S7 | inline | done | `9ef4157` · 10 unit tests pass |
+| T4 | S2, S8 | inline | done | `966911e` · search, filters, image fallback |
+| T5 | S3 | inline | done | `966911e` · cart drawer, persistence |
+| T6 | S4, S5 | inline | done | `966911e` · validated form, `wa.me` handoff |
+| T7 | S6, S7 | inline | done | `966911e` · CRUD, JSON import/export, Base64 |
+| T8 | S1, S8 | inline | done | `966911e` · smoke test + build green |
 
 - **T1 — Scaffold.** Initialize git, Vite + React + TypeScript + Tailwind, base config files.
 - **T2 — Domain data.** Central brand/config module, types, and a women's fashion seed catalog.
