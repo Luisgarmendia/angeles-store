@@ -1,19 +1,17 @@
-import { config } from "@/lib/config"
+"use client"
+
 import { formatHonduranPhone } from "@/lib/phone"
 import { socialHref } from "@/lib/social"
-import type { StoreSettings } from "@/lib/types"
 import { MessageIcon } from "./Icons"
+import { useStoreSettings } from "./store-settings-provider"
 
-interface FooterProps {
-  settings: StoreSettings
-}
-
-export function Footer({ settings }: FooterProps) {
-  const digits = settings.whatsapp.replace(/\D/g, "")
+export function Footer() {
+  const { store, whatsapp, instagram, facebook, tiktok } = useStoreSettings()
+  const digits = whatsapp.replace(/\D/g, "")
   const socials = [
-    { label: "Instagram", href: socialHref(settings.instagram, "instagram") },
-    { label: "Facebook", href: socialHref(settings.facebook, "facebook") },
-    { label: "TikTok", href: socialHref(settings.tiktok, "tiktok") },
+    { label: "Instagram", href: socialHref(instagram, "instagram") },
+    { label: "Facebook", href: socialHref(facebook, "facebook") },
+    { label: "TikTok", href: socialHref(tiktok, "tiktok") },
   ].filter((social) => social.href)
 
   return (
@@ -21,12 +19,14 @@ export function Footer({ settings }: FooterProps) {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
         <div>
           <p className="font-display text-xl tracking-[0.16em] text-ink">
-            {config.brand.name.toUpperCase()}
+            {store.name.toUpperCase()}
           </p>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
-            {config.brand.description}
-          </p>
-          <p className="mt-3 text-sm text-muted">Tegucigalpa, Honduras</p>
+          {store.description && (
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
+              {store.description}
+            </p>
+          )}
+          {store.address && <p className="mt-3 text-sm text-muted">{store.address}</p>}
         </div>
 
         <div>
@@ -40,7 +40,7 @@ export function Footer({ settings }: FooterProps) {
             <MessageIcon className="h-4 w-4" />
             Escríbenos por WhatsApp
           </a>
-          <p className="mt-1 text-xs text-muted">{formatHonduranPhone(settings.whatsapp)}</p>
+          <p className="mt-1 text-xs text-muted">{formatHonduranPhone(whatsapp)}</p>
           {socials.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
               {socials.map((social) => (
@@ -69,8 +69,7 @@ export function Footer({ settings }: FooterProps) {
       </div>
 
       <div className="border-t border-ink/10 px-4 py-5 text-center text-xs text-muted">
-        © {new Date().getFullYear()} {config.brand.name}. Cremas, camisas y moda femenina desde
-        Honduras.
+        © {new Date().getFullYear()} {store.name}. Cremas, camisas y moda femenina desde Honduras.
       </div>
     </footer>
   )

@@ -15,6 +15,51 @@ export function SettingsForm({ settings }: { settings: StoreSettings }) {
   return (
     <form action={formAction} className="space-y-5">
       <section className="rounded-2xl border border-ink/10 bg-white/60 p-5">
+        <h2 className="font-display text-xl text-ink">Información de la tienda</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          Nombre, dirección y descripción que se muestran en la tienda, el pie de página y el
+          mensaje de WhatsApp.
+        </p>
+
+        <div className="mt-4 grid gap-3">
+          <Field label="Nombre de la tienda">
+            <input
+              type="text"
+              name="storeName"
+              defaultValue={settings.store.name}
+              required
+              minLength={2}
+              maxLength={80}
+              className={inputClass}
+              placeholder="Angeles Store's"
+            />
+          </Field>
+
+          <Field label="Dirección">
+            <input
+              type="text"
+              name="storeAddress"
+              defaultValue={settings.store.address}
+              maxLength={200}
+              className={inputClass}
+              placeholder="Tegucigalpa, Honduras"
+            />
+          </Field>
+
+          <Field label="Descripción">
+            <textarea
+              name="storeDescription"
+              defaultValue={settings.store.description}
+              maxLength={600}
+              rows={3}
+              className={`${inputClass} resize-none`}
+              placeholder="Cremas, camisas y piezas seleccionadas para mujer…"
+            />
+          </Field>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-ink/10 bg-white/60 p-5">
         <h2 className="font-display text-xl text-ink">Portada</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
           Lo primero que ven tus clientes. La foto puede ser una URL de R2.

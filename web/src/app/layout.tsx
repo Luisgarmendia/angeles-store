@@ -2,10 +2,7 @@ import type { Metadata, Viewport } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: {
-    default: "Angeles Store's — Cremas, camisas y moda para mujer en Honduras",
-    template: "%s · Angeles Store's",
-  },
+  title: "Angeles Store's",
   description:
     "Angeles Store's: cremas, camisas y piezas para mujer en Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
 }

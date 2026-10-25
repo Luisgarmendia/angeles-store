@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { config } from "@/lib/config"
 import { BagIcon, SettingsIcon } from "./Icons"
+import { useStoreSettings } from "./store-settings-provider"
 
 interface HeaderProps {
   cartCount: number
@@ -10,6 +10,8 @@ interface HeaderProps {
 }
 
 export function Header({ cartCount, onCartOpen }: HeaderProps) {
+  const { store } = useStoreSettings()
+
   return (
     <header className="sticky top-0 z-30 border-b border-ink/10 bg-cream/90 backdrop-blur">
       <p className="bg-ink px-4 py-2 text-center text-[10px] uppercase tracking-[0.2em] text-cream/90">
@@ -21,7 +23,7 @@ export function Header({ cartCount, onCartOpen }: HeaderProps) {
           href="/#catalogo"
           className="font-display text-lg leading-none tracking-[0.12em] text-ink sm:text-xl sm:tracking-[0.16em] lg:text-2xl lg:tracking-[0.2em]"
         >
-          {config.brand.name.toUpperCase()}
+          {store.name.toUpperCase()}
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm text-muted md:flex lg:gap-8">

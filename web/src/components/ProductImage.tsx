@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { config } from "@/lib/config"
+import { useStoreSettings } from "./store-settings-provider"
 
 interface ProductImageProps {
   src: string
@@ -10,6 +10,7 @@ interface ProductImageProps {
 }
 
 export function ProductImage({ src, alt, className }: ProductImageProps) {
+  const { store } = useStoreSettings()
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export function ProductImage({ src, alt, className }: ProductImageProps) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-sand px-3 text-center text-muted">
         <span className="font-display text-sm uppercase leading-tight tracking-[0.16em]">
-          {config.brand.name}
+          {store.name}
         </span>
         <span className="text-[10px] uppercase tracking-[0.2em]">Sin imagen</span>
       </div>

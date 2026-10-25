@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { getStoreSettings } from "@/db/queries"
 import { getAdminSession } from "@/lib/auth"
 import { LoginForm } from "./login-form"
 
@@ -12,9 +13,11 @@ export default async function LoginPage() {
   const session = await getAdminSession()
   if (session) redirect("/admin")
 
+  const settings = await getStoreSettings()
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-cream px-4 py-10">
-      <LoginForm />
+      <LoginForm storeName={settings.store.name} />
     </main>
   )
 }

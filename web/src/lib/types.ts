@@ -39,7 +39,14 @@ export interface HeroContent {
   imageAlt: string
 }
 
+export interface StoreInfo {
+  name: string
+  address: string
+  description: string
+}
+
 export interface StoreSettings {
+  store: StoreInfo
   whatsapp: string
   instagram: string
   facebook: string

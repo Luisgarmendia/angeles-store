@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { config } from "@/lib/config"
 import { buildOrderMessage, whatsappUrl } from "@/lib/whatsapp"
 import type { Customer, Product, StoreSettings } from "@/lib/types"
 import { CartDrawer } from "./CartDrawer"
@@ -9,6 +8,7 @@ import { CheckoutModal } from "./CheckoutModal"
 import { Footer } from "./Footer"
 import { Header } from "./Header"
 import { StoreProvider, useCart } from "./store-provider"
+import { StoreSettingsProvider, useStoreSettings } from "./store-settings-provider"
 import { ToastProvider, useToast } from "./toast-provider"
 
 export function StoreShell({
@@ -21,21 +21,18 @@ export function StoreShell({
   children: ReactNode
 }) {
   return (
-    <StoreProvider products={products}>
-      <ToastProvider>
-        <StoreChrome settings={settings}>{children}</StoreChrome>
-      </ToastProvider>
-    </StoreProvider>
+    <StoreSettingsProvider settings={settings}>
+      <StoreProvider products={products}>
+        <ToastProvider>
+          <StoreChrome>{children}</StoreChrome>
+        </ToastProvider>
+      </StoreProvider>
+    </StoreSettingsProvider>
   )
 }
 
-function StoreChrome({
-  settings,
-  children,
-}: {
-  settings: StoreSettings
-  children: ReactNode
-}) {
+function StoreChrome({ children }: { children: ReactNode }) {
+  const settings = useStoreSettings()
   const { lines, total, count, remove, setQuantity, clear } = useCart()
   const { showToast } = useToast()
   const [cartOpen, setCartOpen] = useState(false)
@@ -43,7 +40,7 @@ function StoreChrome({
 
   function handleCheckout(customer: Customer) {
     const message = buildOrderMessage({
-      brandName: config.brand.name,
+      brandName: settings.store.name,
       customer,
       lines,
       total,
@@ -60,7 +57,7 @@ function StoreChrome({
     <>
       <Header cartCount={count} onCartOpen={() => setCartOpen(true)} />
       <main>{children}</main>
-      <Footer settings={settings} />
+      <Footer />
 
       <CartDrawer
         open={cartOpen}

@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { config } from "@/lib/config"
 import { requireAdmin } from "@/lib/auth"
+import { getStoreSettings } from "@/db/queries"
 import { logoutAction } from "../actions"
 import { AdminTabs } from "@/components/admin/admin-tabs"
 
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireAdmin()
+  const settings = await getStoreSettings()
 
   return (
     <div className="min-h-screen bg-cream">
@@ -16,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted">
-                {config.brand.name} · Administración
+                {settings.store.name} · Administración
               </p>
               <h1 className="font-display text-2xl text-ink sm:text-3xl">Tu tienda, en orden</h1>
             </div>

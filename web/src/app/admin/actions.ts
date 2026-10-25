@@ -141,6 +141,21 @@ export async function saveSettingsAction(
 ): Promise<FormState> {
   await requireAdmin()
 
+  const storeName = text(formData, "storeName")
+  if (storeName.length < 2 || storeName.length > 80) {
+    return { error: "El nombre de la tienda debe tener entre 2 y 80 caracteres." }
+  }
+
+  const storeAddress = text(formData, "storeAddress")
+  if (storeAddress.length > 200) {
+    return { error: "La dirección no puede superar 200 caracteres." }
+  }
+
+  const storeDescription = text(formData, "storeDescription")
+  if (storeDescription.length > 600) {
+    return { error: "La descripción no puede superar 600 caracteres." }
+  }
+
   const whatsapp = normalizeHonduranPhone(text(formData, "whatsapp"))
   if (!whatsapp) {
     return { error: "El WhatsApp debe tener 8 dígitos hondureños, por ejemplo 9999-8888." }
@@ -165,6 +180,11 @@ export async function saveSettingsAction(
   }
 
   const data: StoreSettings = {
+    store: {
+      name: storeName,
+      address: storeAddress,
+      description: storeDescription,
+    },
     whatsapp,
     instagram: text(formData, "instagram"),
     facebook: text(formData, "facebook"),

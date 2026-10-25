@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/format"
 import { useModalBehavior } from "@/lib/useModal"
 import type { CartLine } from "@/lib/types"
 import { ArrowRightIcon, BagIcon, MinusIcon, PlusIcon, TrashIcon, XIcon } from "./Icons"
+import { useStoreSettings } from "./store-settings-provider"
 
 interface CartDrawerProps {
   open: boolean
@@ -26,6 +27,7 @@ export function CartDrawer({
   onCheckout,
 }: CartDrawerProps) {
   useModalBehavior(open, onClose)
+  const { store } = useStoreSettings()
 
   if (!open) return null
 
@@ -160,7 +162,7 @@ export function CartDrawer({
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
               <p className="mt-3 text-center text-[11px] text-muted">
-                Pedido a {config.brand.name} · respuesta por WhatsApp
+                Pedido a {store.name} · respuesta por WhatsApp
               </p>
             </div>
           </>

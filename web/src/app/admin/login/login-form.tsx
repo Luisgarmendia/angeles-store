@@ -7,7 +7,7 @@ import { loginAction, type LoginState } from "./actions"
 
 const initialState: LoginState = {}
 
-export function LoginForm() {
+export function LoginForm({ storeName }: { storeName: string }) {
   const [state, formAction, pending] = useActionState(loginAction, initialState)
 
   return (
@@ -22,7 +22,7 @@ export function LoginForm() {
           </span>
           <div>
             <p className="text-[10px] uppercase tracking-[0.24em] text-muted">
-              Angeles Store&apos;s · Administración
+              {storeName} · Administración
             </p>
             <h1 className="font-display text-2xl text-ink">Entrar al panel</h1>
           </div>
