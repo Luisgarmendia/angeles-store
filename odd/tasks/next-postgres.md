@@ -18,6 +18,7 @@ Test runner: `vitest`
 - **S8 — R2 uploads.** Admin can upload product and hero images server-side to Cloudflare R2; the browser never receives the secret. The URL field remains as a fallback. Order persistence is deferred.
 - **S9 — Production bootstrap.** The Docker standalone image runs migrations on start, includes one-time seed and password-reset scripts, and reads every secret from environment variables. Dokploy keeps PostgreSQL on the internal network with backups.
 - **S10 — Admin catalog views.** The admin product list can be shown as cards or as a compact list. The choice is remembered in the browser.
+- **S11 — Store information.** Admin → Ajustes edits the store name, address, and description. Those values feed the header, footer, page metadata, admin chrome, and the WhatsApp order message; older settings rows fill the new fields from defaults.
 
 ## Tasks
 
@@ -33,6 +34,7 @@ Test runner: `vitest`
 | T8 | S8 | inline | done | `2879da5` · R2 upload verified with `r2.dev` |
 | T9 | S6, S9 | inline | done | `2879da5` · migrate/seed/password scripts |
 | T10 | S10 | inline | done | `0ffbdc2` · cards/list toggle + persisted view |
+| T11 | S11 | inline | done | `7417568` · store name, address and description in settings |
 
 - **T1 — Scaffold.** Create the Next app in `web/` and reuse Tailwind, fonts, and component patterns.
 - **T2 — Database.** Add Drizzle, schema, migration, seed, and queries.
@@ -44,6 +46,7 @@ Test runner: `vitest`
 - **T8 — R2 uploads.** Server-side S3 upload for product and hero images, admin-only route, public URL returned to the form.
 - **T9 — Production bootstrap.** Standalone Dockerfile, migration on start, one-time seed, password reset, Dokploy documentation.
 - **T10 — Admin catalog views.** Toggle between product cards and a compact list, with the preference stored in the browser.
+- **T11 — Store information.** Editable store name, address, and description, with a settings merge for older rows and a shared settings context in the storefront.
 
 ## Log
 
@@ -58,3 +61,6 @@ Test runner: `vitest`
 - **L9 (user, verbatim):** "ok me carga con el endpoint dev y funciona correctamente, y todo bien, ahora quiero que en la parte del admin se vean como tarjetas y como lista"
 - **L10 (decision):** R2 uploads are verified with the `r2.dev` public URL; the custom domain can stay behind Access until it is ready. The admin catalog defaults to cards and offers a list view, with the selected view stored under `angeles.admin.products.view` in `localStorage`.
 - **L11 (verification):** `npm test` → 6 files, 31 tests passing. `npm run build` → green. The server-rendered admin HTML contains both view buttons and the card grid; product create/delete and settings flows remain unchanged.
+- **L12 (user, verbatim):** "ok en ajustes nos hace falta la infromacion de la tienda, ejemplo nombre direccion y una descriocion que eso no esta"
+- **L13 (decision):** `StoreSettings` now carries `store: { name, address, description }`, edited in a new Ajustes card. The store layout provides the settings through a client context, so the header, footer, cart, product-image fallback, and WhatsApp message use the configured name. The admin layout and login page fetch the settings from PostgreSQL, and the store layout generates metadata from the name and description. `mergeSettings` fills the new fields for rows saved before this change.
+- **L14 (verification):** `npm test` → 7 files, 34 tests passing. `npm run build` → green. Saving a test store name, address, and description updated the header and footer; reverting restored the production values. Home title is `<store name> — Cremas…` and a product title is `<product> · <store name>`.
