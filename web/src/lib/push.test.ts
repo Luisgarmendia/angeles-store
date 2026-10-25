@@ -4,9 +4,10 @@ vi.mock("server-only", () => ({}))
 vi.mock("@/db/queries", () => ({
   listPushTokens: vi.fn(async () => []),
   deletePushTokens: vi.fn(async () => undefined),
+  updateOrderPushResult: vi.fn(async () => undefined),
 }))
 
-import { listPushTokens } from "@/db/queries"
+import { listPushTokens, updateOrderPushResult } from "@/db/queries"
 import { formatPrice } from "./format"
 import {
   buildOrderNotification,
@@ -28,6 +29,7 @@ const notificationInput = {
 
 beforeEach(() => {
   vi.mocked(listPushTokens).mockClear()
+  vi.mocked(updateOrderPushResult).mockClear()
 })
 
 afterEach(() => {
@@ -102,22 +104,59 @@ describe("parseServiceAccount", () => {
 })
 
 describe("sendOrderPushNotification", () => {
-  it("does not touch the database when push is not configured", async () => {
+  it("records a skipped result when push is not configured", async () => {
     delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON
 
-    await sendOrderPushNotification(notificationInput)
+    const result = await sendOrderPushNotification(notificationInput)
 
+    expect(result).toMatchObject({
+      successCount: 0,
+      failureCount: 0,
+      error: "Firebase no configurado",
+    })
     expect(listPushTokens).not.toHaveBeenCalled()
+    expect(updateOrderPushResult).toHaveBeenCalledWith(notificationInput.orderId, {
+      sentAt: null,
+      successCount: 0,
+      failureCount: 0,
+      error: "Firebase no configurado",
+    })
   })
 
-  it("logs and swallows errors instead of failing the order", async () => {
+  it("records a skipped result when there are no subscribed devices", async () => {
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON = '{"project_id":"demo"}'
+    vi.mocked(listPushTokens).mockResolvedValueOnce([])
+
+    const result = await sendOrderPushNotification(notificationInput)
+
+    expect(result).toMatchObject({ error: "Sin dispositivos suscritos" })
+    expect(updateOrderPushResult).toHaveBeenCalledWith(notificationInput.orderId, {
+      sentAt: null,
+      successCount: 0,
+      failureCount: 0,
+      error: "Sin dispositivos suscritos",
+    })
+  })
+
+  it("records a failed result and swallows errors instead of failing the order", async () => {
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON = '{"project_id":"demo"}'
     vi.mocked(listPushTokens).mockRejectedValueOnce(new Error("database down"))
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    await expect(sendOrderPushNotification(notificationInput)).resolves.toBeUndefined()
+    const result = await sendOrderPushNotification(notificationInput)
 
+    expect(result).toMatchObject({
+      successCount: 0,
+      failureCount: 0,
+      error: "No se pudo enviar la notificación.",
+    })
     expect(consoleError).toHaveBeenCalled()
+    expect(updateOrderPushResult).toHaveBeenCalledWith(notificationInput.orderId, {
+      sentAt: null,
+      successCount: 0,
+      failureCount: 0,
+      error: "No se pudo enviar la notificación.",
+    })
     consoleError.mockRestore()
   })
 })

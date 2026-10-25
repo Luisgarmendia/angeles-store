@@ -23,6 +23,10 @@ export interface AdminOrder {
   subtotal: number
   status: OrderStatus
   paymentStatus: OrderPaymentStatus
+  pushSentAt: Date | null
+  pushSuccessCount: number
+  pushFailureCount: number
+  pushError: string | null
   createdAt: Date
   itemCount: number
 }
@@ -241,6 +245,10 @@ export async function listOrders(
       subtotalCents: orders.subtotalCents,
       status: orders.status,
       paymentStatus: orders.paymentStatus,
+      pushSentAt: orders.pushSentAt,
+      pushSuccessCount: orders.pushSuccessCount,
+      pushFailureCount: orders.pushFailureCount,
+      pushError: orders.pushError,
       createdAt: orders.createdAt,
       itemCount: sql<number>`count(${orderItems.id})::int`,
     })
@@ -270,6 +278,10 @@ export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
       subtotalCents: orders.subtotalCents,
       status: orders.status,
       paymentStatus: orders.paymentStatus,
+      pushSentAt: orders.pushSentAt,
+      pushSuccessCount: orders.pushSuccessCount,
+      pushFailureCount: orders.pushFailureCount,
+      pushError: orders.pushError,
       createdAt: orders.createdAt,
     })
     .from(orders)
@@ -393,4 +405,25 @@ export async function deletePushTokens(tokens: string[]): Promise<void> {
   if (tokens.length === 0) return
 
   await getDb().delete(adminPushTokens).where(inArray(adminPushTokens.token, tokens))
+}
+
+export async function updateOrderPushResult(
+  id: string,
+  result: {
+    sentAt: Date | null
+    successCount: number
+    failureCount: number
+    error: string | null
+  },
+): Promise<void> {
+  await getDb()
+    .update(orders)
+    .set({
+      pushSentAt: result.sentAt,
+      pushSuccessCount: result.successCount,
+      pushFailureCount: result.failureCount,
+      pushError: result.error,
+      updatedAt: new Date(),
+    })
+    .where(eq(orders.id, id))
 }

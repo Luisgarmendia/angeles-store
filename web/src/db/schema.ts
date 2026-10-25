@@ -110,6 +110,10 @@ export const orders = pgTable("orders", {
   subtotalCents: integer("subtotal_cents").notNull(),
   status: orderStatus("status").notNull().default("pendiente"),
   paymentStatus: orderPaymentStatus("payment_status").notNull().default("pendiente"),
+  pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
+  pushSuccessCount: integer("push_success_count").notNull().default(0),
+  pushFailureCount: integer("push_failure_count").notNull().default(0),
+  pushError: text("push_error"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })

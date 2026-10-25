@@ -105,6 +105,12 @@ the variables are missing the app keeps working and the dashboard card shows
 5. Run `npm run db:migrate`, open `/admin`, and press **Activar notificaciones** in the
    "Notificaciones de pedidos" card.
 
+Each order detail shows a **Notificación** card with the last push result: how many devices
+accepted it, how many failed, or why it was skipped. Server logs also include
+`[push] order #N: success=... failure=... invalid=...` for debugging. A successful FCM send
+means the push was accepted for the token, not that the person actually saw it (the device may
+have notifications muted).
+
 Web push requires HTTPS in production; `http://localhost` is allowed for development. The
 browser also needs notification permission, so each admin enables notifications per device. On a
 shared browser the token belongs to the latest admin who enabled it.

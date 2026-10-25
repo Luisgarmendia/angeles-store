@@ -50,6 +50,13 @@
       "when": 1792957979881,
       "tag": "0006_sweet_invaders",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792959183692,
+      "tag": "0007_hesitant_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }

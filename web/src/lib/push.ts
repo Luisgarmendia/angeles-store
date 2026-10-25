@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { ServiceAccount } from "firebase-admin/app"
-import { deletePushTokens, listPushTokens } from "@/db/queries"
+import { deletePushTokens, listPushTokens, updateOrderPushResult } from "@/db/queries"
 import { formatPrice } from "@/lib/format"
 
 export interface OrderNotificationInput {
@@ -66,15 +66,60 @@ export function buildOrderNotification({
   }
 }
 
-export async function sendOrderPushNotification(input: OrderNotificationInput): Promise<void> {
+export interface PushResult {
+  successCount: number
+  failureCount: number
+  invalidCount: number
+  error?: string
+}
+
+async function recordPushResult(
+  orderId: string,
+  result: {
+    sentAt: Date | null
+    successCount: number
+    failureCount: number
+    error: string | null
+  },
+): Promise<void> {
   try {
-    if (!isPushConfigured()) return
+    await updateOrderPushResult(orderId, result)
+  } catch (error) {
+    console.error("Push result update failed", error)
+  }
+}
+
+export async function sendOrderPushNotification(input: OrderNotificationInput): Promise<PushResult> {
+  try {
+    if (!isPushConfigured()) {
+      const error = "Firebase no configurado"
+      await recordPushResult(input.orderId, {
+        sentAt: null,
+        successCount: 0,
+        failureCount: 0,
+        error,
+      })
+      console.info(`[push] order #${input.orderNumber} skipped: ${error}`)
+      return { successCount: 0, failureCount: 0, invalidCount: 0, error }
+    }
 
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
-    if (!raw) return
+    if (!raw) {
+      return { successCount: 0, failureCount: 0, invalidCount: 0, error: "Firebase no configurado" }
+    }
 
     const tokens = await listPushTokens()
-    if (tokens.length === 0) return
+    if (tokens.length === 0) {
+      const error = "Sin dispositivos suscritos"
+      await recordPushResult(input.orderId, {
+        sentAt: null,
+        successCount: 0,
+        failureCount: 0,
+        error,
+      })
+      console.info(`[push] order #${input.orderNumber} skipped: ${error}`)
+      return { successCount: 0, failureCount: 0, invalidCount: 0, error }
+    }
 
     const [{ cert, getApps, initializeApp }, { getMessaging }] = await Promise.all([
       import("firebase-admin/app"),
@@ -110,7 +155,37 @@ export async function sendOrderPushNotification(input: OrderNotificationInput): 
     })
 
     if (invalidTokens.length > 0) await deletePushTokens(invalidTokens)
+
+    const error =
+      response.failureCount > 0
+        ? "Algunos dispositivos no recibieron la notificación."
+        : null
+
+    await recordPushResult(input.orderId, {
+      sentAt: new Date(),
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+      error,
+    })
+    console.info(
+      `[push] order #${input.orderNumber}: success=${response.successCount} failure=${response.failureCount} invalid=${invalidTokens.length}`,
+    )
+
+    return {
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+      invalidCount: invalidTokens.length,
+      ...(error ? { error } : {}),
+    }
   } catch (error) {
     console.error("Order push notification failed", error)
+    const message = "No se pudo enviar la notificación."
+    await recordPushResult(input.orderId, {
+      sentAt: null,
+      successCount: 0,
+      failureCount: 0,
+      error: message,
+    })
+    return { successCount: 0, failureCount: 0, invalidCount: 0, error: message }
   }
 }
