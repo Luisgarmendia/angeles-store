@@ -5,6 +5,7 @@ import Link from "next/link"
 import { GridIcon, ListIcon } from "@/components/Icons"
 import { DeleteProductButton } from "./delete-product-button"
 import { formatPrice } from "@/lib/format"
+import { discountPercent } from "@/lib/pricing"
 import { productStock } from "@/lib/stock"
 import type { AdminProduct } from "@/lib/types"
 
@@ -82,6 +83,7 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
           {products.map((product) => {
             const stock = productStock(product)
             const soldOut = stock !== null && stock <= 0
+            const discount = discountPercent(product)
 
             return (
               <article
@@ -101,16 +103,30 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
                       Sin foto
                     </div>
                   )}
-                  {!product.active && (
-                    <span className="absolute left-2 top-2 rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
-                      Oculto
-                    </span>
-                  )}
-                  {soldOut && (
-                    <span className="absolute right-2 top-2 rounded-full bg-wine/90 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
-                      Agotado
-                    </span>
-                  )}
+                  <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+                    {!product.active && (
+                      <span className="rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                        Oculto
+                      </span>
+                    )}
+                    {discount !== null && (
+                      <span className="rounded-full bg-wine px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                        -{discount}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+                    {product.porEncargo && (
+                      <span className="rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                        Por encargo
+                      </span>
+                    )}
+                    {soldOut && (
+                      <span className="rounded-full bg-wine/90 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+                        Agotado
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-1 flex-col p-3">
@@ -120,13 +136,22 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
                   <h3 className="mt-0.5 font-display text-lg leading-tight text-ink">
                     {product.nombre}
                   </h3>
-                  <p className="mt-1 text-sm text-muted">{formatPrice(product.precio)}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {formatPrice(product.precio)}
+                    {product.precioAnterior !== null && (
+                      <span className="ml-1 text-xs line-through">
+                        {formatPrice(product.precioAnterior)}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-muted">
-                    {stock === null
-                      ? "Stock ilimitado"
-                      : stock <= 0
-                        ? "Sin stock"
-                        : `Stock: ${stock}`}
+                    {product.porEncargo
+                      ? "Por encargo"
+                      : stock === null
+                        ? "Stock ilimitado"
+                        : stock <= 0
+                          ? "Sin stock"
+                          : `Stock: ${stock}`}
                     {product.variants.length > 0
                       ? ` · ${product.variants.length} ${
                           product.variants.length === 1 ? "opción" : "opciones"
@@ -152,6 +177,7 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
         <div className="mt-3 space-y-2">
           {products.map((product) => {
             const stock = productStock(product)
+            const discount = discountPercent(product)
 
             return (
               <article
@@ -177,13 +203,21 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
                   </h3>
                   <p className="text-sm text-muted">
                     {formatPrice(product.precio)}
+                    {product.precioAnterior !== null && (
+                      <span className="ml-1 text-xs line-through">
+                        {formatPrice(product.precioAnterior)}
+                      </span>
+                    )}
+                    {discount !== null && <span className="ml-2 text-wine">-{discount}%</span>}
                     {!product.active && <span className="ml-2 text-wine">· Oculto</span>}
                     <span className="ml-2 text-xs">
-                      {stock === null
-                        ? "· Stock ilimitado"
-                        : stock <= 0
-                          ? "· Agotado"
-                          : `· Stock: ${stock}`}
+                      {product.porEncargo
+                        ? "· Por encargo"
+                        : stock === null
+                          ? "· Stock ilimitado"
+                          : stock <= 0
+                            ? "· Agotado"
+                            : `· Stock: ${stock}`}
                     </span>
                     {product.variants.length > 0 && (
                       <span className="ml-1 text-xs">

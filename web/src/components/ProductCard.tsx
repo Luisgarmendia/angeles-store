@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { formatPrice } from "@/lib/format"
+import { compareAtPrice, discountPercent } from "@/lib/pricing"
 import { isSoldOut } from "@/lib/stock"
 import type { Product } from "@/lib/types"
 import { CheckIcon, PlusIcon } from "./Icons"
@@ -19,6 +20,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const detailHref = `/producto/${product.id}`
   const soldOut = isSoldOut(product)
   const hasVariants = product.variants.length > 0
+  const discount = discountPercent(product)
+  const previousPrice = compareAtPrice(product)
 
   useEffect(() => {
     if (!added) return
@@ -46,11 +49,24 @@ export function ProductCard({ product }: ProductCardProps) {
           className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose"
         />
 
-        {soldOut && (
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
-            Agotado
+        {discount !== null && (
+          <span className="absolute left-2 top-2 z-10 rounded-full bg-wine px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-cream">
+            -{discount}%
           </span>
         )}
+
+        <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
+          {product.porEncargo && (
+            <span className="rounded-full bg-rose-dark px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+              Por encargo
+            </span>
+          )}
+          {soldOut && (
+            <span className="rounded-full bg-ink/85 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-cream">
+              Agotado
+            </span>
+          )}
+        </div>
 
         {hasVariants ? (
           <Link
@@ -91,9 +107,14 @@ export function ProductCard({ product }: ProductCardProps) {
             </Link>
           </h3>
         </div>
-        <p className="whitespace-nowrap pt-1 text-sm font-medium text-ink">
-          {formatPrice(product.precio)}
-        </p>
+        <div className="whitespace-nowrap pt-1 text-right">
+          {previousPrice !== null && (
+            <p className="text-[11px] text-muted line-through">{formatPrice(previousPrice)}</p>
+          )}
+          <p className={`text-sm font-medium ${discount !== null ? "text-wine" : "text-ink"}`}>
+            {formatPrice(product.precio)}
+          </p>
+        </div>
       </div>
       <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">{product.descripcion}</p>
     </article>

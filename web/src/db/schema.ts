@@ -23,6 +23,8 @@ export const products = pgTable("products", {
   active: boolean("active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   stock: integer("stock"),
+  madeToOrder: boolean("made_to_order").notNull().default(false),
+  compareAtPriceCents: integer("compare_at_price_cents"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })

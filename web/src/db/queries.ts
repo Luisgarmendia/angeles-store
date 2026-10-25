@@ -50,6 +50,9 @@ function toProduct(row: typeof products.$inferSelect): Product {
     imagen: images[0] ?? "",
     imagenes: images,
     stock: row.stock,
+    porEncargo: row.madeToOrder,
+    precioAnterior: row.compareAtPriceCents === null ? null : row.compareAtPriceCents / 100,
+    creadoEn: row.createdAt.toISOString(),
     variants: [],
   }
 }
