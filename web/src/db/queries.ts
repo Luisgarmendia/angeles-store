@@ -1,6 +1,15 @@
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm"
 import { getDb } from "."
-import { adminPushTokens, adminUsers, orderItems, orders, productVariants, products, settings } from "./schema"
+import {
+  adminNotifications,
+  adminPushTokens,
+  adminUsers,
+  orderItems,
+  orders,
+  productVariants,
+  products,
+  settings,
+} from "./schema"
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
 import type { AdminRole } from "@/lib/roles"
 import type {
@@ -61,6 +70,15 @@ export interface AdminUserSummary {
   email: string
   role: AdminRole
   createdAt: Date
+}
+
+export interface AdminNotification {
+  id: string
+  title: string
+  body: string
+  url: string
+  readAt: string | null
+  createdAt: string
 }
 
 function toProduct(row: typeof products.$inferSelect): Product {
@@ -414,6 +432,87 @@ export async function deletePushTokens(tokens: string[]): Promise<void> {
   if (tokens.length === 0) return
 
   await getDb().delete(adminPushTokens).where(inArray(adminPushTokens.token, tokens))
+}
+
+export async function listAdminUserIds(): Promise<string[]> {
+  const rows = await getDb().select({ id: adminUsers.id }).from(adminUsers)
+  return rows.map((row) => row.id)
+}
+
+export async function createAdminNotifications(
+  rows: Array<{
+    userId: string
+    orderId: string
+    title: string
+    body: string
+    url: string
+  }>,
+): Promise<void> {
+  if (rows.length === 0) return
+
+  await getDb().insert(adminNotifications).values(rows)
+}
+
+export async function listAdminNotifications(
+  userId: string,
+  limit = 20,
+): Promise<AdminNotification[]> {
+  const rows = await getDb()
+    .select({
+      id: adminNotifications.id,
+      title: adminNotifications.title,
+      body: adminNotifications.body,
+      url: adminNotifications.url,
+      readAt: adminNotifications.readAt,
+      createdAt: adminNotifications.createdAt,
+    })
+    .from(adminNotifications)
+    .where(eq(adminNotifications.userId, userId))
+    .orderBy(desc(adminNotifications.createdAt))
+    .limit(limit)
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    url: row.url,
+    readAt: row.readAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+  }))
+}
+
+export async function countUnreadNotifications(userId: string): Promise<number> {
+  const [row] = await getDb()
+    .select({ count: sql<number>`count(*)::int` })
+    .from(adminNotifications)
+    .where(and(eq(adminNotifications.userId, userId), isNull(adminNotifications.readAt)))
+
+  return row?.count ?? 0
+}
+
+export async function markNotificationsRead(
+  userId: string,
+  ids: string[],
+): Promise<void> {
+  if (ids.length === 0) return
+
+  await getDb()
+    .update(adminNotifications)
+    .set({ readAt: new Date() })
+    .where(
+      and(
+        eq(adminNotifications.userId, userId),
+        inArray(adminNotifications.id, ids),
+        isNull(adminNotifications.readAt),
+      ),
+    )
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  await getDb()
+    .update(adminNotifications)
+    .set({ readAt: new Date() })
+    .where(and(eq(adminNotifications.userId, userId), isNull(adminNotifications.readAt)))
 }
 
 export async function updateOrderPushResult(

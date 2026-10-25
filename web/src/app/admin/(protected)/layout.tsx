@@ -4,6 +4,7 @@ import { getStoreSettings } from "@/db/queries"
 import { roleLabel } from "@/lib/roles"
 import { logoutAction } from "../actions"
 import { AdminTabs } from "@/components/admin/admin-tabs"
+import { NotificationBell } from "@/components/admin/notification-bell"
 
 export const dynamic = "force-dynamic"
 
@@ -24,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <NotificationBell />
               <Link
                 href="/"
                 className="rounded-full border border-ink px-4 py-2 text-sm transition-colors hover:bg-ink hover:text-cream"

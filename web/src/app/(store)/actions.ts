@@ -79,9 +79,9 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     recordOrder(orderKey)
     revalidatePath("/admin/pedidos")
 
-    void import("@/lib/push")
-      .then(({ sendOrderPushNotification }) =>
-        sendOrderPushNotification({
+    void import("@/lib/notifications")
+      .then(({ notifyNewOrder }) =>
+        notifyNewOrder({
           orderId: result.id,
           orderNumber: result.number,
           customerName: customer.nombre,

@@ -135,3 +135,24 @@ export const orderItems = pgTable(
   },
   (table) => [index("order_items_order_id_idx").on(table.orderId)],
 )
+
+export const adminNotifications = pgTable(
+  "admin_notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => adminUsers.id, { onDelete: "cascade" }),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    url: text("url").notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("admin_notifications_user_created_idx").on(table.userId, table.createdAt),
+  ],
+)
