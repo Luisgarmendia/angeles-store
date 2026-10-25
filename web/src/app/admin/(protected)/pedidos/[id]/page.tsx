@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/format"
 import { ORDER_STATUS_OPTIONS, orderStatusLabel } from "@/lib/orders"
 import { paymentLabel } from "@/lib/payments"
 import type { PaymentMethod } from "@/lib/types"
+import { Select } from "@/components/Select"
 
 export const dynamic = "force-dynamic"
 
@@ -106,17 +107,17 @@ export default async function OrderDetailPage({
           </p>
           <form action={updateOrderStatusAction} className="mt-4 space-y-2">
             <input type="hidden" name="id" value={order.id} />
-            <select
+            <Select
               name="status"
               defaultValue={order.status}
-              className="w-full rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-sm text-ink outline-none focus:border-rose focus:ring-2 focus:ring-rose/20"
+              aria-label="Estado del pedido"
             >
               {ORDER_STATUS_OPTIONS.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
             <button
               type="submit"
               className="w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-wine"
