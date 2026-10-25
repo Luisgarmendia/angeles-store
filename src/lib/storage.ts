@@ -1,8 +1,9 @@
-import type { CartItem, Product, StoreSettings } from "../types"
+import type { CartItem, Customer, PaymentMethod, Product, StoreSettings } from "../types"
 
 const PRODUCTS_KEY = "amapola.productos"
 const CART_KEY = "amapola.carrito"
 const SETTINGS_KEY = "amapola.config"
+const CUSTOMER_KEY = "amapola.cliente"
 const VERSION_KEY = "amapola.data.version"
 
 /**
@@ -13,6 +14,8 @@ const DATA_VERSION = 3
 
 /** Seed IDs from the previous catalog. They are replaced, never kept as custom. */
 const LEGACY_SEED_IDS = new Set(Array.from({ length: 12 }, (_, index) => `p${index + 1}`))
+
+const PAYMENT_METHODS: PaymentMethod[] = ["contraentrega", "transferencia", "tarjeta", "efectivo"]
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -98,4 +101,29 @@ export function loadSettings(fallback: StoreSettings): StoreSettings {
 
 export function saveSettings(settings: StoreSettings): void {
   writeJson(SETTINGS_KEY, settings)
+}
+
+/**
+ * Restores the last customer data so a returning buyer only reviews and
+ * confirms it. Data never leaves this browser.
+ */
+export function loadCustomer(): Customer | null {
+  const stored = readJson<Partial<Customer> | null>(CUSTOMER_KEY, null)
+  if (!stored || typeof stored.nombre !== "string" || !stored.nombre.trim()) return null
+
+  const payment = PAYMENT_METHODS.includes(stored.pago as PaymentMethod)
+    ? (stored.pago as PaymentMethod)
+    : "contraentrega"
+
+  return {
+    nombre: stored.nombre,
+    direccion: typeof stored.direccion === "string" ? stored.direccion : "",
+    telefono: typeof stored.telefono === "string" ? stored.telefono : "",
+    pago: payment,
+    notas: typeof stored.notas === "string" ? stored.notas : "",
+  }
+}
+
+export function saveCustomer(customer: Customer): void {
+  writeJson(CUSTOMER_KEY, customer)
 }

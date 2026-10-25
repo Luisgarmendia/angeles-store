@@ -24,6 +24,9 @@ export interface Customer {
 
 export interface StoreSettings {
   whatsapp: string
+  instagram: string
+  facebook: string
+  tiktok: string
 }
 
 export interface CartLine {

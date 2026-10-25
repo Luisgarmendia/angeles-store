@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import { config } from "../config"
 import { formatPrice } from "../lib/format"
+import { loadCustomer, saveCustomer } from "../lib/storage"
 import { useModalBehavior } from "../lib/useModal"
 import { paymentLabel } from "../lib/whatsapp"
 import type { CartLine, Customer, PaymentMethod } from "../types"
 import { MessageIcon, XIcon } from "./Icons"
+import { Select } from "./Select"
 
 interface CheckoutModalProps {
   open: boolean
@@ -30,13 +32,15 @@ const EMPTY_CUSTOMER: Customer = {
 }
 
 export function CheckoutModal({ open, lines, total, onClose, onSubmit }: CheckoutModalProps) {
-  const [customer, setCustomer] = useState<Customer>(EMPTY_CUSTOMER)
+  const [customer, setCustomer] = useState<Customer>(() => loadCustomer() ?? EMPTY_CUSTOMER)
   const [error, setError] = useState<string | null>(null)
 
   useModalBehavior(open, onClose)
 
   useEffect(() => {
-    if (!open) setError(null)
+    if (!open) return
+    setCustomer(loadCustomer() ?? EMPTY_CUSTOMER)
+    setError(null)
   }, [open])
 
   if (!open) return null
@@ -54,8 +58,8 @@ export function CheckoutModal({ open, lines, total, onClose, onSubmit }: Checkou
     }
 
     setError(null)
+    saveCustomer(customer)
     onSubmit(customer)
-    setCustomer(EMPTY_CUSTOMER)
   }
 
   return (
@@ -145,17 +149,17 @@ export function CheckoutModal({ open, lines, total, onClose, onSubmit }: Checkou
             </Field>
 
             <Field label="Método de pago">
-              <select
+              <Select
                 value={customer.pago}
                 onChange={(event) => update("pago", event.target.value as PaymentMethod)}
-                className={inputClass}
+                aria-label="Método de pago"
               >
                 {PAYMENT_METHODS.map((method) => (
                   <option key={method} value={method}>
                     {paymentLabel(method)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
           </div>
 
@@ -184,7 +188,7 @@ export function CheckoutModal({ open, lines, total, onClose, onSubmit }: Checkou
           </button>
           <p className="text-center text-[11px] leading-relaxed text-muted">
             Se va a abrir WhatsApp con tu pedido listo. Te respondemos para confirmar disponibilidad
-            y entrega.
+            y entrega. Tus datos quedan guardados solo en este dispositivo para tu próxima compra.
           </p>
         </form>
       </div>

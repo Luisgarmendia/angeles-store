@@ -88,6 +88,14 @@ export function ArrowLeftIcon({ className }: IconProps) {
   )
 }
 
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="m6 9 6 6 6-6" />
+    </Icon>
+  )
+}
+
 export function SettingsIcon({ className }: IconProps) {
   return (
     <Icon className={className}>

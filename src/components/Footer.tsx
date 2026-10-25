@@ -1,13 +1,20 @@
 import { config } from "../config"
 import { formatHonduranPhone } from "../lib/phone"
+import { socialHref } from "../lib/social"
+import type { StoreSettings } from "../types"
 import { MessageIcon } from "./Icons"
 
 interface FooterProps {
-  whatsapp: string
+  settings: StoreSettings
 }
 
-export function Footer({ whatsapp }: FooterProps) {
-  const digits = whatsapp.replace(/\D/g, "")
+export function Footer({ settings }: FooterProps) {
+  const digits = settings.whatsapp.replace(/\D/g, "")
+  const socials = [
+    { label: "Instagram", href: socialHref(settings.instagram, "instagram") },
+    { label: "Facebook", href: socialHref(settings.facebook, "facebook") },
+    { label: "TikTok", href: socialHref(settings.tiktok, "tiktok") },
+  ].filter((social) => social.href)
 
   return (
     <footer id="contacto" className="mt-16 border-t border-ink/10 bg-sand/60">
@@ -33,15 +40,22 @@ export function Footer({ whatsapp }: FooterProps) {
             <MessageIcon className="h-4 w-4" />
             Escríbenos por WhatsApp
           </a>
-          <p className="mt-1 text-xs text-muted">{formatHonduranPhone(whatsapp)}</p>
-          <a
-            href={config.contact.instagram}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 block text-sm text-muted transition-colors hover:text-ink"
-          >
-            Instagram
-          </a>
+          <p className="mt-1 text-xs text-muted">{formatHonduranPhone(settings.whatsapp)}</p>
+          {socials.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+              {socials.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-muted transition-colors hover:text-ink"
+                >
+                  {social.label}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         <div id="como-comprar">

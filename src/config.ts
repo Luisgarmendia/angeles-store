@@ -13,6 +13,8 @@ export const config = {
   contact: {
     whatsapp: "50499998888",
     instagram: "https://instagram.com/angelesstores",
+    facebook: "",
+    tiktok: "",
   },
   currency: {
     locale: "es-HN",

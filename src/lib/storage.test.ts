@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { CartItem, Product, StoreSettings } from "../types"
-import { migrateStorage } from "./storage"
+import type { CartItem, Customer, Product, StoreSettings } from "../types"
+import { loadCustomer, migrateStorage, saveCustomer } from "./storage"
 
 const store = new Map<string, string>()
 
@@ -12,7 +12,12 @@ vi.stubGlobal("localStorage", {
 })
 
 const seed: Product[] = [product("c1", 480)]
-const settings: StoreSettings = { whatsapp: "50499998888" }
+const settings: StoreSettings = {
+  whatsapp: "50499998888",
+  instagram: "https://instagram.com/angelesstores",
+  facebook: "",
+  tiktok: "",
+}
 
 function product(id: string, precio: number): Product {
   return {
@@ -103,5 +108,46 @@ describe("migrateStorage", () => {
     migrateStorage(seed, settings)
 
     expect(read<Product[]>("amapola.productos")?.[0].precio).toBe(1500)
+  })
+})
+
+describe("customer persistence", () => {
+  const customer: Customer = {
+    nombre: "Ana Martínez",
+    direccion: "Col. Palmira, Tegucigalpa",
+    telefono: "9999-8888",
+    pago: "transferencia",
+    notas: "Entregar por la tarde",
+  }
+
+  it("saves and restores the customer for the next checkout", () => {
+    saveCustomer(customer)
+
+    expect(loadCustomer()).toEqual(customer)
+  })
+
+  it("returns null when nothing was saved", () => {
+    expect(loadCustomer()).toBeNull()
+  })
+
+  it("repairs an unknown payment method and empty fields", () => {
+    store.set(
+      "amapola.cliente",
+      JSON.stringify({ nombre: "Ana", pago: "bitcoin", direccion: null }),
+    )
+
+    expect(loadCustomer()).toEqual({
+      nombre: "Ana",
+      direccion: "",
+      telefono: "",
+      pago: "contraentrega",
+      notas: "",
+    })
+  })
+
+  it("ignores a record without a name", () => {
+    store.set("amapola.cliente", JSON.stringify({ direccion: "Tegucigalpa" }))
+
+    expect(loadCustomer()).toBeNull()
   })
 })

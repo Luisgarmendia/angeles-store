@@ -35,7 +35,12 @@ import { buildOrderMessage, whatsappUrl } from "./lib/whatsapp"
 import type { CartItem, Customer, Product, StoreSettings } from "./types"
 
 const SEED_PRODUCTS = seedProducts as Product[]
-const DEFAULT_SETTINGS: StoreSettings = { whatsapp: config.contact.whatsapp }
+const DEFAULT_SETTINGS: StoreSettings = {
+  whatsapp: config.contact.whatsapp,
+  instagram: config.contact.instagram,
+  facebook: config.contact.facebook,
+  tiktok: config.contact.tiktok,
+}
 
 migrateStorage(SEED_PRODUCTS, DEFAULT_SETTINGS)
 
@@ -182,7 +187,7 @@ export default function App() {
           onDeleteProduct={handleDeleteProduct}
           onSaveSettings={(next) => {
             setSettings(next)
-            showToast("Número de WhatsApp actualizado.")
+            showToast("Ajustes guardados.")
           }}
           onImport={handleImport}
         />
@@ -263,7 +268,7 @@ export default function App() {
         )}
       </main>
 
-      <Footer whatsapp={settings.whatsapp} />
+      <Footer settings={settings} />
 
       <CartDrawer
         open={cartOpen}

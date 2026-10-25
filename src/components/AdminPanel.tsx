@@ -14,6 +14,7 @@ import {
   UploadIcon,
   XIcon,
 } from "./Icons"
+import { Select } from "./Select"
 
 interface AdminPanelProps {
   products: Product[]
@@ -188,11 +189,11 @@ export function AdminPanel({
                 />
               </div>
 
-              <select
+              <Select
+                variant="pill"
                 value={categoryFilter}
                 onChange={(event) => setCategoryFilter(event.target.value)}
                 aria-label="Filtrar por categoría"
-                className="rounded-full border border-ink/15 bg-white/60 px-4 py-2.5 text-sm text-ink outline-none focus:border-rose focus:ring-2 focus:ring-rose/20"
               >
                 <option value="Todas">Todas las categorías</option>
                 {categories.map((category) => (
@@ -200,7 +201,7 @@ export function AdminPanel({
                     {category}
                   </option>
                 ))}
-              </select>
+              </Select>
 
               <button
                 type="button"
@@ -398,6 +399,9 @@ function SettingsTab({
   onSaveSettings: (settings: StoreSettings) => void
 }) {
   const [phone, setPhone] = useState(() => localDigits(settings.whatsapp))
+  const [instagram, setInstagram] = useState(settings.instagram)
+  const [facebook, setFacebook] = useState(settings.facebook)
+  const [tiktok, setTiktok] = useState(settings.tiktok)
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const normalizedPhone = normalizeHonduranPhone(phone)
 
@@ -412,16 +416,20 @@ function SettingsTab({
 
     setPhoneError(null)
     setPhone(localDigits(normalized))
-    onSaveSettings({ whatsapp: normalized })
+    onSaveSettings({
+      whatsapp: normalized,
+      instagram: instagram.trim(),
+      facebook: facebook.trim(),
+      tiktok: tiktok.trim(),
+    })
   }
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <section className="rounded-2xl border border-ink/10 bg-white/60 p-5">
-        <h2 className="font-display text-xl text-ink">WhatsApp de pedidos</h2>
+        <h2 className="font-display text-xl text-ink">Contacto y redes</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
-          Aquí llegan los pedidos de tus clientes. Escribe el número hondureño sin el código de
-          país.
+          El WhatsApp recibe los pedidos. Las redes sociales se muestran en el pie de tu tienda.
         </p>
 
         <form onSubmit={handleSettingsSubmit} className="mt-4 space-y-3">
@@ -458,11 +466,57 @@ function SettingsTab({
             </p>
           )}
 
+          <div className="grid gap-3 border-t border-ink/10 pt-3 sm:grid-cols-2">
+            <label className="block sm:col-span-2">
+              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+                Instagram
+              </span>
+              <input
+                type="text"
+                value={instagram}
+                onChange={(event) => setInstagram(event.target.value)}
+                className={`${inputClass} w-full`}
+                placeholder="@angelesstores"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+                Facebook
+              </span>
+              <input
+                type="text"
+                value={facebook}
+                onChange={(event) => setFacebook(event.target.value)}
+                className={`${inputClass} w-full`}
+                placeholder="https://facebook.com/tutienda"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-muted">
+                TikTok
+              </span>
+              <input
+                type="text"
+                value={tiktok}
+                onChange={(event) => setTiktok(event.target.value)}
+                className={`${inputClass} w-full`}
+                placeholder="@angelesstores"
+              />
+            </label>
+          </div>
+
+          <p className="text-xs leading-relaxed text-muted">
+            Puedes pegar el enlace completo o escribir solo el usuario con @. Las redes vacías no se
+            muestran en la tienda.
+          </p>
+
           <button
             type="submit"
             className="w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-wine"
           >
-            Guardar número
+            Guardar ajustes
           </button>
         </form>
       </section>
@@ -573,7 +627,7 @@ function ProductDrawer({
     onSave({
       id: initial?.id ?? crypto.randomUUID(),
       nombre: form.nombre.trim(),
-      precio: Math.round(precio),
+      precio: Math.round(precio * 100) / 100,
       categoria: form.categoria.trim(),
       descripcion: form.descripcion.trim(),
       imagen: form.imagen.trim(),
@@ -644,7 +698,7 @@ function ProductDrawer({
                     value={form.precio}
                     onChange={(event) => update("precio", event.target.value)}
                     className={inputClass}
-                    placeholder="1,290"
+                    placeholder="1,290.00"
                   />
                 </div>
               </label>
