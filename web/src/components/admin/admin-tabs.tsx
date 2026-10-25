@@ -18,7 +18,7 @@ export function AdminTabs({ role }: { role: AdminRole }) {
 
   return (
     <nav
-      className="flex w-full gap-1 overflow-x-auto rounded-full bg-sand p-1 sm:w-fit"
+      className="flex w-full gap-1 overflow-x-auto overscroll-x-contain rounded-full bg-sand p-1 [scrollbar-width:none] sm:w-fit [&::-webkit-scrollbar]:hidden"
       aria-label="Secciones del panel"
     >
       {tabs.map((tab) => {
