@@ -17,6 +17,7 @@ Test runner: `vitest`
 - **S7 — Quality.** Pure logic unit tests, TypeScript build, and a local smoke test of the store and auth helpers.
 - **S8 — R2 uploads.** Admin can upload product and hero images server-side to Cloudflare R2; the browser never receives the secret. The URL field remains as a fallback. Order persistence is deferred.
 - **S9 — Production bootstrap.** The Docker standalone image runs migrations on start, includes one-time seed and password-reset scripts, and reads every secret from environment variables. Dokploy keeps PostgreSQL on the internal network with backups.
+- **S10 — Admin catalog views.** The admin product list can be shown as cards or as a compact list. The choice is remembered in the browser.
 
 ## Tasks
 
@@ -29,8 +30,9 @@ Test runner: `vitest`
 | T5 | S5 | inline | done | `2879da5` · admin CRUD and settings |
 | T6 | S6 | inline | done | `2879da5` · Dockerfile, health check, env |
 | T7 | S7 | inline | done | `2879da5` · tests, build, smoke |
-| T8 | S8 | inline | done | `2879da5` · R2 upload route; credentials pending |
+| T8 | S8 | inline | done | `2879da5` · R2 upload verified with `r2.dev` |
 | T9 | S6, S9 | inline | done | `2879da5` · migrate/seed/password scripts |
+| T10 | S10 | inline | done | `0ffbdc2` · cards/list toggle + persisted view |
 
 - **T1 — Scaffold.** Create the Next app in `web/` and reuse Tailwind, fonts, and component patterns.
 - **T2 — Database.** Add Drizzle, schema, migration, seed, and queries.
@@ -41,6 +43,7 @@ Test runner: `vitest`
 - **T7 — Verify.** Port logic tests, run build, smoke test the app.
 - **T8 — R2 uploads.** Server-side S3 upload for product and hero images, admin-only route, public URL returned to the form.
 - **T9 — Production bootstrap.** Standalone Dockerfile, migration on start, one-time seed, password reset, Dokploy documentation.
+- **T10 — Admin catalog views.** Toggle between product cards and a compact list, with the preference stored in the browser.
 
 ## Log
 
@@ -52,3 +55,6 @@ Test runner: `vitest`
 - **L6 (decision):** Uploads happen on the server through `POST /api/admin/upload` using `@aws-sdk/client-s3`, with the R2 access key and secret only in the environment. The public URL is `r2.dev` until the custom domain finishes initializing; Cloudflare Access must be disabled on that hostname for public images. The CORS policy is not needed for server-side uploads or `<img>` tags; it would only matter for direct browser uploads or JavaScript reads.
 - **L7 (verification):** PostgreSQL 16.15 local. `npm test` → 6 files, 31 tests passing. `npm run build` → green with and without `.env`. Public `/` and `/producto/c1` return 200 and render the catalog and recommendations. Login with the seeded admin returns 303 to `/admin` with a session cookie; `/admin` without a cookie redirects to `/admin/login`. Creating a product from the admin shows it on the storefront, and deleting it removes it; settings changes update the hero and revert correctly. The upload route returns 401 without a session and 503 without R2 keys.
 - **L8 (pending):** Add `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` to `web/.env` and Dokploy to enable real uploads. Docker is not installed on the development machine, so the image was not built locally; the Dockerfile and Dokploy steps are documented in `web/README.md`.
+- **L9 (user, verbatim):** "ok me carga con el endpoint dev y funciona correctamente, y todo bien, ahora quiero que en la parte del admin se vean como tarjetas y como lista"
+- **L10 (decision):** R2 uploads are verified with the `r2.dev` public URL; the custom domain can stay behind Access until it is ready. The admin catalog defaults to cards and offers a list view, with the selected view stored under `angeles.admin.products.view` in `localStorage`.
+- **L11 (verification):** `npm test` → 6 files, 31 tests passing. `npm run build` → green. The server-rendered admin HTML contains both view buttons and the card grid; product create/delete and settings flows remain unchanged.
