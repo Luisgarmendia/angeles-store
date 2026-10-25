@@ -43,6 +43,13 @@
       "when": 1792956582509,
       "tag": "0005_nasty_roughhouse",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792957979881,
+      "tag": "0006_sweet_invaders",
+      "breakpoints": true
     }
   ]
 }

@@ -240,3 +240,12 @@ export function FilterIcon({ className }: IconProps) {
     </Icon>
   )
 }
+
+export function BellIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14 6 10Z" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
+    </Icon>
+  )
+}

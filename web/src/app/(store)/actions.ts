@@ -78,6 +78,19 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     const result = await createOrderInDb({ customer, items: input.items })
     recordOrder(orderKey)
     revalidatePath("/admin/pedidos")
+
+    void import("@/lib/push")
+      .then(({ sendOrderPushNotification }) =>
+        sendOrderPushNotification({
+          orderId: result.id,
+          orderNumber: result.number,
+          customerName: customer.nombre,
+          itemCount: result.lines.reduce((total, line) => total + line.quantity, 0),
+          total: result.total,
+        }),
+      )
+      .catch(console.error)
+
     return result
   } catch (error) {
     if (error instanceof OrderError) {

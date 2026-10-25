@@ -80,8 +80,37 @@ password changes; if `ADMIN_ROLE` is explicitly set, the existing user's role is
 | `R2_PUBLIC_URL` | Public base URL for uploaded objects. |
 | `R2_ACCESS_KEY_ID` | R2 API token access key. |
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret. |
+| `NEXT_PUBLIC_FIREBASE_CONFIG` | Firebase web app config JSON (public). Enables push notifications. |
+| `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | Firebase Web Push certificate key (public). |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase service account JSON (server-only). Never prefix it with `NEXT_PUBLIC_`. |
 
 Never commit `.env`. On Dokploy, set the same variables in the application environment.
+
+## Firebase push notifications
+
+Admins can receive a web push notification on every new order. Firebase Cloud Messaging is used
+only for push; the store and admin still run on Next.js and PostgreSQL. Push is optional: when
+the variables are missing the app keeps working and the dashboard card shows
+"Firebase no está configurado."
+
+1. In the [Firebase console](https://console.firebase.google.com/), create a project and add a
+   **Web app**.
+2. Open **Project settings → General → Your apps → SDK setup and configuration → Config**, copy
+   the config object, and store it as one line of JSON in `NEXT_PUBLIC_FIREBASE_CONFIG`.
+3. Open **Project settings → Cloud Messaging → Web Push certificates**, generate a key pair, and
+   copy the key to `NEXT_PUBLIC_FIREBASE_VAPID_KEY`.
+4. Open **Project settings → Service accounts → Generate new private key**, download the JSON,
+   keep it secret, and store it as a single-line `FIREBASE_SERVICE_ACCOUNT_JSON` value. Escaped
+   `\n` sequences in `private_key` are converted to real newlines automatically.
+5. Run `npm run db:migrate`, open `/admin`, and press **Activar notificaciones** in the
+   "Notificaciones de pedidos" card.
+
+Web push requires HTTPS in production; `http://localhost` is allowed for development. The
+browser also needs notification permission, so each admin enables notifications per device. On a
+shared browser the token belongs to the latest admin who enabled it.
+
+`NEXT_PUBLIC_*` values are inlined into the client bundle at build time. Rebuild the app after
+changing them.
 
 ## Cloudflare R2
 

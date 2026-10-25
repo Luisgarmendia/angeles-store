@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { getDb } from "."
-import { adminUsers, orderItems, orders, productVariants, products, settings } from "./schema"
+import { adminPushTokens, adminUsers, orderItems, orders, productVariants, products, settings } from "./schema"
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
 import type { AdminRole } from "@/lib/roles"
 import type {
@@ -363,4 +363,34 @@ export async function countOwners(): Promise<number> {
     .where(eq(adminUsers.role, "owner"))
 
   return row?.count ?? 0
+}
+
+export async function listPushTokens(): Promise<string[]> {
+  const rows = await getDb()
+    .select({ token: adminPushTokens.token })
+    .from(adminPushTokens)
+
+  return rows.map((row) => row.token)
+}
+
+export async function registerPushToken(userId: string, token: string): Promise<void> {
+  await getDb()
+    .insert(adminPushTokens)
+    .values({ userId, token })
+    .onConflictDoUpdate({
+      target: adminPushTokens.token,
+      set: { userId, updatedAt: new Date() },
+    })
+}
+
+export async function deletePushToken(userId: string, token: string): Promise<void> {
+  await getDb()
+    .delete(adminPushTokens)
+    .where(and(eq(adminPushTokens.userId, userId), eq(adminPushTokens.token, token)))
+}
+
+export async function deletePushTokens(tokens: string[]): Promise<void> {
+  if (tokens.length === 0) return
+
+  await getDb().delete(adminPushTokens).where(inArray(adminPushTokens.token, tokens))
 }

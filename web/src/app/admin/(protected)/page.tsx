@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth"
 import { formatPrice } from "@/lib/format"
 import { orderStatusLabel } from "@/lib/orders"
 import { canManageStore, canManageUsers, roleLabel } from "@/lib/roles"
+import { PushNotifications } from "@/components/admin/push-notifications"
 
 export const dynamic = "force-dynamic"
 
@@ -91,6 +92,8 @@ export default async function AdminDashboardPage({
           <p className="mt-1 font-display text-2xl text-ink">{formatPrice(summary.totalSales)}</p>
         </div>
       </div>
+
+      <PushNotifications />
 
       <section className="mt-8">
         <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Accesos</p>
