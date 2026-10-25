@@ -1,4 +1,5 @@
-import type { CartItem, Customer, PaymentMethod, Product, StoreSettings } from "../types"
+import type { CartItem, Customer, HeroContent, Product, StoreSettings } from "../types"
+import { enabledPaymentMethods, isPaymentMethod } from "./payments"
 
 const PRODUCTS_KEY = "amapola.productos"
 const CART_KEY = "amapola.carrito"
@@ -15,7 +16,50 @@ const DATA_VERSION = 3
 /** Seed IDs from the previous catalog. They are replaced, never kept as custom. */
 const LEGACY_SEED_IDS = new Set(Array.from({ length: 12 }, (_, index) => `p${index + 1}`))
 
-const PAYMENT_METHODS: PaymentMethod[] = ["contraentrega", "transferencia", "tarjeta", "efectivo"]
+export type StoredSettings = Partial<Omit<StoreSettings, "hero">> & {
+  hero?: Partial<HeroContent>
+}
+
+function mergeHero(fallback: HeroContent, value: Partial<HeroContent> | undefined): HeroContent {
+  if (!value || typeof value !== "object") return fallback
+
+  const pick = (key: keyof HeroContent, defaultValue: string): string =>
+    typeof value[key] === "string" ? (value[key] as string) : defaultValue
+
+  return {
+    tagline: pick("tagline", fallback.tagline),
+    headline: pick("headline", fallback.headline),
+    accent: pick("accent", fallback.accent),
+    description: pick("description", fallback.description),
+    ctaLabel: pick("ctaLabel", fallback.ctaLabel),
+    secondaryLabel: pick("secondaryLabel", fallback.secondaryLabel),
+    trust: Array.isArray(value.trust)
+      ? value.trust.filter((item): item is string => typeof item === "string")
+      : fallback.trust,
+    image: pick("image", fallback.image),
+    imageAlt: pick("imageAlt", fallback.imageAlt),
+  }
+}
+
+/**
+ * Fills settings saved by an older version with the current defaults, without
+ * losing the slices the owner already configured.
+ */
+export function mergeSettings(
+  fallback: StoreSettings,
+  stored: StoredSettings | null | undefined,
+): StoreSettings {
+  const safe = stored && typeof stored === "object" ? stored : {}
+
+  return {
+    whatsapp: typeof safe.whatsapp === "string" ? safe.whatsapp : fallback.whatsapp,
+    instagram: typeof safe.instagram === "string" ? safe.instagram : fallback.instagram,
+    facebook: typeof safe.facebook === "string" ? safe.facebook : fallback.facebook,
+    tiktok: typeof safe.tiktok === "string" ? safe.tiktok : fallback.tiktok,
+    payments: enabledPaymentMethods(safe.payments),
+    hero: mergeHero(fallback.hero, safe.hero),
+  }
+}
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -64,13 +108,13 @@ export function migrateStorage(fallbackProducts: Product[], fallbackSettings: St
     )
   }
 
-  const storedSettings = readJson<Partial<StoreSettings>>(SETTINGS_KEY, {})
+  const storedSettings = readJson<StoredSettings>(SETTINGS_KEY, {})
+  const mergedSettings = mergeSettings(fallbackSettings, storedSettings)
   const storedPhone = typeof storedSettings.whatsapp === "string" ? storedSettings.whatsapp : ""
   const keepStoredPhone = storedPhone.length > 0 && !storedPhone.startsWith("54")
 
   writeJson(SETTINGS_KEY, {
-    ...fallbackSettings,
-    ...storedSettings,
+    ...mergedSettings,
     whatsapp: keepStoredPhone ? storedPhone : fallbackSettings.whatsapp,
   })
 
@@ -96,7 +140,7 @@ export function saveCart(cart: CartItem[]): void {
 }
 
 export function loadSettings(fallback: StoreSettings): StoreSettings {
-  return { ...fallback, ...readJson<Partial<StoreSettings>>(SETTINGS_KEY, {}) }
+  return mergeSettings(fallback, readJson<StoredSettings>(SETTINGS_KEY, {}))
 }
 
 export function saveSettings(settings: StoreSettings): void {
@@ -111,9 +155,7 @@ export function loadCustomer(): Customer | null {
   const stored = readJson<Partial<Customer> | null>(CUSTOMER_KEY, null)
   if (!stored || typeof stored.nombre !== "string" || !stored.nombre.trim()) return null
 
-  const payment = PAYMENT_METHODS.includes(stored.pago as PaymentMethod)
-    ? (stored.pago as PaymentMethod)
-    : "contraentrega"
+  const payment = isPaymentMethod(stored.pago) ? stored.pago : "contraentrega"
 
   return {
     nombre: stored.nombre,

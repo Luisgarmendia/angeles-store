@@ -22,11 +22,25 @@ export interface Customer {
   notas: string
 }
 
+export interface HeroContent {
+  tagline: string
+  headline: string
+  accent: string
+  description: string
+  ctaLabel: string
+  secondaryLabel: string
+  trust: string[]
+  image: string
+  imageAlt: string
+}
+
 export interface StoreSettings {
   whatsapp: string
   instagram: string
   facebook: string
   tiktok: string
+  payments: PaymentMethod[]
+  hero: HeroContent
 }
 
 export interface CartLine {

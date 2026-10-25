@@ -16,6 +16,19 @@ export const config = {
     facebook: "",
     tiktok: "",
   },
+  hero: {
+    tagline: "Cremas, camisas y mucho más para mujer",
+    headline: "Cuida tu piel, renueva tu",
+    accent: "look.",
+    description:
+      "Cremas, camisas y piezas seleccionadas para mujer, con cariño desde Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
+    ctaLabel: "Ver cremas y camisas",
+    secondaryLabel: "Cómo comprar",
+    trust: ["Envíos a todo Honduras", "Pago contra entrega", "Atención personalizada"],
+    image:
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Selección de cremas, camisas y prendas para mujer",
+  },
   currency: {
     locale: "es-HN",
     code: "HNL",

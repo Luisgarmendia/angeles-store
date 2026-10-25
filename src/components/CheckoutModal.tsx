@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import { config } from "../config"
 import { formatPrice } from "../lib/format"
+import { ALL_PAYMENT_METHODS } from "../lib/payments"
 import { loadCustomer, saveCustomer } from "../lib/storage"
 import { useModalBehavior } from "../lib/useModal"
 import { paymentLabel } from "../lib/whatsapp"
@@ -12,16 +13,10 @@ interface CheckoutModalProps {
   open: boolean
   lines: CartLine[]
   total: number
+  paymentMethods: PaymentMethod[]
   onClose: () => void
   onSubmit: (customer: Customer) => void
 }
-
-const PAYMENT_METHODS: PaymentMethod[] = [
-  "contraentrega",
-  "transferencia",
-  "tarjeta",
-  "efectivo",
-]
 
 const EMPTY_CUSTOMER: Customer = {
   nombre: "",
@@ -31,17 +26,33 @@ const EMPTY_CUSTOMER: Customer = {
   notas: "",
 }
 
-export function CheckoutModal({ open, lines, total, onClose, onSubmit }: CheckoutModalProps) {
-  const [customer, setCustomer] = useState<Customer>(() => loadCustomer() ?? EMPTY_CUSTOMER)
+function initialCustomer(methods: PaymentMethod[]): Customer {
+  const fallbackPayment = methods[0] ?? "contraentrega"
+  const saved = loadCustomer()
+
+  if (!saved) return { ...EMPTY_CUSTOMER, pago: fallbackPayment }
+  return methods.includes(saved.pago) ? saved : { ...saved, pago: fallbackPayment }
+}
+
+export function CheckoutModal({
+  open,
+  lines,
+  total,
+  paymentMethods,
+  onClose,
+  onSubmit,
+}: CheckoutModalProps) {
+  const methods = paymentMethods.length > 0 ? paymentMethods : ALL_PAYMENT_METHODS
+  const [customer, setCustomer] = useState<Customer>(() => initialCustomer(methods))
   const [error, setError] = useState<string | null>(null)
 
   useModalBehavior(open, onClose)
 
   useEffect(() => {
     if (!open) return
-    setCustomer(loadCustomer() ?? EMPTY_CUSTOMER)
+    setCustomer(initialCustomer(methods))
     setError(null)
-  }, [open])
+  }, [open, methods])
 
   if (!open) return null
 
@@ -154,7 +165,7 @@ export function CheckoutModal({ open, lines, total, onClose, onSubmit }: Checkou
                 onChange={(event) => update("pago", event.target.value as PaymentMethod)}
                 aria-label="Método de pago"
               >
-                {PAYMENT_METHODS.map((method) => (
+                {methods.map((method) => (
                   <option key={method} value={method}>
                     {paymentLabel(method)}
                   </option>

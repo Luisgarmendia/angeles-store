@@ -1,16 +1,8 @@
-import type { CartLine, Customer, PaymentMethod } from "../types"
+import type { CartLine, Customer } from "../types"
 import { formatPrice } from "./format"
+import { paymentLabel } from "./payments"
 
-const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  contraentrega: "Pago contra entrega",
-  transferencia: "Transferencia bancaria",
-  tarjeta: "Tarjeta",
-  efectivo: "Efectivo",
-}
-
-export function paymentLabel(method: PaymentMethod): string {
-  return PAYMENT_LABELS[method]
-}
+export { paymentLabel } from "./payments"
 
 /**
  * Decorative symbols from the Basic Multilingual Plane (3 bytes or less).

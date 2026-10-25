@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { CartItem, Customer, Product, StoreSettings } from "../types"
-import { loadCustomer, migrateStorage, saveCustomer } from "./storage"
+import type { CartItem, Customer, PaymentMethod, Product, StoreSettings } from "../types"
+import { ALL_PAYMENT_METHODS } from "./payments"
+import { loadCustomer, mergeSettings, migrateStorage, saveCustomer } from "./storage"
 
 const store = new Map<string, string>()
 
@@ -17,6 +18,18 @@ const settings: StoreSettings = {
   instagram: "https://instagram.com/angelesstores",
   facebook: "",
   tiktok: "",
+  payments: ["contraentrega", "transferencia", "tarjeta", "efectivo"],
+  hero: {
+    tagline: "Cremas y camisas",
+    headline: "Cuida tu piel",
+    accent: "hoy.",
+    description: "Descripción de la portada",
+    ctaLabel: "Ver catálogo",
+    secondaryLabel: "Cómo comprar",
+    trust: ["Envío", "Pago", "Atención"],
+    image: "https://example.com/hero.jpg",
+    imageAlt: "Portada",
+  },
 }
 
 function product(id: string, precio: number): Product {
@@ -108,6 +121,28 @@ describe("migrateStorage", () => {
     migrateStorage(seed, settings)
 
     expect(read<Product[]>("amapola.productos")?.[0].precio).toBe(1500)
+  })
+})
+
+describe("mergeSettings", () => {
+  it("merges a partial hero with the current defaults", () => {
+    const merged = mergeSettings(settings, { hero: { headline: "Nuevo título" } })
+
+    expect(merged.hero.headline).toBe("Nuevo título")
+    expect(merged.hero.description).toBe(settings.hero.description)
+    expect(merged.hero.trust).toEqual(settings.hero.trust)
+    expect(merged.hero.image).toBe(settings.hero.image)
+  })
+
+  it("keeps only payment methods from the defined list", () => {
+    expect(mergeSettings(settings, { payments: ["tarjeta"] }).payments).toEqual(["tarjeta"])
+    expect(
+      mergeSettings(settings, { payments: ["bitcoin"] as unknown as PaymentMethod[] }).payments,
+    ).toEqual(ALL_PAYMENT_METHODS)
+  })
+
+  it("returns the defaults when nothing was stored", () => {
+    expect(mergeSettings(settings, null)).toEqual(settings)
   })
 })
 

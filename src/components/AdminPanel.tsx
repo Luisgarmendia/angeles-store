@@ -2,9 +2,11 @@ import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "reac
 import { config } from "../config"
 import { isValidPin, saveAdminPin, verifyAdminPin } from "../lib/adminAuth"
 import { formatPrice } from "../lib/format"
+import { readImageFile } from "../lib/image"
 import { formatHonduranPhone, normalizeHonduranPhone } from "../lib/phone"
 import { useModalBehavior } from "../lib/useModal"
 import type { Product, StoreSettings } from "../types"
+import { HeroSettings } from "./HeroSettings"
 import {
   ArrowRightIcon,
   DownloadIcon,
@@ -16,6 +18,7 @@ import {
   UploadIcon,
   XIcon,
 } from "./Icons"
+import { PaymentsSettings } from "./PaymentsSettings"
 import { Select } from "./Select"
 
 interface AdminPanelProps {
@@ -436,6 +439,7 @@ function SettingsTab({
     setPhoneError(null)
     setPhone(localDigits(normalized))
     onSaveSettings({
+      ...settings,
       whatsapp: normalized,
       instagram: instagram.trim(),
       facebook: facebook.trim(),
@@ -472,6 +476,9 @@ function SettingsTab({
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
+      <HeroSettings settings={settings} onSave={onSaveSettings} />
+      <PaymentsSettings settings={settings} onSave={onSaveSettings} />
+
       <section className="rounded-2xl border border-ink/10 bg-white/60 p-5">
         <h2 className="font-display text-xl text-ink">Contacto y redes</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
@@ -711,22 +718,17 @@ function ProductDrawer({
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  function handleFile(event: ChangeEvent<HTMLInputElement>) {
+  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ""
     if (!file) return
 
-    if (file.size > 1_500_000) {
-      setError("La imagen supera 1.5 MB. Usa una URL o una foto más liviana.")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => {
+    try {
+      update("imagen", await readImageFile(file))
       setError(null)
-      update("imagen", String(reader.result))
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo leer la imagen.")
     }
-    reader.readAsDataURL(file)
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {

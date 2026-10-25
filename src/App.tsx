@@ -24,6 +24,7 @@ import {
 import { recommendProducts } from "./lib/recommendations"
 import { productIdFromHash } from "./lib/route"
 import { lockAdmin } from "./lib/adminAuth"
+import { ALL_PAYMENT_METHODS } from "./lib/payments"
 import {
   loadCart,
   loadProducts,
@@ -42,6 +43,8 @@ const DEFAULT_SETTINGS: StoreSettings = {
   instagram: config.contact.instagram,
   facebook: config.contact.facebook,
   tiktok: config.contact.tiktok,
+  payments: [...ALL_PAYMENT_METHODS],
+  hero: { ...config.hero, trust: [...config.hero.trust] },
 }
 
 migrateStorage(SEED_PRODUCTS, DEFAULT_SETTINGS)
@@ -222,7 +225,7 @@ export default function App() {
           />
         ) : (
           <>
-            <Hero />
+            <Hero hero={settings.hero} />
 
             <section id="catalogo" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
               <div className="flex flex-col gap-5 border-t border-ink/10 pt-10">
@@ -297,6 +300,7 @@ export default function App() {
         open={checkoutOpen}
         lines={lines}
         total={total}
+        paymentMethods={settings.payments}
         onClose={() => setCheckoutOpen(false)}
         onSubmit={handleCheckout}
       />
