@@ -26,7 +26,7 @@ Test runner: `vitest`
 | T4 | S3 | inline | done | `aa78bd7` · order action and WhatsApp number |
 | T5 | S4 | inline | done | `aa78bd7` · admin orders list/detail/status |
 | T6 | S6 | inline | done | `aa78bd7` · 45 tests, build and E2E smoke |
-| T7 | S7 | inline | done | gallery manager, variant photo, carousel, migration `0002` |
+| T7 | S7 | inline | done | `b4220d8` · gallery manager, variant photo, carousel, migration `0002` |
 
 ## Log
 
