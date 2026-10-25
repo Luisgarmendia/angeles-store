@@ -102,7 +102,7 @@ export function CheckoutModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <button
         type="button"
-        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+        className="absolute inset-0 animate-fade-in bg-ink/40 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Cerrar formulario de pedido"
       />
@@ -110,7 +110,7 @@ export function CheckoutModal({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-cream p-6 shadow-2xl sm:rounded-3xl"
+        className="relative max-h-[92vh] w-full max-w-lg animate-modal-in overflow-y-auto rounded-t-3xl bg-cream p-6 shadow-2xl sm:rounded-3xl"
         role="dialog"
         aria-modal="true"
         aria-label="Datos de entrega"

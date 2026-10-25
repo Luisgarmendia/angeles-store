@@ -6,6 +6,7 @@ import { buildOrderMessage, whatsappUrl } from "@/lib/whatsapp"
 import type { Customer, Product, StoreSettings } from "@/lib/types"
 import { CartDrawer } from "./CartDrawer"
 import { CheckoutModal } from "./CheckoutModal"
+import { CherryBlossomBackground } from "./CherryBlossomBackground"
 import { Footer } from "./Footer"
 import { Header } from "./Header"
 import { OrderConfirmationModal, type OrderConfirmation } from "./OrderConfirmationModal"
@@ -105,9 +106,12 @@ function StoreChrome({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Header cartCount={count} onCartOpen={() => setCartOpen(true)} />
-      <main>{children}</main>
-      <Footer />
+      <CherryBlossomBackground />
+      <div className="relative z-10">
+        <Header cartCount={count} onCartOpen={() => setCartOpen(true)} />
+        <main>{children}</main>
+        <Footer />
+      </div>
 
       <CartDrawer
         open={cartOpen}

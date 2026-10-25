@@ -98,9 +98,11 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
       </Link>
 
       <div className="mt-6 grid gap-8 md:grid-cols-2 md:gap-12">
-        <ProductGallery key={selectedVariantId} images={images} alt={product.nombre} />
+        <div className="animate-fade-in">
+          <ProductGallery key={selectedVariantId} images={images} alt={product.nombre} />
+        </div>
 
-        <div className="flex flex-col">
+        <div className="flex flex-col animate-fade-up" style={{ animationDelay: "80ms" }}>
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-[10px] uppercase tracking-[0.24em] text-rose-dark">
               {product.categoria}
@@ -253,8 +255,8 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
           <h2 className="mt-1 font-display text-3xl text-ink">También te puede gustar</h2>
 
           <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
-            {recommended.map((item) => (
-              <ProductCard key={item.id} product={item} />
+            {recommended.map((item, index) => (
+              <ProductCard key={item.id} product={item} index={index} />
             ))}
           </div>
         </div>

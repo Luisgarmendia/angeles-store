@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/format"
 import { orderStatusLabel } from "@/lib/orders"
 import { canManageStore, canManageUsers, roleLabel } from "@/lib/roles"
 import { PushNotifications } from "@/components/admin/push-notifications"
+import { InstallApp } from "@/components/admin/install-app"
 
 export const dynamic = "force-dynamic"
 
@@ -92,6 +93,8 @@ export default async function AdminDashboardPage({
           <p className="mt-1 font-display text-2xl text-ink">{formatPrice(summary.totalSales)}</p>
         </div>
       </div>
+
+      <InstallApp />
 
       <PushNotifications />
 
