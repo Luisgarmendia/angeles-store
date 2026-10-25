@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "sh -c 'node scripts/migrate.mjs && NODE_ENV=production npm start -- --hostname 0.0.0.0'"

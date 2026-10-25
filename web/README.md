@@ -70,21 +70,27 @@ allow `PUT`/`POST`, the application origin, and expose `ETag`.
 
 ## Dokploy
 
+### Nixpacks
+
 1. Create a **PostgreSQL** service in Dokploy. Do not publish its port publicly.
-2. Create an application from this repository with base directory `web/` and Dockerfile build.
-3. Set the environment variables from the table above. Use the internal Postgres hostname in
+2. Create an application from this repository with base directory `web/` and build type
+   **Nixpacks**.
+3. `web/nixpacks.toml` pins Node 22, runs `npm ci`, builds the app, applies migrations on
+   start, and serves it with `next start`.
+4. Set the environment variables from the table above. Use the internal Postgres hostname in
    `DATABASE_URL` and the public domain in `SITE_URL`.
-4. Expose container port `3000`, attach the domain, and use `/api/health` as the health check.
-5. Deploy. The container runs `migrate.mjs` before starting the server, so migrations are
-   applied automatically.
-6. On the first deploy, run `node seed.mjs` once in the Dokploy container terminal. It inserts
-   the settings and the admin user, but leaves the catalog empty. Set `SEED_PRODUCTS=true`
-   only if you want the demo catalog.
+5. Expose container port `3000` and use `/api/health` as the health check.
+6. On the first deploy, run `node scripts/seed.mjs` once in the Dokploy container terminal.
+   The catalog starts empty unless `SEED_PRODUCTS=true`.
 7. To change the admin password later, update `ADMIN_PASSWORD` and run
-   `node set-admin-password.mjs` once in the container.
-8. Set `SITE_URL=https://angelesstore.styledflow.com` and
-   `R2_PUBLIC_URL=https://angelesfile.styledflow.com` in the production environment.
-9. Configure PostgreSQL backups in Dokploy to an S3-compatible destination (R2 works).
+   `node scripts/set-admin-password.mjs` once in the container.
+8. Configure PostgreSQL backups in Dokploy to an S3-compatible destination (R2 works).
+
+### Docker
+
+The `web/Dockerfile` remains available. It builds Next with `output: "standalone"` and runs
+the generated server after applying migrations. Use base directory `web/` and Dockerfile
+build if you prefer Docker over Nixpacks.
 
 ## Sharing and SEO
 

@@ -1,7 +1,7 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.env.BUILD_TARGET === "docker" ? "standalone" : undefined,
   turbopack: {
     root: process.cwd(),
     rules: {
