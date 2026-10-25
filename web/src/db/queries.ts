@@ -34,6 +34,8 @@ export interface AdminOrderItem {
   unitPrice: number
   quantity: number
   lineTotal: number
+  image: string
+  productExists: boolean
 }
 
 export interface AdminOrderDetail extends AdminOrder {
@@ -269,8 +271,20 @@ export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
   if (!row) return null
 
   const items = await db
-    .select()
+    .select({
+      id: orderItems.id,
+      productId: orderItems.productId,
+      productName: orderItems.productName,
+      variantLabel: orderItems.variantLabel,
+      unitPriceCents: orderItems.unitPriceCents,
+      quantity: orderItems.quantity,
+      lineTotalCents: orderItems.lineTotalCents,
+      linkedProductId: products.id,
+      productImage: products.image,
+      productImages: products.images,
+    })
     .from(orderItems)
+    .leftJoin(products, eq(products.id, orderItems.productId))
     .where(eq(orderItems.orderId, id))
     .orderBy(asc(orderItems.id))
 
@@ -286,6 +300,8 @@ export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
       unitPrice: item.unitPriceCents / 100,
       quantity: item.quantity,
       lineTotal: item.lineTotalCents / 100,
+      image: item.productImages?.[0] ?? item.productImage ?? "",
+      productExists: item.linkedProductId !== null,
     })),
   }
 }

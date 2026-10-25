@@ -178,16 +178,67 @@ export default async function OrderDetailPage({
         <h3 className="font-display text-xl text-ink">Productos</h3>
         <ul className="mt-3 divide-y divide-ink/10">
           {order.items.map((item) => (
-            <li key={item.id} className="flex items-start justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="text-sm text-ink">
-                  {item.productName}
-                  {item.variantLabel ? ` (${item.variantLabel})` : ""}
-                </p>
+            <li key={item.id} className="flex items-center gap-3 py-3">
+              {item.productExists ? (
+                <Link
+                  href={`/admin/productos/${item.productId}`}
+                  className="block h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-sand"
+                  aria-label={`Editar ${item.productName}`}
+                >
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-full items-center justify-center text-[9px] uppercase tracking-[0.14em] text-muted">
+                      Sin foto
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <div className="flex h-16 w-14 shrink-0 items-center justify-center rounded-xl bg-sand text-[9px] uppercase tracking-[0.14em] text-muted">
+                  Sin foto
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  {item.productExists ? (
+                    <Link
+                      href={`/admin/productos/${item.productId}`}
+                      className="text-sm text-ink transition-colors hover:text-wine"
+                    >
+                      {item.productName}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-ink">{item.productName}</span>
+                  )}
+                  {item.variantLabel && (
+                    <span className="text-xs text-muted">({item.variantLabel})</span>
+                  )}
+                  {!item.productExists && (
+                    <span className="rounded-full bg-wine/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-wine">
+                      Eliminado
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted">
                   {item.quantity} × {formatPrice(item.unitPrice)}
                 </p>
+                {item.productExists && (
+                  <Link
+                    href={`/producto/${item.productId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-[11px] text-muted underline underline-offset-2 transition-colors hover:text-ink"
+                  >
+                    Ver en la tienda
+                  </Link>
+                )}
               </div>
+
               <p className="whitespace-nowrap text-sm font-medium text-ink">
                 {formatPrice(item.lineTotal)}
               </p>
