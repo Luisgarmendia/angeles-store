@@ -17,15 +17,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-cream">
       <header className="sticky top-0 z-30 border-b border-ink/10 bg-cream/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted">
                 {settings.store.name} · Administración
               </p>
               <h1 className="font-display text-2xl text-ink sm:text-3xl">Tu tienda, en orden</h1>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
               <NotificationBell />
               <Link
                 href="/"
