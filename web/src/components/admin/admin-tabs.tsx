@@ -2,29 +2,37 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { canManageStore, type AdminRole } from "@/lib/roles"
 
 const TABS = [
-  { href: "/admin", label: "Productos" },
-  { href: "/admin/pedidos", label: "Pedidos" },
-  { href: "/admin/ajustes", label: "Ajustes" },
+  { href: "/admin", label: "Resumen", ownerOnly: false },
+  { href: "/admin/productos", label: "Productos", ownerOnly: false },
+  { href: "/admin/pedidos", label: "Pedidos", ownerOnly: false },
+  { href: "/admin/tienda", label: "Tienda", ownerOnly: true },
+  { href: "/admin/usuarios", label: "Usuarios", ownerOnly: true },
 ]
 
-export function AdminTabs() {
+export function AdminTabs({ role }: { role: AdminRole }) {
   const pathname = usePathname()
+  const tabs = TABS.filter((tab) => !tab.ownerOnly || canManageStore(role))
 
   return (
-    <nav className="flex w-full gap-1 rounded-full bg-sand p-1 sm:w-fit" aria-label="Secciones del panel">
-      {TABS.map((tab) => {
+    <nav
+      className="flex w-full gap-1 overflow-x-auto rounded-full bg-sand p-1 sm:w-fit"
+      aria-label="Secciones del panel"
+    >
+      {tabs.map((tab) => {
         const active =
           tab.href === "/admin"
-            ? pathname === "/admin" || pathname.startsWith("/admin/productos")
-            : pathname.startsWith(tab.href)
+            ? pathname === "/admin"
+            : pathname === tab.href || pathname.startsWith(`${tab.href}/`)
 
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className={`flex-1 rounded-full px-5 py-2 text-center text-sm transition-colors sm:flex-none ${
+            aria-current={active ? "page" : undefined}
+            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-center text-sm transition-colors sm:px-5 ${
               active ? "bg-ink text-cream" : "text-muted hover:text-ink"
             }`}
           >

@@ -85,7 +85,7 @@ await pool.query(
 
 const passwordHash = await bcrypt.hash(password, 12)
 await pool.query(
-  `insert into admin_users (email, password_hash) values ($1, $2) on conflict (email) do nothing`,
+  `insert into admin_users (email, password_hash, role) values ($1, $2, 'owner') on conflict (email) do nothing`,
   [email, passwordHash],
 )
 

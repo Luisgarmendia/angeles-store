@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { requireAdmin } from "@/lib/auth"
 import { getStoreSettings } from "@/db/queries"
+import { roleLabel } from "@/lib/roles"
 import { logoutAction } from "../actions"
 import { AdminTabs } from "@/components/admin/admin-tabs"
 
@@ -41,8 +42,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
 
           <div className="flex items-center justify-between gap-3">
-            <AdminTabs />
-            <p className="hidden text-xs text-muted sm:block">{session.email}</p>
+            <AdminTabs role={session.role} />
+            <p className="hidden shrink-0 text-xs text-muted sm:block">
+              {session.email} · {roleLabel(session.role)}
+            </p>
           </div>
         </div>
       </header>

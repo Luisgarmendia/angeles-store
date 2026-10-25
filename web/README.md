@@ -1,8 +1,8 @@
 # Angeles Store's — Next.js store and admin
 
 Database-backed storefront and admin panel for Angeles Store's. This app replaces the
-localStorage admin with PostgreSQL, server-side sessions, and Cloudflare R2 image uploads.
-The original Vite app remains at the repository root until the cutover.
+localStorage admin with PostgreSQL, server-side sessions, admin roles, and Cloudflare R2
+image uploads. The original Vite app remains at the repository root until the cutover.
 
 ## Requirements
 
@@ -36,6 +36,34 @@ If you forget the admin password:
 npm run db:admin
 ```
 
+## Admin roles and routes
+
+There are two roles:
+
+| Role | Access |
+| --- | --- |
+| `owner` | Dashboard, products, orders, store settings, and user management. |
+| `staff` | Dashboard, products, and orders only. |
+
+The admin is split into these routes:
+
+| Route | Page | Role |
+| --- | --- | --- |
+| `/admin` | Dashboard with summary cards, quick links, and recent orders. | Both |
+| `/admin/productos` | Product list, search, and create/edit flow. | Both |
+| `/admin/pedidos` | Orders and order detail. | Both |
+| `/admin/tienda` | Store settings. `/admin/ajustes` redirects here. | Owner |
+| `/admin/usuarios` | Team management: create users, change roles, reset passwords, delete. | Owner |
+
+Role checks run on the server in the page and in every server action, so hiding a tab is
+not the protection. Existing admin rows are promoted to `owner` by the migration; new users
+created from `/admin/usuarios` default to `staff`. The last owner cannot be demoted or
+deleted, and an owner cannot delete their own account.
+
+`ADMIN_ROLE` controls the role used by `npm run db:admin` when it creates a new user. It
+accepts `owner` or `staff` and defaults to `staff`; when the email already exists, only the
+password changes.
+
 ## Environment
 
 | Variable | Purpose |
@@ -43,6 +71,7 @@ npm run db:admin
 | `DATABASE_URL` | PostgreSQL connection string. |
 | `ADMIN_EMAIL` | Admin login email used by the seed. |
 | `ADMIN_PASSWORD` | Admin password used by the seed. Production requires 12+ characters. |
+| `ADMIN_ROLE` | Role for a newly created user in `npm run db:admin`: `owner` or `staff` (default `staff`). |
 | `SITE_URL` | Public site URL used for canonical and Open Graph metadata. Use `https://angelesstore.styledflow.com`. |
 | `STORE_WHATSAPP` | Optional seed override for the business WhatsApp. 8 local digits or 11 including 504. |
 | `SEED_PRODUCTS` | `false` (default) leaves the production store empty. Set `true` to load the demo catalog. |
@@ -111,7 +140,8 @@ tags when it builds a link preview.
 
 - Admin login uses bcrypt hashes, database-backed sessions, `httpOnly` cookies, and a login
   rate limit. The session cookie is `secure` in production.
-- Every admin server action calls `requireAdmin()`, so hiding the UI is not the protection.
+- Every admin server action calls `requireAdmin()` or `requireOwner()`, so hiding the UI is
+  not the protection. Store settings and user management are owner-only at both layers.
 - The PostgreSQL port stays on the internal Docker network. Use an SSH tunnel or Tailscale if
   a remote connection is ever needed.
 - Protect the Dokploy panel with a strong password, 2FA, and firewall rules.

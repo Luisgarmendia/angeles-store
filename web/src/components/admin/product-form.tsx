@@ -92,7 +92,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/admin" className="text-sm text-muted transition-colors hover:text-ink">
+      <Link href="/admin/productos" className="text-sm text-muted transition-colors hover:text-ink">
         ← Volver a productos
       </Link>
 

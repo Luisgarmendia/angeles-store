@@ -1,7 +1,8 @@
 import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { getDb } from "."
-import { orderItems, orders, productVariants, products, settings } from "./schema"
+import { adminUsers, orderItems, orders, productVariants, products, settings } from "./schema"
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
+import type { AdminRole } from "@/lib/roles"
 import type {
   AdminProduct,
   OrderPaymentStatus,
@@ -49,6 +50,13 @@ export interface AdminSummary {
   lowStockProducts: number
   activeProducts: number
   totalSales: number
+}
+
+export interface AdminUserSummary {
+  id: string
+  email: string
+  role: AdminRole
+  createdAt: Date
 }
 
 function toProduct(row: typeof products.$inferSelect): Product {
@@ -333,4 +341,26 @@ export async function getAdminSummary(): Promise<AdminSummary> {
     activeProducts: productTotals.activeProducts,
     totalSales: Number(orderTotals.totalSalesCents) / 100,
   }
+}
+
+export async function listAdminUsers(): Promise<AdminUserSummary[]> {
+  return getDb()
+    .select({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      role: adminUsers.role,
+      createdAt: adminUsers.createdAt,
+    })
+    .from(adminUsers)
+    .orderBy(asc(adminUsers.createdAt))
+}
+
+export async function countOwners(): Promise<number> {
+  const db = getDb()
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(adminUsers)
+    .where(eq(adminUsers.role, "owner"))
+
+  return row?.count ?? 0
 }

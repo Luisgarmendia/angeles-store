@@ -58,7 +58,7 @@ async function main() {
 
   await db
     .insert(adminUsers)
-    .values({ email, passwordHash: await bcrypt.hash(password, 12) })
+    .values({ email, passwordHash: await bcrypt.hash(password, 12), role: "owner" })
     .onConflictDoNothing()
 
   console.log(`Seed listo: ${seedProducts.length} productos, ajustes y admin ${email}.`)
