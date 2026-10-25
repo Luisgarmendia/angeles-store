@@ -29,6 +29,11 @@ async function main() {
         image: product.imagen,
         active: true,
         sortOrder: index,
+        madeToOrder: product.porEncargo ?? false,
+        compareAtPriceCents:
+          product.precioAnterior === null || product.precioAnterior === undefined
+            ? null
+            : Math.round(product.precioAnterior * 100),
       })
       .onConflictDoUpdate({
         target: products.id,
@@ -39,6 +44,11 @@ async function main() {
           description: product.descripcion,
           image: product.imagen,
           sortOrder: index,
+          madeToOrder: product.porEncargo ?? false,
+          compareAtPriceCents:
+            product.precioAnterior === null || product.precioAnterior === undefined
+              ? null
+              : Math.round(product.precioAnterior * 100),
           updatedAt: new Date(),
         },
       })

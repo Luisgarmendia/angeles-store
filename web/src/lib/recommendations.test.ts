@@ -12,6 +12,9 @@ function product(id: string, categoria: string): Product {
     imagen: "",
     imagenes: [],
     stock: null,
+    porEncargo: false,
+    precioAnterior: null,
+    creadoEn: "2026-01-01T00:00:00.000Z",
     variants: [],
   }
 }

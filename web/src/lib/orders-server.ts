@@ -72,21 +72,24 @@ export async function createOrderInDb(input: {
         if (!variant) {
           throw new OrderError("Una opción de tu carrito ya no está disponible.")
         }
-        if (variant.stock < quantity) {
-          throw new OrderError(
-            `No hay stock suficiente de ${product.name}${variant.label ? ` (${variant.label})` : ""}.`,
-          )
-        }
 
-        await tx
-          .update(productVariants)
-          .set({ stock: variant.stock - quantity })
-          .where(eq(productVariants.id, variant.id))
+        if (!product.madeToOrder) {
+          if (variant.stock < quantity) {
+            throw new OrderError(
+              `No hay stock suficiente de ${product.name}${variant.label ? ` (${variant.label})` : ""}.`,
+            )
+          }
+
+          await tx
+            .update(productVariants)
+            .set({ stock: variant.stock - quantity })
+            .where(eq(productVariants.id, variant.id))
+        }
       } else {
         if (variants.length > 0) {
           throw new OrderError(`Elegí una opción para ${product.name}.`)
         }
-        if (product.stock !== null) {
+        if (!product.madeToOrder && product.stock !== null) {
           if (product.stock < quantity) {
             throw new OrderError(`No hay stock suficiente de ${product.name}.`)
           }
@@ -110,6 +113,10 @@ export async function createOrderInDb(input: {
         imagen: product.images?.[0] ?? product.image,
         imagenes: product.images?.length ? product.images : product.image ? [product.image] : [],
         stock: product.stock,
+        porEncargo: product.madeToOrder,
+        precioAnterior:
+          product.compareAtPriceCents === null ? null : product.compareAtPriceCents / 100,
+        creadoEn: product.createdAt.toISOString(),
         variants: [],
       }
 

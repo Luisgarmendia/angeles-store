@@ -137,7 +137,9 @@ export async function saveProductAction(
   const category = text(formData, "category")
   const description = text(formData, "description")
   const price = parsePriceToCents(text(formData, "price"))
+  const compareAtRaw = text(formData, "compareAtPrice")
   const active = formData.get("active") === "on"
+  const madeToOrder = formData.get("madeToOrder") === "on"
   const images = parseImages(text(formData, "images") || "[]")
   const variants = parseVariantInputs(text(formData, "variants") || "[]")
   const stockRaw = text(formData, "stock")
@@ -155,6 +157,15 @@ export async function saveProductAction(
   if (price === null) {
     return { error: "Escribe un precio mayor a cero, por ejemplo 1,290.00." }
   }
+
+  const compareAt = compareAtRaw ? parsePriceToCents(compareAtRaw) : null
+  if (compareAtRaw && compareAt === null) {
+    return { error: "El precio anterior debe ser mayor a cero, por ejemplo 590.00." }
+  }
+  if (compareAt !== null && compareAt <= price) {
+    return { error: "El precio anterior debe ser mayor al precio actual para mostrar el descuento." }
+  }
+
   if (images === null) {
     return {
       error: `Revisá la galería: hasta ${MAX_GALLERY_IMAGES} fotos con URL http(s), sin repetir.`,
@@ -173,6 +184,7 @@ export async function saveProductAction(
     stock = parsed
   }
   if (variants.length > 0) stock = null
+  if (madeToOrder) stock = null
 
   const db = getDb()
 
@@ -192,6 +204,8 @@ export async function saveProductAction(
             images,
             active,
             stock,
+            madeToOrder,
+            compareAtPriceCents: compareAt,
             updatedAt: new Date(),
           })
           .where(eq(products.id, id))
@@ -216,6 +230,8 @@ export async function saveProductAction(
           images,
           active,
           stock,
+          madeToOrder,
+          compareAtPriceCents: compareAt,
           sortOrder: (last?.sortOrder ?? 0) + 1,
         })
       }

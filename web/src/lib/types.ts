@@ -15,6 +15,9 @@ export interface Product {
   imagen: string
   imagenes: string[]
   stock: number | null
+  porEncargo: boolean
+  precioAnterior: number | null
+  creadoEn: string
   variants: ProductVariant[]
 }
 

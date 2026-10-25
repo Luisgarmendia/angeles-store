@@ -27,6 +27,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [state, formAction, pending] = useActionState(saveProductAction, initialState)
   const [images, setImages] = useState<string[]>(() => product?.imagenes ?? [])
   const [newImage, setNewImage] = useState("")
+  const [madeToOrder, setMadeToOrder] = useState(() => product?.porEncargo ?? false)
   const [variants, setVariants] = useState<VariantDraft[]>(() =>
     (product?.variants ?? []).map((variant) => ({
       id: variant.id,
@@ -125,27 +126,45 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             />
           </Field>
 
-          <Field label="Categoría">
+          <Field label="Precio anterior (opcional)">
             <input
               type="text"
-              name="category"
-              list="admin-categories"
-              defaultValue={product?.categoria ?? ""}
-              required
-              minLength={2}
-              maxLength={60}
+              name="compareAtPrice"
+              inputMode="decimal"
+              defaultValue={
+                product?.precioAnterior === null || product?.precioAnterior === undefined
+                  ? ""
+                  : product.precioAnterior.toFixed(2)
+              }
               className={inputClass}
-              placeholder="Camisas"
+              placeholder="Ej. 590.00"
             />
-            <datalist id="admin-categories">
-              {categories.map((category) => (
-                <option key={category} value={category} />
-              ))}
-            </datalist>
+            <span className="mt-1 block text-xs text-muted">
+              Si lo completás, la tienda muestra el precio tachado y una etiqueta de descuento.
+            </span>
           </Field>
         </div>
 
-        {variants.length === 0 && (
+        <Field label="Categoría">
+          <input
+            type="text"
+            name="category"
+            list="admin-categories"
+            defaultValue={product?.categoria ?? ""}
+            required
+            minLength={2}
+            maxLength={60}
+            className={inputClass}
+            placeholder="Camisas"
+          />
+          <datalist id="admin-categories">
+            {categories.map((category) => (
+              <option key={category} value={category} />
+            ))}
+          </datalist>
+        </Field>
+
+        {variants.length === 0 && !madeToOrder && (
           <Field label="Stock (opcional)">
             <input
               type="number"
@@ -267,8 +286,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 Opciones / variantes
               </h3>
               <p className="mt-1 text-xs text-muted">
-                Tallas, colores, tamaños u otra característica. Si agregás opciones, el stock
-                se maneja por opción.
+                {madeToOrder
+                  ? "Tallas, colores o tamaños. En productos por encargo el stock no se controla."
+                  : "Tallas, colores, tamaños u otra característica. Si agregás opciones, el stock se maneja por opción."}
               </p>
             </div>
             <button
@@ -378,15 +398,33 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           )}
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-ink/15 bg-white px-4 py-3 text-sm">
-          <input
-            type="checkbox"
-            name="active"
-            defaultChecked={product?.active ?? true}
-            className="h-4 w-4 accent-ink"
-          />
-          Visible en la tienda
-        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-ink/15 bg-white px-4 py-3 text-sm">
+            <input
+              type="checkbox"
+              name="active"
+              defaultChecked={product?.active ?? true}
+              className="h-4 w-4 accent-ink"
+            />
+            Visible en la tienda
+          </label>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-ink/15 bg-white px-4 py-3 text-sm">
+            <input
+              type="checkbox"
+              name="madeToOrder"
+              checked={madeToOrder}
+              onChange={(event) => setMadeToOrder(event.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-ink"
+            />
+            <span>
+              <span className="block">Producto por encargo</span>
+              <span className="mt-0.5 block text-xs text-muted">
+                No se controla stock y la tarjeta muestra la etiqueta.
+              </span>
+            </span>
+          </label>
+        </div>
 
         {state.error && (
           <p className="rounded-xl bg-wine/10 px-4 py-3 text-sm text-wine" role="alert">

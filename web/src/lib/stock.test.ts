@@ -12,6 +12,9 @@ function product(overrides: Partial<Product> = {}): Product {
     imagen: "",
     imagenes: [],
     stock: null,
+    porEncargo: false,
+    precioAnterior: null,
+    creadoEn: "2026-01-01T00:00:00.000Z",
     variants: [],
     ...overrides,
   }
@@ -53,5 +56,17 @@ describe("stock helpers", () => {
     })
 
     expect(isSoldOut(item)).toBe(true)
+  })
+
+  it("ignores stock for made-to-order products", () => {
+    const item = product({
+      stock: 0,
+      porEncargo: true,
+      variants: [{ id: "v1", label: "M", stock: 0, precio: null, imagen: null }],
+    })
+
+    expect(productStock(item)).toBeNull()
+    expect(availableStock(item, "v1")).toBeNull()
+    expect(isSoldOut(item)).toBe(false)
   })
 })
