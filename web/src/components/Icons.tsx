@@ -96,6 +96,26 @@ export function ChevronDownIcon({ className }: IconProps) {
   )
 }
 
+export function GridIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </Icon>
+  )
+}
+
+export function ListIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M4 6h.01M4 12h.01M4 18h.01" />
+    </Icon>
+  )
+}
+
 export function LockIcon({ className }: IconProps) {
   return (
     <Icon className={className}>
