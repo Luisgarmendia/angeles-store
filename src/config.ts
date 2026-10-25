@@ -22,7 +22,7 @@ export const config = {
   },
   shipping: {
     country: "Honduras",
-    note: "Enviamos a todo Honduras. Coordinamos la entrega por WhatsApp según tu ciudad.",
+    note: "El envío puede tener un costo extra según tu ciudad. Lo coordinamos por WhatsApp al confirmar tu pedido.",
   },
 } as const
 

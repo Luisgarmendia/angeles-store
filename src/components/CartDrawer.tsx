@@ -144,6 +144,10 @@ export function CartDrawer({
                 <span>Total del pedido</span>
                 <span className="font-display text-3xl text-ink">{formatPrice(total)}</span>
               </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted">
+                <span>Envío</span>
+                <span>Se coordina por WhatsApp</span>
+              </div>
               <p className="mt-1 text-xs leading-relaxed text-muted">{config.shipping.note}</p>
               <button
                 type="button"

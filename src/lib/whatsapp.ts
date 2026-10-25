@@ -20,21 +20,20 @@ export interface OrderInput {
 }
 
 /**
- * Builds the WhatsApp message. Emojis are a small, widely supported set and
- * every block is separated by blank lines so the message reads well on both
- * Android and iOS.
+ * Builds the WhatsApp message with plain text and WhatsApp markdown only.
+ * Emojis were removed because they render as empty boxes on some devices.
  */
 export function buildOrderMessage({ brandName, customer, lines, total }: OrderInput): string {
   const rows: Array<string | null> = [
-    `🛍️ *NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
+    `*NUEVO PEDIDO · ${brandName.toUpperCase()}*`,
     "",
-    `👤 *Cliente:* ${customer.nombre.trim()}`,
-    customer.telefono.trim() ? `📱 *Teléfono:* ${customer.telefono.trim()}` : null,
-    `📍 *Entrega:* ${customer.direccion.trim()}`,
-    `💳 *Pago:* ${paymentLabel(customer.pago)}`,
-    customer.notas.trim() ? `📝 *Notas:* ${customer.notas.trim()}` : null,
+    `*Cliente:* ${customer.nombre.trim()}`,
+    customer.telefono.trim() ? `*Teléfono:* ${customer.telefono.trim()}` : null,
+    `*Entrega:* ${customer.direccion.trim()}`,
+    `*Pago:* ${paymentLabel(customer.pago)}`,
+    customer.notas.trim() ? `*Notas:* ${customer.notas.trim()}` : null,
     "",
-    "🧾 *DETALLE DEL PEDIDO*",
+    "*DETALLE DEL PEDIDO*",
     ...lines.map(
       (line, index) =>
         `${index + 1}. *${line.product.nombre}* x${line.quantity} — ${formatPrice(
@@ -42,9 +41,11 @@ export function buildOrderMessage({ brandName, customer, lines, total }: OrderIn
         )}`,
     ),
     "",
-    `💵 *TOTAL:* *${formatPrice(total)}*`,
+    `*TOTAL PRODUCTOS:* *${formatPrice(total)}*`,
     "",
-    "¡Gracias por tu compra! 🌷",
+    "*Envío:* se coordina por WhatsApp y puede tener un costo extra.",
+    "",
+    "¡Gracias por tu compra!",
   ]
 
   return rows.filter((row): row is string => row !== null).join("\n")

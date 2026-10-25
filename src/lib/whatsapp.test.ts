@@ -48,6 +48,17 @@ describe("buildOrderMessage", () => {
     expect(message).not.toContain("Teléfono")
     expect(message).not.toContain("Notas")
   })
+
+  it("uses plain text so no device shows missing emoji boxes", () => {
+    const message = buildOrderMessage({
+      brandName: "Angeles Store's",
+      customer,
+      lines: [{ product: dress, quantity: 1 }],
+      total: 1290,
+    })
+
+    expect(message).not.toMatch(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u)
+  })
 })
 
 describe("whatsappUrl", () => {
