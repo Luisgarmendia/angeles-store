@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import Link from "next/link"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
 import { ALL_PAYMENT_METHODS } from "@/lib/payments"
@@ -216,7 +217,15 @@ export function CheckoutModal({
           </button>
           <p className="text-center text-[11px] leading-relaxed text-muted">
             Se va a abrir WhatsApp con tu pedido listo. Te respondemos para confirmar disponibilidad
-            y entrega. Tus datos quedan guardados solo en este dispositivo para tu próxima compra.
+            y entrega. Guardamos tu pedido en nuestra base de datos para gestionarlo y tu navegador
+            conserva tus datos de contacto para prellenar la próxima compra. Consulta nuestra{" "}
+            <Link
+              href="/privacidad"
+              className="underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              política de privacidad
+            </Link>
+            .
           </p>
         </form>
       </div>
