@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { GridIcon, ListIcon } from "@/components/Icons"
+import { GridIcon, ListIcon, PlusIcon } from "@/components/Icons"
 import { DeleteProductButton } from "./delete-product-button"
 import { formatPrice } from "@/lib/format"
 import { discountPercent } from "@/lib/pricing"
@@ -71,15 +71,24 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
         </div>
       </div>
 
-      {products.length === 0 ? (
-        <div className="mt-3 rounded-2xl border border-dashed border-ink/15 px-6 py-14 text-center">
-          <p className="font-display text-2xl text-ink">No hay productos para mostrar</p>
-          <p className="mt-2 text-sm text-muted">
-            Creá el primero o cambiá el término de búsqueda.
-          </p>
-        </div>
-      ) : view === "cards" ? (
+      {view === "cards" ? (
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Link
+            href="/admin/productos/nuevo"
+            aria-label="Crear un producto nuevo"
+            className="group flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-ink/25 bg-white/40 p-6 text-center transition-colors hover:border-ink hover:bg-white/70"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sand text-ink transition-colors group-hover:bg-ink group-hover:text-cream">
+              <PlusIcon className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block font-display text-lg text-ink">Nuevo producto</span>
+              <span className="mt-0.5 block text-xs uppercase tracking-[0.16em] text-muted">
+                Agregar al catálogo
+              </span>
+            </span>
+          </Link>
+
           {products.map((product) => {
             const stock = productStock(product)
             const soldOut = stock !== null && stock <= 0
@@ -181,6 +190,22 @@ export function AdminProductsView({ products }: { products: AdminProduct[] }) {
         </div>
       ) : (
         <div className="mt-3 space-y-2">
+          <Link
+            href="/admin/productos/nuevo"
+            aria-label="Crear un producto nuevo"
+            className="group flex items-center gap-3 rounded-2xl border border-dashed border-ink/25 bg-white/40 p-3 transition-colors hover:border-ink hover:bg-white/70 sm:gap-4"
+          >
+            <span className="flex h-16 w-14 shrink-0 items-center justify-center rounded-xl bg-sand text-ink transition-colors group-hover:bg-ink group-hover:text-cream">
+              <PlusIcon className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block font-display text-lg text-ink">Nuevo producto</span>
+              <span className="text-xs uppercase tracking-[0.16em] text-muted">
+                Agregar al catálogo
+              </span>
+            </span>
+          </Link>
+
           {products.map((product) => {
             const stock = productStock(product)
             const lowStock = stock !== null && stock > 0 && stock <= 3

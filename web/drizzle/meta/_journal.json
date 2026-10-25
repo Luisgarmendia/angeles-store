@@ -36,6 +36,27 @@
       "when": 1792949982632,
       "tag": "0004_dark_ricochet",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792956582509,
+      "tag": "0005_nasty_roughhouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792957979881,
+      "tag": "0006_sweet_invaders",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792959183692,
+      "tag": "0007_hesitant_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }

@@ -202,6 +202,27 @@ export default async function OrderDetailPage({
       </section>
 
       <section className="mt-4 rounded-2xl border border-ink/10 bg-white/60 p-5">
+        <h3 className="font-display text-xl text-ink">Notificación</h3>
+        <p className="mt-1 text-sm text-muted">
+          {order.pushSentAt
+            ? order.pushSuccessCount > 0
+              ? order.pushFailureCount > 0
+                ? `Enviada a ${order.pushSuccessCount} dispositivo(s); falló en ${order.pushFailureCount}.`
+                : `Enviada a ${order.pushSuccessCount} dispositivo(s).`
+              : `No se pudo entregar a ningún dispositivo (${order.pushFailureCount} fallo(s)).`
+            : order.pushError
+              ? `No se envió: ${order.pushError}.`
+              : "Sin intento registrado."}
+        </p>
+        {order.pushSentAt && (
+          <p className="mt-1 text-xs text-muted">{formatter.format(order.pushSentAt)}</p>
+        )}
+        {order.pushError && order.pushFailureCount > 0 && (
+          <p className="mt-1 text-xs text-wine">{order.pushError}</p>
+        )}
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-ink/10 bg-white/60 p-5">
         <h3 className="font-display text-xl text-ink">Productos</h3>
         <ul className="mt-3 divide-y divide-ink/10">
           {order.items.map((item) => (

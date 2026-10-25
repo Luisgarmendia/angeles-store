@@ -1,7 +1,8 @@
 import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { getDb } from "."
-import { orderItems, orders, productVariants, products, settings } from "./schema"
+import { adminPushTokens, adminUsers, orderItems, orders, productVariants, products, settings } from "./schema"
 import { DEFAULT_SETTINGS, mergeSettings } from "@/lib/settings"
+import type { AdminRole } from "@/lib/roles"
 import type {
   AdminProduct,
   OrderPaymentStatus,
@@ -22,6 +23,10 @@ export interface AdminOrder {
   subtotal: number
   status: OrderStatus
   paymentStatus: OrderPaymentStatus
+  pushSentAt: Date | null
+  pushSuccessCount: number
+  pushFailureCount: number
+  pushError: string | null
   createdAt: Date
   itemCount: number
 }
@@ -49,6 +54,13 @@ export interface AdminSummary {
   lowStockProducts: number
   activeProducts: number
   totalSales: number
+}
+
+export interface AdminUserSummary {
+  id: string
+  email: string
+  role: AdminRole
+  createdAt: Date
 }
 
 function toProduct(row: typeof products.$inferSelect): Product {
@@ -233,6 +245,10 @@ export async function listOrders(
       subtotalCents: orders.subtotalCents,
       status: orders.status,
       paymentStatus: orders.paymentStatus,
+      pushSentAt: orders.pushSentAt,
+      pushSuccessCount: orders.pushSuccessCount,
+      pushFailureCount: orders.pushFailureCount,
+      pushError: orders.pushError,
       createdAt: orders.createdAt,
       itemCount: sql<number>`count(${orderItems.id})::int`,
     })
@@ -262,6 +278,10 @@ export async function getOrder(id: string): Promise<AdminOrderDetail | null> {
       subtotalCents: orders.subtotalCents,
       status: orders.status,
       paymentStatus: orders.paymentStatus,
+      pushSentAt: orders.pushSentAt,
+      pushSuccessCount: orders.pushSuccessCount,
+      pushFailureCount: orders.pushFailureCount,
+      pushError: orders.pushError,
       createdAt: orders.createdAt,
     })
     .from(orders)
@@ -333,4 +353,86 @@ export async function getAdminSummary(): Promise<AdminSummary> {
     activeProducts: productTotals.activeProducts,
     totalSales: Number(orderTotals.totalSalesCents) / 100,
   }
+}
+
+export async function listAdminUsers(): Promise<AdminUserSummary[]> {
+  return getDb()
+    .select({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      role: adminUsers.role,
+      createdAt: adminUsers.createdAt,
+    })
+    .from(adminUsers)
+    .orderBy(asc(adminUsers.createdAt))
+}
+
+export async function countOwners(): Promise<number> {
+  const db = getDb()
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(adminUsers)
+    .where(eq(adminUsers.role, "owner"))
+
+  return row?.count ?? 0
+}
+
+export async function listPushTokens(): Promise<string[]> {
+  const rows = await getDb()
+    .select({ token: adminPushTokens.token })
+    .from(adminPushTokens)
+
+  return rows.map((row) => row.token)
+}
+
+export async function listPushTokensForUser(userId: string): Promise<string[]> {
+  const rows = await getDb()
+    .select({ token: adminPushTokens.token })
+    .from(adminPushTokens)
+    .where(eq(adminPushTokens.userId, userId))
+
+  return rows.map((row) => row.token)
+}
+
+export async function registerPushToken(userId: string, token: string): Promise<void> {
+  await getDb()
+    .insert(adminPushTokens)
+    .values({ userId, token })
+    .onConflictDoUpdate({
+      target: adminPushTokens.token,
+      set: { userId, updatedAt: new Date() },
+    })
+}
+
+export async function deletePushToken(userId: string, token: string): Promise<void> {
+  await getDb()
+    .delete(adminPushTokens)
+    .where(and(eq(adminPushTokens.userId, userId), eq(adminPushTokens.token, token)))
+}
+
+export async function deletePushTokens(tokens: string[]): Promise<void> {
+  if (tokens.length === 0) return
+
+  await getDb().delete(adminPushTokens).where(inArray(adminPushTokens.token, tokens))
+}
+
+export async function updateOrderPushResult(
+  id: string,
+  result: {
+    sentAt: Date | null
+    successCount: number
+    failureCount: number
+    error: string | null
+  },
+): Promise<void> {
+  await getDb()
+    .update(orders)
+    .set({
+      pushSentAt: result.sentAt,
+      pushSuccessCount: result.successCount,
+      pushFailureCount: result.failureCount,
+      pushError: result.error,
+      updatedAt: new Date(),
+    })
+    .where(eq(orders.id, id))
 }

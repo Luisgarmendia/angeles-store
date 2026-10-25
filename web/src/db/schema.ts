@@ -52,10 +52,13 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const adminRole = pgEnum("admin_role", ["owner", "staff"])
+
 export const adminUsers = pgTable("admin_users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  role: adminRole("role").notNull().default("staff"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -67,6 +70,20 @@ export const adminSessions = pgTable("admin_sessions", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const adminPushTokens = pgTable(
+  "admin_push_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => adminUsers.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("admin_push_tokens_user_id_idx").on(table.userId)],
+)
 
 export const orderStatus = pgEnum("order_status", [
   "pendiente",
@@ -93,6 +110,10 @@ export const orders = pgTable("orders", {
   subtotalCents: integer("subtotal_cents").notNull(),
   status: orderStatus("status").notNull().default("pendiente"),
   paymentStatus: orderPaymentStatus("payment_status").notNull().default("pendiente"),
+  pushSentAt: timestamp("push_sent_at", { withTimezone: true }),
+  pushSuccessCount: integer("push_success_count").notNull().default(0),
+  pushFailureCount: integer("push_failure_count").notNull().default(0),
+  pushError: text("push_error"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })

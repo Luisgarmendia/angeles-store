@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 import { and, desc, eq, isNotNull, sql } from "drizzle-orm"
 import { getDb } from "@/db"
 import { orderItems, orders, productVariants, products, settings } from "@/db/schema"
-import { destroySession, requireAdmin } from "@/lib/auth"
+import { destroySession, requireAdmin, requireOwner } from "@/lib/auth"
 import { PAYMENT_OPTIONS, isPaymentMethod } from "@/lib/payments"
 import { normalizeHonduranPhone } from "@/lib/phone"
 import { isOrderStatus, isPaymentStatus } from "@/lib/orders"
@@ -286,24 +286,25 @@ export async function saveProductAction(
   }
 
   revalidatePath("/", "layout")
-  redirect("/admin")
+  redirect("/admin/productos")
 }
 
 export async function deleteProductAction(formData: FormData): Promise<void> {
   await requireAdmin()
 
   const id = text(formData, "id")
-  if (!id) redirect("/admin")
+  if (!id) redirect("/admin/productos")
 
   await getDb().delete(products).where(eq(products.id, id))
   revalidatePath("/", "layout")
-  redirect("/admin")
+  redirect("/admin/productos")
 }
 
 export async function saveSettingsAction(
   _previous: FormState,
   formData: FormData,
-): Promise<FormState> {  await requireAdmin()
+): Promise<FormState> {
+  await requireOwner()
 
   const storeName = text(formData, "storeName")
   if (storeName.length < 2 || storeName.length > 80) {
@@ -377,7 +378,7 @@ export async function saveSettingsAction(
     })
 
   revalidatePath("/", "layout")
-  redirect("/admin/ajustes?ok=1")
+  redirect("/admin/tienda?ok=1")
 }
 
 export async function updateOrderStatusAction(formData: FormData): Promise<void> {
