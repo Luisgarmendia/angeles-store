@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
 import { maxPurchasable } from "@/lib/stock"
@@ -27,7 +28,9 @@ export function CartDrawer({
   onRemove,
   onCheckout,
 }: CartDrawerProps) {
-  useModalBehavior(open, onClose)
+  const dialogRef = useRef<HTMLElement>(null)
+
+  useModalBehavior(open, onClose, dialogRef)
   const { store } = useStoreSettings()
 
   if (!open) return null
@@ -44,6 +47,8 @@ export function CartDrawer({
       />
 
       <aside
+        ref={dialogRef}
+        tabIndex={-1}
         className="relative flex h-full w-full max-w-md flex-col bg-cream shadow-2xl"
         role="dialog"
         aria-modal="true"

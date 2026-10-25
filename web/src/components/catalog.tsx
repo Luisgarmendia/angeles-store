@@ -39,12 +39,16 @@ export function Catalog({ products }: { products: Product[] }) {
     filters.category !== "Todos" ||
     filters.minPrice !== "" ||
     filters.maxPrice !== "" ||
-    filters.sort !== "destacados"
+    filters.sort !== "destacados" ||
+    filters.onlyDiscounted ||
+    filters.onlyMadeToOrder
 
   const hiddenFilterCount =
     (filters.minPrice !== "" ? 1 : 0) +
     (filters.maxPrice !== "" ? 1 : 0) +
-    (filters.sort !== "destacados" ? 1 : 0)
+    (filters.sort !== "destacados" ? 1 : 0) +
+    (filters.onlyDiscounted ? 1 : 0) +
+    (filters.onlyMadeToOrder ? 1 : 0)
 
   function updateFilter<K extends keyof CatalogFilterInput>(
     key: K,
@@ -187,6 +191,40 @@ export function Catalog({ products }: { products: Product[] }) {
                     </option>
                   ))}
                 </Select>
+              </label>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <label
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.14em] transition-colors focus-within:ring-2 focus-within:ring-rose/30 ${
+                  filters.onlyDiscounted
+                    ? "border-ink bg-ink text-cream"
+                    : "border-ink/15 text-muted hover:border-ink/40 hover:text-ink"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.onlyDiscounted}
+                  onChange={(event) => updateFilter("onlyDiscounted", event.target.checked)}
+                  className="sr-only"
+                />
+                Solo ofertas
+              </label>
+
+              <label
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-xs uppercase tracking-[0.14em] transition-colors focus-within:ring-2 focus-within:ring-rose/30 ${
+                  filters.onlyMadeToOrder
+                    ? "border-ink bg-ink text-cream"
+                    : "border-ink/15 text-muted hover:border-ink/40 hover:text-ink"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.onlyMadeToOrder}
+                  onChange={(event) => updateFilter("onlyMadeToOrder", event.target.checked)}
+                  className="sr-only"
+                />
+                Solo por encargo
               </label>
             </div>
 

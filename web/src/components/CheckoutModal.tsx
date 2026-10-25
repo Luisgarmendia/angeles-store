@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
 import Link from "next/link"
 import { config } from "@/lib/config"
 import { formatPrice } from "@/lib/format"
@@ -52,8 +52,9 @@ export function CheckoutModal({
   const [customer, setCustomer] = useState<Customer>(() => initialCustomer(methods))
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
-  useModalBehavior(open, onClose)
+  useModalBehavior(open, onClose, dialogRef)
 
   useEffect(() => {
     if (!open) return
@@ -107,6 +108,8 @@ export function CheckoutModal({
       />
 
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-cream p-6 shadow-2xl sm:rounded-3xl"
         role="dialog"
         aria-modal="true"

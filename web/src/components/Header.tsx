@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { BagIcon, SettingsIcon } from "./Icons"
+import { BagIcon, MenuIcon, SettingsIcon, XIcon } from "./Icons"
 import { useStoreSettings } from "./store-settings-provider"
 
 interface HeaderProps {
@@ -9,8 +10,17 @@ interface HeaderProps {
   onCartOpen: () => void
 }
 
+const MOBILE_LINKS = [
+  { href: "/#catalogo", label: "Catálogo" },
+  { href: "/#como-comprar", label: "Cómo comprar" },
+  { href: "/#contacto", label: "Contacto" },
+  { href: "/envios-y-devoluciones", label: "Envíos y devoluciones" },
+  { href: "/preguntas-frecuentes", label: "Preguntas frecuentes" },
+]
+
 export function Header({ cartCount, onCartOpen }: HeaderProps) {
   const { store } = useStoreSettings()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-30 border-b border-ink/10 bg-cream/90 backdrop-blur">
@@ -39,6 +49,16 @@ export function Header({ cartCount, onCartOpen }: HeaderProps) {
         </nav>
 
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            className="rounded-full p-2.5 text-ink transition-colors hover:bg-sand md:hidden"
+          >
+            {menuOpen ? <XIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+          </button>
           <Link
             href="/admin"
             className="rounded-full p-2.5 text-muted transition-colors hover:bg-sand hover:text-ink"
@@ -60,6 +80,28 @@ export function Header({ cartCount, onCartOpen }: HeaderProps) {
             )}
           </button>
         </div>
+      </div>
+
+      <div
+        id="mobile-menu"
+        hidden={!menuOpen}
+        className="border-t border-ink/10 bg-cream md:hidden"
+      >
+        <nav aria-label="Navegación móvil" className="mx-auto max-w-6xl px-4 py-3 sm:px-6">
+          <ul className="flex flex-col">
+            {MOBILE_LINKS.map((link) => (
+              <li key={link.href} className="border-b border-ink/5 last:border-0">
+                <Link
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block py-3 text-sm text-muted transition-colors hover:text-ink"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </header>
   )
