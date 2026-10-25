@@ -8,7 +8,7 @@ Test runner: `vitest` (`cd web && npm test`)
 
 ## Specs
 
-- **S1 — Cherry blossoms.** A fixed, pointer-events-none background renders 18 slow-falling petals behind the storefront content (12 on mobile), in the rose palette, with low opacity. The petals are `aria-hidden`, stay behind a `relative z-10` content wrapper, and never cause scroll or block interaction.
+- **S1 — Cherry blossoms.** A fixed, pointer-events-none background renders 22 slow-falling petals behind the storefront content (12 on mobile), in the rose palette, with visible-but-soft opacity (0.32–0.6). The petals are `aria-hidden`, stay behind a `relative z-10` content wrapper, and never cause scroll or block interaction.
 - **S2 — Entrance motion.** The hero text fades up, the hero image fades in with a very slow zoom; catalog headers/search/categories/filters fade up; product cards stagger in by index; the product detail gallery fades in and its info fades up; recommendations stagger.
 - **S3 — Modal motion.** The cart drawer slides in from the right with a fading backdrop; checkout and order-confirmation dialogs scale/fade in.
 - **S4 — Accessibility and performance.** All motion is CSS-only, uses `transform`/`opacity`, respects `prefers-reduced-motion` (petals hidden, animations disabled), and does not introduce layout shift or interaction blockers.
@@ -29,3 +29,6 @@ Test runner: `vitest` (`cd web && npm test`)
 - **L3 (decision):** Entrance animations use `backwards` fill and small delays so the cards keep their hover transforms after the animation ends.
 - **L4 (decision):** `prefers-reduced-motion` hides the petals and disables all added animations; the petals are `aria-hidden` and `pointer-events-none`.
 - **L5 (verification):** `npm test` → 19 files / 105 tests; `npm run typecheck` clean; `npm run build` green. The homepage SSR contains 18 `petal` spans, the `relative z-10` wrapper and the hero/catalog fade classes; the CSS bundle contains the `petal-fall`, `hero-zoom`, `drawer-in` and `modal-in` keyframes. Visual behavior is verified manually in the browser.
+- **L6 (user, verbatim):** "no veo nunguna animacion ocupa reiniciar el sitio?"
+- **L7 (diagnosis):** The motion was already deployed and rendering (verified with a headless Chrome screenshot of `localhost:3000`), but the petals were 8–16px at 0.18–0.36 opacity with a 0.55-alpha gradient, which is effectively invisible on the cream background, and the entrance animations finished in 0.65s before the page could be read. No restart was required; the browser was not the problem.
+- **L8 (correction):** Raised the petals to 22, 10–25px, opacity 0.32–0.6, faster 11–21s fall, stronger gradient and no blur; slowed `fade-up` to 0.9s with 26px travel, `fade-in` to 1.1s, the hero zoom to 9s at 1.06 scale, and the card stagger to 70ms. Verified again with a screenshot: the petals are clearly visible. `prefers-reduced-motion` still disables everything.

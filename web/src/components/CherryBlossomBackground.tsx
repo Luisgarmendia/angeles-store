@@ -1,12 +1,12 @@
 import type { CSSProperties } from "react"
 
-const PETALS = Array.from({ length: 18 }, (_, index) => ({
+const PETALS = Array.from({ length: 22 }, (_, index) => ({
   left: (index * 37 + 11) % 100,
-  size: 8 + (index % 5) * 2,
-  delay: -(index * 1.7),
-  duration: 14 + (index % 7) * 2,
-  drift: (index % 2 === 0 ? 1 : -1) * (18 + (index % 4) * 12),
-  opacity: 0.18 + (index % 4) * 0.06,
+  size: 10 + (index % 6) * 3,
+  delay: -(index * 1.3),
+  duration: 11 + (index % 6) * 2,
+  drift: (index % 2 === 0 ? 1 : -1) * (30 + (index % 4) * 20),
+  opacity: 0.32 + (index % 5) * 0.07,
 }))
 
 /** Decorative falling cherry-blossom petals behind the storefront content. */

@@ -23,7 +23,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const hasVariants = product.variants.length > 0
   const discount = discountPercent(product)
   const previousPrice = compareAtPrice(product)
-  const animationDelay = Math.min(index, 8) * 45
+  const animationDelay = Math.min(index, 8) * 70
 
   useEffect(() => {
     if (!added) return
