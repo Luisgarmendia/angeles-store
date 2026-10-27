@@ -1,42 +1,42 @@
 import type { MetadataRoute } from "next"
 import { listProductSitemapEntries } from "@/db/queries"
+import { getSiteUrl } from "@/lib/site-url"
 
 // Keep the sitemap request-time so the build never needs a database connection.
 export const dynamic = "force-dynamic"
 
-const SITE_URL = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await listProductSitemapEntries()
   const now = new Date()
+  const siteUrl = getSiteUrl()
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${SITE_URL}/`,
+      url: `${siteUrl}/`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: `${SITE_URL}/privacidad`,
+      url: `${siteUrl}/privacidad`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${SITE_URL}/terminos`,
+      url: `${siteUrl}/terminos`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${SITE_URL}/envios-y-devoluciones`,
+      url: `${siteUrl}/envios-y-devoluciones`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
     },
     {
-      url: `${SITE_URL}/preguntas-frecuentes`,
+      url: `${siteUrl}/preguntas-frecuentes`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
@@ -45,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const productRoutes = products.map(
     (product): MetadataRoute.Sitemap[number] => ({
-      url: `${SITE_URL}/producto/${product.id}`,
+      url: `${siteUrl}/producto/${encodeURIComponent(product.id)}`,
       lastModified: new Date(product.updatedAt),
       changeFrequency: "weekly",
       priority: 0.8,

@@ -185,6 +185,10 @@ Product pages expose Open Graph and Twitter metadata plus `Product` JSON-LD: nam
 category, description, image, store name, and canonical URL. WhatsApp reads the Open Graph
 tags when it builds a link preview.
 
+- The deployment exposes `/sitemap.xml` with the home, legal, FAQ, and active product pages.
+  `/robots.txt` references that sitemap and keeps `/admin` and `/api` out of search engines.
+- Set `SITE_URL` to the exact public HTTPS origin before deploying. After the first deploy,
+  submit `https://tu-dominio.com/sitemap.xml` in Google Search Console.
 - `SITE_URL` must be the public HTTPS domain in production, otherwise the preview URL points
   to localhost.
 - WhatsApp cannot preview a `localhost` page. Deploy first and share the public URL.
