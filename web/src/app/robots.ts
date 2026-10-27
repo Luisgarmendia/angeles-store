@@ -1,14 +1,15 @@
 import type { MetadataRoute } from "next"
-
-const SITE_URL = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
+import { getSiteUrl } from "@/lib/site-url"
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl()
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
       disallow: ["/admin", "/api"],
     },
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   }
 }
