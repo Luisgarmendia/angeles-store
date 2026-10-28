@@ -3,9 +3,9 @@ import { LegalPage, StoreContactDetails } from "@/components/legal-page"
 import { getStoreSettings } from "@/db/queries"
 
 export const metadata: Metadata = {
-  title: "Envíos y devoluciones",
+  title: "Envíos y devoluciones | Angeles Store's",
   description:
-    "Cobertura, costos, tiempos de entrega y condiciones para cambios o devoluciones.",
+    "Información sobre envíos a Honduras, costos de entrega, tiempos y condiciones para cambios o devoluciones.",
   alternates: { canonical: "/envios-y-devoluciones" },
 }
 

@@ -42,6 +42,11 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       description,
       images: image ? [image] : [],
     },
+    other: {
+      "product:price:amount": product.precio.toString(),
+      "product:price:currency": "HNL",
+      "product:category": product.categoria,
+    },
   }
 }
 

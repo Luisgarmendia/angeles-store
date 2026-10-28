@@ -8,7 +8,7 @@ export const config = {
     name: "Angeles Store's",
     tagline: "Cremas, camisas y mucho más para mujer",
     description:
-      "Cremas, camisas y piezas seleccionadas para mujer, con cariño desde Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
+      "Compra cremas, camisas y moda femenina en Honduras. Descubre looks modernos y coordina tu pedido por WhatsApp.",
   },
   contact: {
     whatsapp: "50499998888",
@@ -17,12 +17,12 @@ export const config = {
     tiktok: "",
   },
   hero: {
-    tagline: "Cremas, camisas y mucho más para mujer",
-    headline: "Cuida tu piel, renueva tu",
-    accent: "look.",
+    tagline: "Cremas, camisas y moda femenina",
+    headline: "Compra cremas, camisas y",
+    accent: "looks para mujer.",
     description:
-      "Cremas, camisas y piezas seleccionadas para mujer, con cariño desde Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
-    ctaLabel: "Ver cremas y camisas",
+      "Descubre productos seleccionados para mujer en Honduras. Elige tus favoritos y coordina tu pedido por WhatsApp.",
+    ctaLabel: "Ver catálogo",
     secondaryLabel: "Cómo comprar",
     trust: ["Envíos a todo Honduras", "Pago contra entrega", "Atención personalizada"],
     image:

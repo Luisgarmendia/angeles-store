@@ -5,9 +5,9 @@ import { getStoreSettings } from "@/db/queries"
 import { paymentLabel } from "@/lib/payments"
 
 export const metadata: Metadata = {
-  title: "Preguntas frecuentes",
+  title: "Preguntas frecuentes | Angeles Store's",
   description:
-    "Respuestas sobre pedidos, pagos, envíos, devoluciones y productos por encargo.",
+    "Resuelve dudas sobre pedidos, pagos, envíos, devoluciones y productos por encargo en Honduras.",
   alternates: { canonical: "/preguntas-frecuentes" },
 }
 
