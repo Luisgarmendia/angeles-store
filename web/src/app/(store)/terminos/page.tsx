@@ -5,9 +5,9 @@ import { getStoreSettings } from "@/db/queries"
 import { paymentLabel } from "@/lib/payments"
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones",
+  title: "Términos y condiciones | Angeles Store's",
   description:
-    "Condiciones de compra, disponibilidad, precios, pagos, entregas, cancelaciones y responsabilidad.",
+    "Consulta los términos de compra, pagos, entregas y devoluciones de Angeles Store's en Honduras.",
   alternates: { canonical: "/terminos" },
 }
 

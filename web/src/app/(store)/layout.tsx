@@ -8,22 +8,27 @@ export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getStoreSettings()
-  const title = `${settings.store.name} — Cremas, camisas y moda para mujer en Honduras`
-  const description = settings.store.description
+  const title = `${settings.store.name} | Tienda de cremas, camisas y moda femenina en Honduras`
+  const description =
+    "Compra cremas, camisas y moda femenina en Honduras. Descubre productos seleccionados y coordina tu pedido por WhatsApp."
   const image = settings.hero.image
 
   return {
     title: {
       default: title,
-      template: `%s · ${settings.store.name}`,
+      template: `%s | ${settings.store.name}`,
     },
     description,
+    alternates: {
+      canonical: "/",
+    },
     openGraph: {
       title,
       description,
       siteName: settings.store.name,
       locale: "es_HN",
       type: "website",
+      url: "/",
       images: image
         ? [{ url: image, alt: settings.hero.imageAlt || settings.store.name }]
         : [],

@@ -3,9 +3,9 @@ import { LegalPage, StoreContactDetails } from "@/components/legal-page"
 import { getStoreSettings } from "@/db/queries"
 
 export const metadata: Metadata = {
-  title: "Política de privacidad",
+  title: "Política de privacidad | Angeles Store's",
   description:
-    "Qué datos recopilamos al registrar un pedido, para qué los usamos y cómo solicitar su corrección o eliminación.",
+    "Conoce cómo Angeles Store's usa tus datos de compra, pedidos y contacto en Honduras.",
   alternates: { canonical: "/privacidad" },
 }
 
