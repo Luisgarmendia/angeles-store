@@ -71,6 +71,13 @@
       "when": 1792963914340,
       "tag": "0009_icy_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792965000000,
+      "tag": "0010_product_reviews",
+      "breakpoints": true
     }
   ]
 }

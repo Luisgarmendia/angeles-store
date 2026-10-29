@@ -21,6 +21,14 @@ export interface Product {
   variants: ProductVariant[]
 }
 
+export interface ProductReview {
+  id: string
+  authorName: string
+  rating: number
+  body: string
+  createdAt: string
+}
+
 export interface AdminProduct extends Product {
   active: boolean
   sortOrder: number

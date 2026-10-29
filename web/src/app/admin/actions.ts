@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { and, desc, eq, isNotNull, sql } from "drizzle-orm"
 import { getDb } from "@/db"
-import { orderItems, orders, productVariants, products, settings } from "@/db/schema"
+import { orderItems, orders, productReviews, productVariants, products, settings } from "@/db/schema"
 import { destroySession, requireAdmin, requireOwner } from "@/lib/auth"
 import { PAYMENT_OPTIONS, isPaymentMethod } from "@/lib/payments"
 import { normalizeHonduranPhone } from "@/lib/phone"
@@ -148,6 +148,7 @@ export async function saveProductAction(
   if (name.length < 2 || name.length > 120) {
     return { error: "El nombre debe tener entre 2 y 120 caracteres." }
   }
+
   if (category.length < 2 || category.length > 60) {
     return { error: "La categoría debe tener entre 2 y 60 caracteres." }
   }
@@ -298,6 +299,45 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   await getDb().delete(products).where(eq(products.id, id))
   revalidatePath("/", "layout")
   redirect("/admin/productos")
+}
+
+export async function createProductReviewAction(formData: FormData): Promise<void> {
+  await requireAdmin()
+
+  const productId = text(formData, "productId")
+  const authorName = text(formData, "authorName")
+  const body = text(formData, "body")
+  const rating = Number(text(formData, "rating"))
+
+  if (!productId || authorName.length < 2 || authorName.length > 80) {
+    throw new Error("El nombre debe tener entre 2 y 80 caracteres.")
+  }
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new Error("La calificación debe estar entre 1 y 5.")
+  }
+  if (body.length < 5 || body.length > 1000) {
+    throw new Error("La opinión debe tener entre 5 y 1000 caracteres.")
+  }
+
+  const db = getDb()
+  const product = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(eq(products.id, productId))
+    .limit(1)
+
+  if (!product[0]) throw new Error("Ese producto no existe.")
+
+  await db.insert(productReviews).values({
+    productId,
+    authorName,
+    rating,
+    body,
+    approved: true,
+  })
+
+  revalidatePath(`/producto/${productId}`)
+  revalidatePath(`/admin/productos/${productId}`)
 }
 
 export async function saveSettingsAction(
