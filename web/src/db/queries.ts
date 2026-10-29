@@ -24,6 +24,7 @@ import {
   adminUsers,
   orderItems,
   orders,
+  productReviews,
   productVariants,
   products,
   settings,
@@ -48,6 +49,7 @@ import type {
   Product,
   ProductVariant,
   StoreSettings,
+  ProductReview,
 } from "@/lib/types"
 
 export interface AdminOrder {
@@ -419,6 +421,22 @@ export async function getProduct(
   if (!rows[0]) return null
   const [product] = await withVariants(rows)
   return product ?? null
+}
+
+export async function listProductReviews(productId: string): Promise<ProductReview[]> {
+  const rows = await getDb()
+    .select()
+    .from(productReviews)
+    .where(and(eq(productReviews.productId, productId), eq(productReviews.approved, true)))
+    .orderBy(desc(productReviews.createdAt))
+
+  return rows.map((row) => ({
+    id: row.id,
+    authorName: row.authorName,
+    rating: row.rating,
+    body: row.body,
+    createdAt: row.createdAt.toISOString(),
+  }))
 }
 
 export async function getStoreSettings(): Promise<StoreSettings> {

@@ -7,7 +7,7 @@ import { formatPrice } from "@/lib/format"
 import { galleryImages } from "@/lib/gallery"
 import { compareAtPrice, discountPercent } from "@/lib/pricing"
 import { availableStock } from "@/lib/stock"
-import type { Product } from "@/lib/types"
+import type { Product, ProductReview } from "@/lib/types"
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -28,9 +28,10 @@ import { useStoreSettings } from "./store-settings-provider"
 interface ProductDetailProps {
   product: Product
   recommended: Product[]
+  reviews: ProductReview[]
 }
 
-export function ProductDetail({ product, recommended }: ProductDetailProps) {
+export function ProductDetail({ product, recommended, reviews }: ProductDetailProps) {
   const { add } = useCart()
   const { store } = useStoreSettings()
   const [quantity, setQuantity] = useState(1)
@@ -246,6 +247,36 @@ export function ProductDetail({ product, recommended }: ProductDetailProps) {
           </ul>
         </div>
       </div>
+
+      {reviews.length > 0 && (
+        <section className="mt-16 border-t border-ink/10 pt-10">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Opiniones</p>
+              <h2 className="mt-1 font-display text-3xl text-ink">Lo que dicen nuestras clientas</h2>
+            </div>
+            <p className="text-sm text-muted">
+              {(reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)}
+              /5 · {reviews.length} {reviews.length === 1 ? "opinión" : "opiniones"}
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {reviews.map((review) => (
+              <figure key={review.id} className="rounded-2xl border border-ink/10 bg-sand/40 p-5">
+                <div className="text-sm tracking-widest text-wine" aria-label={`${review.rating} de 5 estrellas`}>
+                  {"★".repeat(review.rating)}
+                </div>
+                <blockquote className="mt-3 text-sm leading-relaxed text-muted">
+                  “{review.body}”
+                </blockquote>
+                <figcaption className="mt-4 text-xs font-medium text-ink">
+                  {review.authorName}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       {recommended.length > 0 && (
         <div className="mt-16 border-t border-ink/10 pt-10">

@@ -60,6 +60,24 @@ export const productVariants = pgTable(
   (table) => [index("product_variants_product_id_idx").on(table.productId)],
 )
 
+export const productReviews = pgTable(
+  "product_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    authorName: text("author_name").notNull(),
+    rating: integer("rating").notNull(),
+    body: text("body").notNull(),
+    approved: boolean("approved").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("product_reviews_product_approved_idx").on(table.productId, table.approved),
+  ],
+)
+
 export const settings = pgTable("settings", {
   id: integer("id").primaryKey(),
   data: jsonb("data").$type<StoreSettings>().notNull(),

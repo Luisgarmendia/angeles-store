@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ProductDetail } from "@/components/ProductDetail"
-import { getProduct, getStoreSettings, listRecommendations } from "@/db/queries"
+import { getProduct, getStoreSettings, listProductReviews, listRecommendations } from "@/db/queries"
 import { productShareDescription, productShareTitle } from "@/lib/product-share"
 
 export const dynamic = "force-dynamic"
@@ -56,9 +56,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product) notFound()
 
-  const [recommended, settings] = await Promise.all([
+  const [recommended, settings, reviews] = await Promise.all([
     listRecommendations(product),
     getStoreSettings(),
+    listProductReviews(product.id),
   ])
 
   const siteUrl = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
@@ -74,12 +75,48 @@ export default async function ProductPage({ params }: ProductPageProps) {
       name: settings.store.name,
     },
     ...(image ? { image: [image] } : {}),
+    ...(reviews.length > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: (
+              reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+            ).toFixed(1),
+            reviewCount: reviews.length,
+          },
+          review: reviews.map((review) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: review.authorName },
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: review.rating,
+              bestRating: 5,
+              worstRating: 1,
+            },
+            reviewBody: review.body,
+          })),
+        }
+      : {}),
     offers: {
       "@type": "Offer",
       url: `${siteUrl}/producto/${product.id}`,
       price: product.precio.toFixed(2),
       priceCurrency: "HNL",
       availability: "https://schema.org/InStock",
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        url: `${siteUrl}/envios-y-devoluciones`,
+        applicableCountry: "HN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 2,
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "HN",
+        },
+      },
     },
   }
 
@@ -91,7 +128,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <ProductDetail product={product} recommended={recommended} />
+      <ProductDetail product={product} recommended={recommended} reviews={reviews} />
     </>
   )
 }
