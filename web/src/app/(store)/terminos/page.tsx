@@ -1,15 +1,15 @@
-import type { Metadata } from "next"
 import Link from "next/link"
 import { LegalPage, StoreContactDetails } from "@/components/legal-page"
 import { getStoreSettings } from "@/db/queries"
 import { paymentLabel } from "@/lib/payments"
+import { pageMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Términos y condiciones | Angeles Store's",
+export const metadata = pageMetadata({
+  title: "Términos y condiciones",
   description:
     "Consulta los términos de compra, pagos, entregas y devoluciones de Angeles Store's en Honduras.",
-  alternates: { canonical: "/terminos" },
-}
+  path: "/terminos",
+})
 
 export default async function TermsPage() {
   const settings = await getStoreSettings()

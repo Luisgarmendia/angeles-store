@@ -7,6 +7,7 @@ import { MessageIcon } from "./Icons"
 import { useStoreSettings } from "./store-settings-provider"
 
 const LEGAL_LINKS = [
+  { href: "/categorias", label: "Categorías" },
   { href: "/privacidad", label: "Política de privacidad" },
   { href: "/terminos", label: "Términos y condiciones" },
   { href: "/envios-y-devoluciones", label: "Envíos y devoluciones" },

@@ -29,10 +29,24 @@ const AUTO_PAGE_LIMIT = 8
 interface CatalogProps {
   initialPage: CatalogPage
   categories: CategoryCount[]
+  initialCategory?: string
+  showIntro?: boolean
+  showCategories?: boolean
 }
 
-export function Catalog({ initialPage, categories }: CatalogProps) {
-  const [filters, setFilters] = useState<CatalogFilterInput>(DEFAULT_CATALOG_FILTERS)
+export function Catalog({
+  initialPage,
+  categories,
+  initialCategory,
+  showIntro = true,
+  showCategories = true,
+}: CatalogProps) {
+  const initialFilters: CatalogFilterInput = {
+    ...DEFAULT_CATALOG_FILTERS,
+    category: initialCategory ?? DEFAULT_CATALOG_FILTERS.category,
+  }
+  const resetFilters = initialFilters
+  const [filters, setFilters] = useState<CatalogFilterInput>(initialFilters)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [items, setItems] = useState(initialPage.products)
   const [cursor, setCursor] = useState<string | null>(initialPage.nextCursor)
@@ -46,7 +60,7 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
   const requestRef = useRef(0)
   const loadingRef = useRef(false)
   const filtersKey = JSON.stringify(filters)
-  const lastFiltersKeyRef = useRef(JSON.stringify(DEFAULT_CATALOG_FILTERS))
+  const lastFiltersKeyRef = useRef(JSON.stringify(initialFilters))
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   const fetchPage = useCallback(
@@ -148,7 +162,7 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
 
   const hasActiveFilters =
     filters.search !== "" ||
-    filters.category !== "Todos" ||
+    filters.category !== resetFilters.category ||
     filters.minPrice !== "" ||
     filters.maxPrice !== "" ||
     filters.sort !== "destacados" ||
@@ -170,7 +184,7 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
   }
 
   function clearFilters() {
-    setFilters(DEFAULT_CATALOG_FILTERS)
+    setFilters(resetFilters)
   }
 
   function retry() {
@@ -181,16 +195,18 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
   return (
     <section id="catalogo" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
       <div className="flex flex-col gap-5 border-t border-ink/10 pt-10">
-        <div className="flex flex-col gap-2 animate-fade-up sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Cremas y camisas</p>
-            <h2 className="font-display text-4xl text-ink">La colección</h2>
+        {showIntro && (
+          <div className="flex flex-col gap-2 animate-fade-up sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Cremas y camisas</p>
+              <h2 className="font-display text-4xl text-ink">La colección</h2>
+            </div>
+            <p className="max-w-sm text-sm leading-relaxed text-muted">
+              Cremas, camisas y piezas elegidas una por una. Entra al detalle y agrégalas a tu
+              carrito.
+            </p>
           </div>
-          <p className="max-w-sm text-sm leading-relaxed text-muted">
-            Cremas, camisas y piezas elegidas una por una. Entra al detalle y agrégalas a tu
-            carrito.
-          </p>
-        </div>
+        )}
 
         <div className="relative animate-fade-up" style={{ animationDelay: "60ms" }}>
           <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -204,13 +220,15 @@ export function Catalog({ initialPage, categories }: CatalogProps) {
           />
         </div>
 
-        <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <CategoryFilter
-            categories={categories}
-            active={filters.category}
-            onChange={(category) => updateFilter("category", category)}
-          />
-        </div>
+        {showCategories && (
+          <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+            <CategoryFilter
+              categories={categories}
+              active={filters.category}
+              onChange={(category) => updateFilter("category", category)}
+            />
+          </div>
+        )}
 
         <div
           className="flex flex-wrap items-center justify-between gap-3 animate-fade-up"

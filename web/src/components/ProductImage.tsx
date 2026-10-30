@@ -1,15 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { useStoreSettings } from "./store-settings-provider"
 
 interface ProductImageProps {
   src: string
   alt: string
   className?: string
+  priority?: boolean
+  sizes?: string
 }
 
-export function ProductImage({ src, alt, className }: ProductImageProps) {
+export function ProductImage({
+  src,
+  alt,
+  className,
+  priority = false,
+  sizes,
+}: ProductImageProps) {
   const { store } = useStoreSettings()
   const [failed, setFailed] = useState(false)
 
@@ -29,10 +38,13 @@ export function ProductImage({ src, alt, className }: ProductImageProps) {
   }
 
   return (
-    <img
+    <Image
       src={src}
       alt={alt}
-      loading="lazy"
+      fill
+      sizes={sizes ?? "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"}
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
       onError={() => setFailed(true)}
       className={className}
     />

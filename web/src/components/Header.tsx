@@ -12,6 +12,7 @@ interface HeaderProps {
 
 const MOBILE_LINKS = [
   { href: "/#catalogo", label: "Catálogo" },
+  { href: "/categorias", label: "Categorías" },
   { href: "/#como-comprar", label: "Cómo comprar" },
   { href: "/#contacto", label: "Contacto" },
   { href: "/envios-y-devoluciones", label: "Envíos y devoluciones" },
@@ -39,6 +40,9 @@ export function Header({ cartCount, onCartOpen }: HeaderProps) {
         <nav className="hidden items-center gap-6 text-sm text-muted md:flex lg:gap-8">
           <Link href="/#catalogo" className="transition-colors hover:text-ink">
             Catálogo
+          </Link>
+          <Link href="/categorias" className="transition-colors hover:text-ink">
+            Categorías
           </Link>
           <Link href="/#como-comprar" className="transition-colors hover:text-ink">
             Cómo comprar

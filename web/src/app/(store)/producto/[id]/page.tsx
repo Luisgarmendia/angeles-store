@@ -1,8 +1,13 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ProductDetail } from "@/components/ProductDetail"
 import { getProduct, getStoreSettings, listProductReviews, listRecommendations } from "@/db/queries"
+import { categoryPath } from "@/lib/category"
 import { productShareDescription, productShareTitle } from "@/lib/product-share"
+import { getSiteUrl } from "@/lib/site-url"
+import { productSeoTitle } from "@/lib/seo"
+import { isSoldOut } from "@/lib/stock"
 
 export const dynamic = "force-dynamic"
 
@@ -22,7 +27,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const description = productShareDescription(product)
 
   return {
-    title,
+    title: { absolute: productSeoTitle(product.nombre, settings.store.name) },
     description,
     alternates: {
       canonical: `/producto/${product.id}`,
@@ -62,14 +67,64 @@ export default async function ProductPage({ params }: ProductPageProps) {
     listProductReviews(product.id),
   ])
 
-  const siteUrl = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
+  const siteUrl = getSiteUrl()
+  const productUrl = `${siteUrl}/producto/${product.id}`
+  const categoryUrl = `${siteUrl}${categoryPath(product.categoria)}`
   const image = product.imagen || settings.hero.image
-  const jsonLd = {
-    "@context": "https://schema.org",
+  const availability = isSoldOut(product)
+    ? "https://schema.org/OutOfStock"
+    : "https://schema.org/InStock"
+  const prices = [
+    product.precio,
+    ...product.variants
+      .map((variant) => variant.precio)
+      .filter((price): price is number => price !== null),
+  ]
+  const lowPrice = Math.min(...prices)
+  const highPrice = Math.max(...prices)
+  const offerBase = {
+    url: productUrl,
+    priceCurrency: "HNL",
+    availability,
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      url: `${siteUrl}/envios-y-devoluciones`,
+      applicableCountry: "HN",
+      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+      merchantReturnDays: 2,
+    },
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      shippingDestination: {
+        "@type": "DefinedRegion",
+        addressCountry: "HN",
+      },
+    },
+  }
+  const offers =
+    lowPrice === highPrice
+      ? {
+          "@type": "Offer",
+          ...offerBase,
+          price: lowPrice.toFixed(2),
+        }
+      : {
+          "@type": "AggregateOffer",
+          ...offerBase,
+          lowPrice: lowPrice.toFixed(2),
+          highPrice: highPrice.toFixed(2),
+          offerCount: prices.length,
+        }
+
+  const productSchema = {
     "@type": "Product",
+    "@id": `${productUrl}#product`,
     name: product.nombre,
     description: product.descripcion,
     category: product.categoria,
+    sku: product.id,
+    itemCondition: "https://schema.org/NewCondition",
+    url: productUrl,
     brand: {
       "@type": "Brand",
       name: settings.store.name,
@@ -87,6 +142,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           review: reviews.map((review) => ({
             "@type": "Review",
             author: { "@type": "Person", name: review.authorName },
+            datePublished: review.createdAt,
             reviewRating: {
               "@type": "Rating",
               ratingValue: review.rating,
@@ -97,27 +153,37 @@ export default async function ProductPage({ params }: ProductPageProps) {
           })),
         }
       : {}),
-    offers: {
-      "@type": "Offer",
-      url: `${siteUrl}/producto/${product.id}`,
-      price: product.precio.toFixed(2),
-      priceCurrency: "HNL",
-      availability: "https://schema.org/InStock",
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        url: `${siteUrl}/envios-y-devoluciones`,
-        applicableCountry: "HN",
-        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-        merchantReturnDays: 2,
+    offers,
+  }
+
+  const breadcrumbSchema = {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Categorías",
+        item: `${siteUrl}/categorias`,
       },
-      shippingDetails: {
-        "@type": "OfferShippingDetails",
-        shippingDestination: {
-          "@type": "DefinedRegion",
-          addressCountry: "HN",
-        },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.categoria,
+        item: categoryUrl,
       },
-    },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: product.nombre,
+        item: productUrl,
+      },
+    ],
+  }
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [productSchema, breadcrumbSchema],
   }
 
   return (
@@ -128,6 +194,39 @@ export default async function ProductPage({ params }: ProductPageProps) {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
+      <nav
+        aria-label="Miga de pan"
+        className="mx-auto max-w-6xl px-4 pt-6 text-xs text-muted sm:px-6"
+      >
+        <ol className="flex flex-wrap items-center gap-1.5">
+          <li>
+            <Link href="/" className="transition-colors hover:text-ink">
+              Inicio
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <Link href="/categorias" className="transition-colors hover:text-ink">
+              Categorías
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <Link
+              href={categoryPath(product.categoria)}
+              className="transition-colors hover:text-ink"
+            >
+              {product.categoria}
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <span aria-current="page" className="text-ink">
+              {product.nombre}
+            </span>
+          </li>
+        </ol>
+      </nav>
       <ProductDetail product={product} recommended={recommended} reviews={reviews} />
     </>
   )
