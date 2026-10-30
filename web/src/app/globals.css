@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
   --color-cream: #faf7f2;
   --color-sand: #f1eae0;
   --color-ink: #2b2320;
-  --color-muted: #8a7f78;
+  --color-muted: #6f655f;
   --color-rose: #c98b8b;
-  --color-rose-dark: #a86b6b;
+  --color-rose-dark: #8f5656;
   --color-wine: #7a3b3b;
   --color-gold: #c9a227;
 }

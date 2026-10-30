@@ -1,13 +1,13 @@
-import type { Metadata } from "next"
 import { LegalPage, StoreContactDetails } from "@/components/legal-page"
 import { getStoreSettings } from "@/db/queries"
+import { pageMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Envíos y devoluciones | Angeles Store's",
+export const metadata = pageMetadata({
+  title: "Envíos y devoluciones",
   description:
     "Información sobre envíos a Honduras, costos de entrega, tiempos y condiciones para cambios o devoluciones.",
-  alternates: { canonical: "/envios-y-devoluciones" },
-}
+  path: "/envios-y-devoluciones",
+})
 
 export default async function ShippingReturnsPage() {
   const settings = await getStoreSettings()

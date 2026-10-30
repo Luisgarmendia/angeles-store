@@ -1,13 +1,13 @@
-import type { Metadata } from "next"
 import { LegalPage, StoreContactDetails } from "@/components/legal-page"
 import { getStoreSettings } from "@/db/queries"
+import { pageMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Política de privacidad | Angeles Store's",
+export const metadata = pageMetadata({
+  title: "Política de privacidad",
   description:
     "Conoce cómo Angeles Store's usa tus datos de compra, pedidos y contacto en Honduras.",
-  alternates: { canonical: "/privacidad" },
-}
+  path: "/privacidad",
+})
 
 export default async function PrivacyPage() {
   const settings = await getStoreSettings()

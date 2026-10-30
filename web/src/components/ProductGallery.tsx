@@ -30,6 +30,8 @@ export function ProductGallery({ images, alt }: ProductGalleryProps) {
         <ProductImage
           src={images[current] ?? ""}
           alt={alt}
+          priority={current === 0}
+          sizes="(min-width: 768px) 50vw, 100vw"
           className="h-full w-full object-cover"
         />
 
@@ -62,7 +64,7 @@ export function ProductGallery({ images, alt }: ProductGalleryProps) {
               key={`${image}-${position}`}
               type="button"
               onClick={() => setIndex(position)}
-              className={`h-16 w-14 shrink-0 overflow-hidden rounded-xl border transition-colors ${
+              className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border transition-colors ${
                 position === current
                   ? "border-ink"
                   : "border-transparent hover:border-ink/30"
@@ -73,6 +75,7 @@ export function ProductGallery({ images, alt }: ProductGalleryProps) {
               <ProductImage
                 src={image}
                 alt=""
+                sizes="56px"
                 className="h-full w-full object-cover"
               />
             </button>

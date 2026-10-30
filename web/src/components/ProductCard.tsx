@@ -46,6 +46,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <ProductImage
           src={product.imagen}
           alt={product.nombre}
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <Link

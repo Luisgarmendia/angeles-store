@@ -69,12 +69,14 @@ export function Hero({ hero }: HeroProps) {
           )}
         </div>
 
-        <div className="relative animate-fade-in" style={{ animationDelay: "150ms" }}>
+        <div className="relative">
           <div className="absolute -inset-6 rounded-full bg-rose/15 blur-3xl" aria-hidden="true" />
           <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-xl shadow-ink/10">
             <ProductImage
               src={hero.image}
               alt={hero.imageAlt || hero.tagline || "Portada de la tienda"}
+              priority
+              sizes="(min-width: 768px) 50vw, 100vw"
               className="h-full w-full animate-hero-zoom object-cover"
             />
           </div>
