@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { getAdminSession } from "@/lib/auth"
-import { isR2Configured, MAX_IMAGE_BYTES, uploadImage, type UploadFolder } from "@/lib/r2"
+import {
+  InvalidImageFormatError,
+  isR2Configured,
+  MAX_IMAGE_BYTES,
+  uploadImage,
+  type UploadFolder,
+} from "@/lib/r2"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -34,9 +40,6 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Falta el archivo." }, { status: 400 })
   }
-  if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "El archivo debe ser una imagen." }, { status: 400 })
-  }
   if (file.size > MAX_IMAGE_BYTES) {
     return NextResponse.json(
       { error: "La imagen supera 1.5 MB. Comprimila o usá una URL." },
@@ -53,6 +56,9 @@ export async function POST(request: NextRequest) {
     const url = await uploadImage(file, folder)
     return NextResponse.json({ url })
   } catch (error) {
+    if (error instanceof InvalidImageFormatError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     console.error("R2 upload failed", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudo subir la imagen." },
