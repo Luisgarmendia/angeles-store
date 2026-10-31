@@ -3,3 +3,18 @@ dist
 .DS_Store
 *.local
 .vite
+
+# build output
+.next
+out
+build
+*.tsbuildinfo
+next-env.d.ts
+
+# env files
+.env
+.env.*
+!.env.example
+
+# engram stores the project identity locally, per developer
+.engram/
