@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { canAttempt, canCreateOrder, recordFailure, recordOrder } from "./rate-limit"
+import {
+  canAttempt,
+  canCreateOrder,
+  MAX_ENTRIES,
+  rateLimitSizes,
+  recordFailure,
+  recordOrder,
+} from "./rate-limit"
 
 /** The limiter keeps a module-level map, so every test uses its own keys. */
 function uniqueKey(label: string): string {
@@ -52,5 +59,23 @@ describe("order rate limit", () => {
 
     expect(canAttempt(key)).toBe(false)
     expect(canCreateOrder(key)).toBe(true)
+  })
+})
+
+describe("bounded growth", () => {
+  it("caps the stored order entries at MAX_ENTRIES", () => {
+    for (let index = 0; index < MAX_ENTRIES + 50; index += 1) {
+      recordOrder(`order:flood-${index}`)
+    }
+
+    expect(rateLimitSizes().orders).toBe(MAX_ENTRIES)
+  })
+
+  it("caps the stored attempt entries at MAX_ENTRIES", () => {
+    for (let index = 0; index < MAX_ENTRIES + 50; index += 1) {
+      recordFailure(`ip:flood-${index}`)
+    }
+
+    expect(rateLimitSizes().attempts).toBe(MAX_ENTRIES)
   })
 })
