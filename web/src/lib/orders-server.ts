@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { and, eq, gte, sql } from "drizzle-orm"
 import { getDb } from "@/db"
 import { orderItems, orders, productVariants, products, settings } from "@/db/schema"
 import { ALL_PAYMENT_METHODS, enabledPaymentMethods } from "./payments"
@@ -75,29 +75,37 @@ export async function createOrderInDb(input: {
         }
 
         if (!product.madeToOrder) {
-          if (variant.stock < quantity) {
-            throw new OrderError(
-              `No hay stock suficiente de ${product.name}${variant.label ? ` (${variant.label})` : ""}.`,
-            )
-          }
+          // The row was read inside this transaction's lock on the product, but
+          // that snapshot can still be stale: an admin edit does not take the
+          // product lock, and a commit from another transaction can land between
+          // this statement and the next. Decrementing relatively inside the
+          // statement, and matching zero rows when the persisted stock is short,
+          // turns the check and the write into one atomic step, so a stale
+          // snapshot fails loudly instead of overwriting the newer number.
+          const stockError = `No hay stock suficiente de ${product.name}${variant.label ? ` (${variant.label})` : ""}.`
 
-          await tx
+          const [updatedVariant] = await tx
             .update(productVariants)
-            .set({ stock: variant.stock - quantity })
-            .where(eq(productVariants.id, variant.id))
+            .set({ stock: sql`${productVariants.stock} - ${quantity}` })
+            .where(
+              and(eq(productVariants.id, variant.id), gte(productVariants.stock, quantity)),
+            )
+            .returning({ id: productVariants.id })
+
+          if (!updatedVariant) throw new OrderError(stockError)
         }
       } else {
         if (variants.length > 0) {
           throw new OrderError(`Elegí una opción para ${product.name}.`)
         }
         if (!product.madeToOrder && product.stock !== null) {
-          if (product.stock < quantity) {
-            throw new OrderError(`No hay stock suficiente de ${product.name}.`)
-          }
-          await tx
+          const [updatedProduct] = await tx
             .update(products)
-            .set({ stock: product.stock - quantity })
-            .where(eq(products.id, product.id))
+            .set({ stock: sql`${products.stock} - ${quantity}` })
+            .where(and(eq(products.id, product.id), gte(products.stock, quantity)))
+            .returning({ id: products.id })
+
+          if (!updatedProduct) throw new OrderError(`No hay stock suficiente de ${product.name}.`)
         }
       }
 
