@@ -48,6 +48,21 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value)
 }
 
+/**
+ * Social fields reach the storefront as clickable links, so they accept only a
+ * full http(s) URL or a bare handle. Returns null for a value that is neither,
+ * which the caller turns into a form error instead of storing it raw.
+ * An empty field stays empty: those links are optional.
+ */
+function socialLink(value: string): string | null {
+  if (!value) return ""
+  if (value.length > 300) return null
+  if (value.startsWith("@")) {
+    return /^@[A-Za-z0-9._]{1,30}$/.test(value) ? value : null
+  }
+  return isHttpUrl(value) ? value : null
+}
+
 interface VariantInput {
   id?: string
   label: string
@@ -384,6 +399,16 @@ export async function saveSettingsAction(
     return { error: "Deja al menos un método de pago activo." }
   }
 
+  const instagram = socialLink(text(formData, "instagram"))
+  const facebook = socialLink(text(formData, "facebook"))
+  const tiktok = socialLink(text(formData, "tiktok"))
+
+  if (instagram === null || facebook === null || tiktok === null) {
+    return {
+      error: "Revisá las redes: usá una URL completa (https://…) o un usuario @nombre.",
+    }
+  }
+
   const data: StoreSettings = {
     store: {
       name: storeName,
@@ -391,9 +416,9 @@ export async function saveSettingsAction(
       description: storeDescription,
     },
     whatsapp,
-    instagram: text(formData, "instagram"),
-    facebook: text(formData, "facebook"),
-    tiktok: text(formData, "tiktok"),
+    instagram,
+    facebook,
+    tiktok,
     payments,
     hero: {
       tagline: text(formData, "tagline"),
@@ -439,28 +464,48 @@ export async function updateOrderStatusAction(formData: FormData): Promise<void>
   }
 
   await db.transaction(async (tx) => {
-    if (status === "cancelado" && order.status !== "cancelado") {
-      const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, id))
-
-      for (const item of items) {
-        if (item.variantId) {
-          await tx
-            .update(productVariants)
-            .set({ stock: sql`${productVariants.stock} + ${item.quantity}` })
-            .where(eq(productVariants.id, item.variantId))
-        } else {
-          await tx
-            .update(products)
-            .set({ stock: sql`${products.stock} + ${item.quantity}` })
-            .where(and(eq(products.id, item.productId), isNotNull(products.stock)))
-        }
-      }
-    }
-
-    await tx
+    // Claim the transition before touching stock. `order` was read outside this
+    // transaction, so two concurrent cancels both observe the old status. The
+    // guard on the UPDATE is what decides which one owns the transition, and
+    // only the owner may restock; without it both would credit the same units.
+    const [claimed] = await tx
       .update(orders)
       .set({ status, updatedAt: new Date() })
-      .where(eq(orders.id, id))
+      .where(and(eq(orders.id, id), eq(orders.status, order.status)))
+      .returning({ id: orders.id })
+
+    if (!claimed) return
+
+    if (status !== "cancelado" || order.status === "cancelado") return
+
+    // A made-to-order line never decremented stock at checkout, so returning it
+    // here would invent inventory that was never sold.
+    const items = await tx
+      .select({
+        variantId: orderItems.variantId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        madeToOrder: products.madeToOrder,
+      })
+      .from(orderItems)
+      .innerJoin(products, eq(products.id, orderItems.productId))
+      .where(eq(orderItems.orderId, id))
+
+    for (const item of items) {
+      if (item.madeToOrder) continue
+
+      if (item.variantId) {
+        await tx
+          .update(productVariants)
+          .set({ stock: sql`${productVariants.stock} + ${item.quantity}` })
+          .where(eq(productVariants.id, item.variantId))
+      } else {
+        await tx
+          .update(products)
+          .set({ stock: sql`${products.stock} + ${item.quantity}` })
+          .where(and(eq(products.id, item.productId), isNotNull(products.stock)))
+      }
+    }
   })
 
   revalidatePath("/admin/pedidos")
