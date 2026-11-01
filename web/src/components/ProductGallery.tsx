@@ -12,9 +12,12 @@ interface ProductGalleryProps {
 export function ProductGallery({ images, alt }: ProductGalleryProps) {
   const [index, setIndex] = useState(0)
 
-  useEffect(() => {
+  const imagesKey = images.join("|")
+  const [prevImagesKey, setPrevImagesKey] = useState(imagesKey)
+  if (imagesKey !== prevImagesKey) {
+    setPrevImagesKey(imagesKey)
     setIndex(0)
-  }, [images.join("|")])
+  }
 
   const total = images.length
   const current = total > 0 ? Math.min(index, total - 1) : 0

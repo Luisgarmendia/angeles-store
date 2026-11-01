@@ -57,10 +57,12 @@ export function ProductDetail({ product, recommended, reviews }: ProductDetailPr
     return () => window.clearTimeout(timeout)
   }, [added])
 
-  useEffect(() => {
+  const [prevVariantId, setPrevVariantId] = useState(selectedVariantId)
+  if (selectedVariantId !== prevVariantId) {
+    setPrevVariantId(selectedVariantId)
     setQuantity(1)
     setAdded(false)
-  }, [selectedVariantId])
+  }
 
   function handleAdd() {
     if (soldOut) return

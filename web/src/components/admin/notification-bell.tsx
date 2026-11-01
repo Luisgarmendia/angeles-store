@@ -79,13 +79,15 @@ export function NotificationBell() {
   }, [router, showToast])
 
   useEffect(() => {
-    void refresh()
-
+    // Defer the first poll so its setState lands after the effect returns
+    // instead of cascading an extra render on mount.
+    const initial = window.setTimeout(() => void refresh(), 0)
     const interval = window.setInterval(() => void refresh(), POLL_INTERVAL_MS)
     const onFocus = () => void refresh()
     window.addEventListener("focus", onFocus)
 
     return () => {
+      window.clearTimeout(initial)
       window.clearInterval(interval)
       window.removeEventListener("focus", onFocus)
     }

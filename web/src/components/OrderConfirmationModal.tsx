@@ -42,13 +42,13 @@ export function OrderConfirmationModal({
 
   useModalBehavior(confirmation !== null, onClose, dialogRef)
 
-  useEffect(() => {
-    if (!confirmation) {
-      setReceiptUrl("")
-      return
-    }
-    setReceiptUrl(`${window.location.origin}/pedido/${confirmation.id}`)
-  }, [confirmation])
+  const [prevConfirmationId, setPrevConfirmationId] = useState(confirmation?.id)
+  if (confirmation?.id !== prevConfirmationId) {
+    setPrevConfirmationId(confirmation?.id)
+    setReceiptUrl(
+      confirmation ? `${window.location.origin}/pedido/${confirmation.id}` : "",
+    )
+  }
 
   if (!confirmation) return null
 
