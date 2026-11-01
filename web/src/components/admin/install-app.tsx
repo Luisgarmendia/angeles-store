@@ -23,19 +23,18 @@ function isIosDevice() {
 
 /** Prompts the admin to install the panel as a PWA, which iOS requires for push. */
 export function InstallApp() {
-  const [mode, setMode] = useState<InstallMode>("checking")
+  // The initial mode is derived once, during render. The effect below only
+  // subscribes to browser events, so nothing calls setState synchronously.
+  const [mode, setMode] = useState<InstallMode>(() => {
+    if (typeof window === "undefined") return "checking"
+    if (isStandalone()) return "installed"
+    if (isIosDevice()) return "ios"
+    return "checking"
+  })
   const [promptEvent, setPromptEvent] = useState<InstallPromptEvent | null>(null)
 
   useEffect(() => {
-    if (isStandalone()) {
-      setMode("installed")
-      return
-    }
-
-    if (isIosDevice()) {
-      setMode("ios")
-      return
-    }
+    if (isStandalone() || isIosDevice()) return
 
     const onPrompt = (event: Event) => {
       event.preventDefault()

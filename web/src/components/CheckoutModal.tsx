@@ -56,11 +56,17 @@ export function CheckoutModal({
 
   useModalBehavior(open, onClose, dialogRef)
 
-  useEffect(() => {
-    if (!open) return
-    setCustomer(initialCustomer(methods))
-    setError(null)
-  }, [open, methods])
+  // Adjusting state during render is the documented replacement for resetting
+  // from an effect: the form is rebuilt the moment the dialog opens, with no
+  // extra render pass and no chance of showing the previous customer.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
+      setCustomer(initialCustomer(methods))
+      setError(null)
+    }
+  }
 
   if (!open) return null
 

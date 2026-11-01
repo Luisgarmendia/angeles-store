@@ -14,16 +14,18 @@ const STORAGE_KEY = "angeles.admin.products.view"
 type View = "cards" | "list"
 
 export function AdminProductsView({ products }: { products: AdminProduct[] }) {
-  const [view, setView] = useState<View>("cards")
-
-  useEffect(() => {
+  // Read once during the initial render instead of correcting the state from
+  // an effect, which would flash the default layout before the stored one.
+  const [view, setView] = useState<View>(() => {
+    if (typeof window === "undefined") return "cards"
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored === "cards" || stored === "list") setView(stored)
+      if (stored === "cards" || stored === "list") return stored
     } catch {
       // Private mode: keep the default view.
     }
-  }, [])
+    return "cards"
+  })
 
   function changeView(next: View) {
     setView(next)
