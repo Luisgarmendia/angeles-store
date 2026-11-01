@@ -22,9 +22,19 @@ export function ProductImage({
   const { store } = useStoreSettings()
   const [failed, setFailed] = useState(false)
 
-  useEffect(() => {
+  const [prevSrc, setPrevSrc] = useState(src)
+  if (src !== prevSrc) {
+    setPrevSrc(src)
     setFailed(false)
-  }, [src])
+  }
+
+  // Objects on the R2 CDN are already served with immutable caching and no
+  // transformation, while the Next optimizer has to reach that hostname from
+  // the server runtime. When Cloudflare blocks that request, the optimizer
+  // answers 403 and every product image disappears. Letting the browser fetch
+  // external URLs directly removes the server from the path entirely; bundled
+  // assets keep the optimizer.
+  const unoptimized = /^https?:\/\//i.test(src)
 
   if (!src || failed) {
     return (
@@ -42,6 +52,7 @@ export function ProductImage({
       src={src}
       alt={alt}
       fill
+      unoptimized={unoptimized}
       sizes={sizes ?? "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"}
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : undefined}
