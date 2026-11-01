@@ -1,13 +1,12 @@
 node_modules
-dist
 .DS_Store
 *.local
-.vite
 
 # build output
 .next
 out
 build
+dist
 *.tsbuildinfo
 next-env.d.ts
 
